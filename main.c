@@ -158,8 +158,11 @@ void render_cursor(SDL_Renderer *renderer, Uint32 color)
     scc(SDL_RenderFillRect(renderer, &rect));
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
+    (void) argc;
+    (void) argv;
+
     scc(SDL_Init(SDL_INIT_VIDEO));
 
     SDL_Window *window =
