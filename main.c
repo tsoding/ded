@@ -86,8 +86,8 @@ Font font_load_from_file(SDL_Renderer *renderer, const char *file_path)
         const size_t col = index % FONT_COLS;
         const size_t row = index / FONT_COLS;
         font.glyph_table[index] = (SDL_Rect) {
-            .x = col * FONT_CHAR_WIDTH,
-            .y = row * FONT_CHAR_HEIGHT,
+            .x = (int) col * FONT_CHAR_WIDTH,
+            .y = (int) row * FONT_CHAR_HEIGHT,
             .w = FONT_CHAR_WIDTH,
             .h = FONT_CHAR_HEIGHT,
         };
@@ -148,7 +148,7 @@ size_t buffer_size = 0;
 void render_cursor(SDL_Renderer *renderer, Uint32 color)
 {
     const SDL_Rect rect = {
-        .x = (int) floorf(buffer_cursor * FONT_CHAR_WIDTH * FONT_SCALE),
+        .x = (int) floorf((float) buffer_cursor * FONT_CHAR_WIDTH * FONT_SCALE),
         .y = 0,
         .w = FONT_CHAR_WIDTH * FONT_SCALE,
         .h = FONT_CHAR_HEIGHT * FONT_SCALE,
