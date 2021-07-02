@@ -106,9 +106,11 @@ void render_char(SDL_Renderer *renderer, const Font *font, char c, Vec2f pos, fl
         .h = (int) floorf(FONT_CHAR_HEIGHT * scale),
     };
 
-    assert(c >= ASCII_DISPLAY_LOW);
-    assert(c <= ASCII_DISPLAY_HIGH);
-    const size_t index = c - ASCII_DISPLAY_LOW;
+    size_t index = '?' - ASCII_DISPLAY_LOW;
+    if (ASCII_DISPLAY_LOW <= c && c <= ASCII_DISPLAY_HIGH) {
+        index = c - ASCII_DISPLAY_LOW;
+    }
+
     scc(SDL_RenderCopy(renderer, font->spritesheet, &font->glyph_table[index], &dst));
 }
 
@@ -134,16 +136,47 @@ void render_text_sized(SDL_Renderer *renderer, Font *font, const char *text, siz
     }
 }
 
-void render_text(SDL_Renderer *renderer, Font *font, const char *text, Vec2f pos, Uint32 color, float scale)
-{
-    render_text_sized(renderer, font, text, strlen(text), pos, color, scale);
-}
-
 #define BUFFER_CAPACITY 1024
 
 char buffer[BUFFER_CAPACITY];
 size_t buffer_cursor = 0;
 size_t buffer_size = 0;
+
+void buffer_insert_text_before_cursor(const char *text)
+{
+    size_t text_size = strlen(text);
+    const size_t free_space = BUFFER_CAPACITY - buffer_size;
+    if (text_size > free_space) {
+        text_size = free_space;
+    }
+    memmove(buffer + buffer_cursor + text_size,
+            buffer + buffer_cursor,
+            buffer_size - buffer_cursor);
+    memcpy(buffer + buffer_cursor, text, text_size);
+    buffer_size += text_size;
+    buffer_cursor += text_size;
+}
+
+void buffer_backspace(void)
+{
+    if (buffer_cursor > 0 && buffer_size > 0) {
+        memmove(buffer + buffer_cursor - 1,
+                buffer + buffer_cursor,
+                buffer_size - buffer_cursor);
+        buffer_size -= 1;
+        buffer_cursor -= 1;
+    }
+}
+
+void buffer_delete(void)
+{
+    if (buffer_cursor < buffer_size && buffer_size > 0) {
+        memmove(buffer + buffer_cursor,
+                buffer + buffer_cursor + 1,
+                buffer_size - buffer_cursor);
+        buffer_size -= 1;
+    }
+}
 
 #define UNHEX(color) \
     ((color) >> (8 * 0)) & 0xFF, \
@@ -172,7 +205,8 @@ void render_cursor(SDL_Renderer *renderer, const Font *font)
 }
 
 
-// TODO: move the cursor around
+// TODO: Jump forward/backward by a word
+// TODO: Delete a word
 // TODO: Blinking cursor
 // TODO: Multiple lines
 // TODO: Save/Load file
@@ -181,6 +215,8 @@ int main(int argc, char **argv)
 {
     (void) argc;
     (void) argv;
+
+    buffer_insert_text_before_cursor("Hello, World");
 
     scc(SDL_Init(SDL_INIT_VIDEO));
 
@@ -207,37 +243,33 @@ int main(int argc, char **argv)
             case SDL_KEYDOWN: {
                 switch (event.key.keysym.sym) {
                 case SDLK_BACKSPACE: {
-                    if (buffer_size > 0) {
-                        buffer_size -= 1;
-                        buffer_cursor = buffer_size;
-                    }
+                    buffer_backspace();
                 }
                 break;
+
+                case SDLK_DELETE: {
+                    buffer_delete();
+                } break;
 
                 case SDLK_LEFT: {
                     if (buffer_cursor > 0) {
                         buffer_cursor -= 1;
                     }
-                } break;
+                }
+                break;
 
                 case SDLK_RIGHT: {
                     if (buffer_cursor < buffer_size) {
                         buffer_cursor += 1;
                     }
-                } break;
+                }
+                break;
                 }
             }
             break;
 
             case SDL_TEXTINPUT: {
-                size_t text_size = strlen(event.text.text);
-                const size_t free_space = BUFFER_CAPACITY - buffer_size;
-                if (text_size > free_space) {
-                    text_size = free_space;
-                }
-                memcpy(buffer + buffer_size, event.text.text, text_size);
-                buffer_size += text_size;
-                buffer_cursor = buffer_size;
+                buffer_insert_text_before_cursor(event.text.text);
             }
             break;
             }
