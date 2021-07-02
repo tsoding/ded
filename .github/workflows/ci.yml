@@ -54,3 +54,8 @@ jobs:
         shell: cmd
         run: |
           ./build_msvc.bat
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: Binaries
+          path: /*.exe
