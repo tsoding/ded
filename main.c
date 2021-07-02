@@ -9,7 +9,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "./stb_image.h"
 
-#include "./buffer.h"
+#include "./editor.h"
 
 #define FONT_WIDTH 128
 #define FONT_HEIGHT 64
@@ -138,8 +138,7 @@ void render_text_sized(SDL_Renderer *renderer, Font *font, const char *text, siz
     }
 }
 
-Line line = {0};
-size_t cursor = 0;
+Editor editor = {0};
 
 #define UNHEX(color) \
     ((color) >> (8 * 0)) & 0xFF, \
@@ -149,7 +148,9 @@ size_t cursor = 0;
 
 void render_cursor(SDL_Renderer *renderer, const Font *font)
 {
-    const Vec2f pos = vec2f((float) cursor * FONT_CHAR_WIDTH * FONT_SCALE, 0.0f);
+    const Vec2f pos =
+        vec2f((float) editor.cursor_col * FONT_CHAR_WIDTH * FONT_SCALE,
+              (float) editor.cursor_row * FONT_CHAR_HEIGHT * FONT_SCALE);
 
     const SDL_Rect rect = {
         .x = (int) floorf(pos.x),
@@ -161,9 +162,10 @@ void render_cursor(SDL_Renderer *renderer, const Font *font)
     scc(SDL_SetRenderDrawColor(renderer, UNHEX(0xFFFFFFFF)));
     scc(SDL_RenderFillRect(renderer, &rect));
 
-    set_texture_color(font->spritesheet, 0xFF000000);
-    if (cursor < line.size) {
-        render_char(renderer, font, line.chars[cursor], pos, FONT_SCALE);
+    const char *c = editor_char_under_cursor(&editor);
+    if (c) {
+        set_texture_color(font->spritesheet, 0xFF000000);
+        render_char(renderer, font, *c, pos, FONT_SCALE);
     }
 }
 
@@ -177,6 +179,16 @@ int main(int argc, char **argv)
 {
     (void) argc;
     (void) argv;
+
+    editor_insert_text_before_cursor(&editor, "dhjfhskjdfhkjshdf");
+    editor_insert_new_line(&editor);
+    editor_insert_text_before_cursor(&editor, "3j4k23l4j");
+    editor_insert_new_line(&editor);
+    editor_insert_text_before_cursor(&editor, "456kj356klj35l6j");
+    editor_insert_new_line(&editor);
+    editor_insert_text_before_cursor(&editor, "46jkl45jkljclslkj");
+    editor_insert_new_line(&editor);
+    editor_insert_text_before_cursor(&editor, "tjk5kfkdjgk");
 
     scc(SDL_Init(SDL_INIT_VIDEO));
 
@@ -203,28 +215,38 @@ int main(int argc, char **argv)
             case SDL_KEYDOWN: {
                 switch (event.key.keysym.sym) {
                 case SDLK_BACKSPACE: {
-                    line_backspace(&line, cursor);
-                    if (cursor > 0) {
-                        cursor -= 1;
-                    }
+                    editor_backspace(&editor);
                 }
                 break;
 
+                case SDLK_RETURN: {
+                    editor_insert_new_line(&editor);
+                } break;
+
                 case SDLK_DELETE: {
-                    line_delete(&line, cursor);
+                    editor_delete(&editor);
+                }
+                break;
+
+                case SDLK_UP: {
+                    if (editor.cursor_row > 0) {
+                        editor.cursor_row -= 1;
+                    }
+                } break;
+
+                case SDLK_DOWN: {
+                    editor.cursor_row += 1;
                 } break;
 
                 case SDLK_LEFT: {
-                    if (cursor > 0) {
-                        cursor -= 1;
+                    if (editor.cursor_col > 0) {
+                        editor.cursor_col -= 1;
                     }
                 }
                 break;
 
                 case SDLK_RIGHT: {
-                    if (cursor < line.size) {
-                        cursor += 1;
-                    }
+                    editor.cursor_col += 1;
                 }
                 break;
                 }
@@ -232,8 +254,7 @@ int main(int argc, char **argv)
             break;
 
             case SDL_TEXTINPUT: {
-                line_insert_text_before(&line, event.text.text, cursor);
-                cursor += strlen(event.text.text);
+                editor_insert_text_before_cursor(&editor, event.text.text);
             }
             break;
             }
@@ -242,7 +263,10 @@ int main(int argc, char **argv)
         scc(SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0));
         scc(SDL_RenderClear(renderer));
 
-        render_text_sized(renderer, &font, line.chars, line.size, vec2f(0.0, 0.0), 0xFFFFFFFF, FONT_SCALE);
+        for (size_t row = 0; row < editor.size; ++row) {
+            const Line *line = editor.lines + row;
+            render_text_sized(renderer, &font, line->chars, line->size, vec2f(0.0f, row * FONT_CHAR_HEIGHT * FONT_SCALE), 0xFFFFFFFF, FONT_SCALE);
+        }
         render_cursor(renderer, &font);
 
         SDL_RenderPresent(renderer);
