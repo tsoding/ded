@@ -186,7 +186,7 @@ void buffer_delete(void)
 
 void render_cursor(SDL_Renderer *renderer, const Font *font)
 {
-    const Vec2f pos = vec2f(buffer_cursor * FONT_CHAR_WIDTH * FONT_SCALE, 0.0f);
+    const Vec2f pos = vec2f((float) buffer_cursor * FONT_CHAR_WIDTH * FONT_SCALE, 0.0f);
 
     const SDL_Rect rect = {
         .x = (int) floorf(pos.x),
