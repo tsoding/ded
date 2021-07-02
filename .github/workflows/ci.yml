@@ -54,3 +54,14 @@ jobs:
         shell: cmd
         run: |
           ./build_msvc.bat
+      - name: Prepare WindowsBinaries artifacts
+        shell: cmd
+        run: |
+          mkdir winbin
+          copy /B *.exe winbin
+          copy /B *.png winbin
+      - name: Upload WindowsBinaries artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: WindowsBinaries
+          path: ./winbin/
