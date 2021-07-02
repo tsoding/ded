@@ -1,8 +1,8 @@
 #include <assert.h>
-#include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 #include "./editor.h"
 
 #define LINE_INIT_CAPACITY 1024
