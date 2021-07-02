@@ -169,26 +169,17 @@ void render_cursor(SDL_Renderer *renderer, const Font *font)
     }
 }
 
-// TODO: Multiple lines
 // TODO: Save/Load file
 // TODO: Jump forward/backward by a word
 // TODO: Delete a word
 // TODO: Blinking cursor
+// TODO: Delete line
+// TODO: Split the line on Enter
 
 int main(int argc, char **argv)
 {
     (void) argc;
     (void) argv;
-
-    editor_insert_text_before_cursor(&editor, "dhjfhskjdfhkjshdf");
-    editor_insert_new_line(&editor);
-    editor_insert_text_before_cursor(&editor, "3j4k23l4j");
-    editor_insert_new_line(&editor);
-    editor_insert_text_before_cursor(&editor, "456kj356klj35l6j");
-    editor_insert_new_line(&editor);
-    editor_insert_text_before_cursor(&editor, "46jkl45jkljclslkj");
-    editor_insert_new_line(&editor);
-    editor_insert_text_before_cursor(&editor, "tjk5kfkdjgk");
 
     scc(SDL_Init(SDL_INIT_VIDEO));
 
@@ -218,6 +209,10 @@ int main(int argc, char **argv)
                     editor_backspace(&editor);
                 }
                 break;
+
+                case SDLK_F2: {
+                    editor_save_to_file(&editor, "output");
+                } break;
 
                 case SDLK_RETURN: {
                     editor_insert_new_line(&editor);

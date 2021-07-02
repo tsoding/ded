@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <errno.h>
 #include "./editor.h"
 
 #define LINE_INIT_CAPACITY 1024
@@ -162,4 +164,21 @@ const char *editor_char_under_cursor(const Editor *editor)
         }
     }
     return NULL;
+}
+
+void editor_save_to_file(const Editor *editor, const char *file_path)
+{
+    FILE *f = fopen(file_path, "w");
+    if (f == NULL) {
+        fprintf(stdout, "ERROR: could not open file `%s`: %s\n",
+                file_path, strerror(errno));
+        exit(1);
+    }
+
+    for (size_t row = 0; row < editor->size; ++row) {
+        fwrite(editor->lines[row].chars, 1, editor->lines[row].size, f);
+        fputc('\n', f);
+    }
+
+    fclose(f);
 }
