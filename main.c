@@ -260,7 +260,7 @@ int main(int argc, char **argv)
 
         for (size_t row = 0; row < editor.size; ++row) {
             const Line *line = editor.lines + row;
-            render_text_sized(renderer, &font, line->chars, line->size, vec2f(0.0f, row * FONT_CHAR_HEIGHT * FONT_SCALE), 0xFFFFFFFF, FONT_SCALE);
+            render_text_sized(renderer, &font, line->chars, line->size, vec2f(0.0f, (float) row * FONT_CHAR_HEIGHT * FONT_SCALE), 0xFFFFFFFF, FONT_SCALE);
         }
         render_cursor(renderer, &font);
 
