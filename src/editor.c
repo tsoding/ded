@@ -30,18 +30,13 @@ static void line_grow(Line *line, size_t n)
     }
 }
 
-void line_append_text(Line *line, const char *text)
-{
-    line_append_text_sized(line, text, strlen(text));
-}
-
-void line_append_text_sized(Line *line, const char *text, size_t text_size)
+void line_append_text(Line *line, const char *text, size_t text_size)
 {
     size_t col = line->size;
-    line_insert_text_sized_before(line, text, text_size, &col);
+    line_insert_text_before(line, text, text_size, &col);
 }
 
-void line_insert_text_sized_before(Line *line, const char *text, size_t text_size, size_t *col)
+void line_insert_text_before(Line *line, const char *text, size_t text_size, size_t *col)
 {
     if (*col > line->size) {
         *col = line->size;
@@ -55,11 +50,6 @@ void line_insert_text_sized_before(Line *line, const char *text, size_t text_siz
     memcpy(line->chars + *col, text, text_size);
     line->size += text_size;
     *col += text_size;
-}
-
-void line_insert_text_before(Line *line, const char *text, size_t *col)
-{
-    line_insert_text_sized_before(line, text, strlen(text), col);
 }
 
 void line_backspace(Line *line, size_t *col)
@@ -144,7 +134,7 @@ static void editor_create_first_new_line(Editor *editor)
 void editor_insert_text_before_cursor(Editor *editor, const char *text)
 {
     editor_create_first_new_line(editor);
-    line_insert_text_before(&editor->lines[editor->cursor_row], text, &editor->cursor_col);
+    line_insert_text_before(&editor->lines[editor->cursor_row], text, strlen(text), &editor->cursor_col);
 }
 
 void editor_backspace(Editor *editor)
@@ -205,10 +195,10 @@ void editor_load_from_file(Editor *editor, FILE *file)
             String_View chunk_line = {0};
             Line *line = &editor->lines[editor->size - 1];
             if (sv_try_chop_by_delim(&chunk_sv, '\n', &chunk_line)) {
-                line_append_text_sized(line, chunk_line.data, chunk_line.count);
+                line_append_text(line, chunk_line.data, chunk_line.count);
                 editor_insert_new_line(editor);
             } else {
-                line_append_text_sized(line, chunk_sv.data, chunk_sv.count);
+                line_append_text(line, chunk_sv.data, chunk_sv.count);
                 chunk_sv = SV_NULL;
             }
         }
