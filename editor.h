@@ -25,7 +25,7 @@ typedef struct {
 } Editor;
 
 void editor_save_to_file(const Editor *editor, const char *file_path);
-void editor_load_from_file(Editor *editor, const char *file_path);
+void editor_load_from_file(Editor *editor, FILE *file);
 
 void editor_insert_text_before_cursor(Editor *editor, const char *text);
 void editor_insert_new_line(Editor *editor);

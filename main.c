@@ -174,7 +174,9 @@ void usage(FILE *stream)
     fprintf(stream, "Usage: te [FILE-PATH]\n");
 }
 
-// TODO: Save/Load file
+// TODO: Save file
+// TODO: ncurses renderer
+// TODO: scrolling
 // TODO: Jump forward/backward by a word
 // TODO: Delete a word
 // TODO: Blinking cursor
@@ -190,7 +192,11 @@ int main(int argc, char **argv)
     }
 
     if (file_path) {
-        editor_load_from_file(&editor, file_path);
+        FILE *file = fopen(file_path, "r");
+        if (file != NULL) {
+            editor_load_from_file(&editor, file);
+            fclose(file);
+        }
     }
 
     scc(SDL_Init(SDL_INIT_VIDEO));
@@ -292,3 +298,4 @@ int main(int argc, char **argv)
 
 #define SV_IMPLEMENTATION
 #include "./sv.h"
+
