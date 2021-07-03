@@ -169,6 +169,11 @@ void render_cursor(SDL_Renderer *renderer, const Font *font)
     }
 }
 
+void usage(FILE *stream)
+{
+    fprintf(stream, "Usage: te [FILE-PATH]\n");
+}
+
 // TODO: Save/Load file
 // TODO: Jump forward/backward by a word
 // TODO: Delete a word
@@ -178,8 +183,15 @@ void render_cursor(SDL_Renderer *renderer, const Font *font)
 
 int main(int argc, char **argv)
 {
-    (void) argc;
-    (void) argv;
+    const char *file_path = NULL;
+
+    if (argc > 1) {
+        file_path = argv[1];
+    }
+
+    if (file_path) {
+        editor_load_from_file(&editor, file_path);
+    }
 
     scc(SDL_Init(SDL_INIT_VIDEO));
 
@@ -211,12 +223,16 @@ int main(int argc, char **argv)
                 break;
 
                 case SDLK_F2: {
-                    editor_save_to_file(&editor, "output");
-                } break;
+                    if (file_path) {
+                        editor_save_to_file(&editor, file_path);
+                    }
+                }
+                break;
 
                 case SDLK_RETURN: {
                     editor_insert_new_line(&editor);
-                } break;
+                }
+                break;
 
                 case SDLK_DELETE: {
                     editor_delete(&editor);
@@ -227,11 +243,13 @@ int main(int argc, char **argv)
                     if (editor.cursor_row > 0) {
                         editor.cursor_row -= 1;
                     }
-                } break;
+                }
+                break;
 
                 case SDLK_DOWN: {
                     editor.cursor_row += 1;
-                } break;
+                }
+                break;
 
                 case SDLK_LEFT: {
                     if (editor.cursor_col > 0) {
@@ -271,3 +289,6 @@ int main(int argc, char **argv)
 
     return 0;
 }
+
+#define SV_IMPLEMENTATION
+#include "./sv.h"
