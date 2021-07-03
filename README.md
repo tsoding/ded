@@ -4,5 +4,5 @@
 
 ```console
 $ make
-$ ./te
+$ ./te main.c
 ```
