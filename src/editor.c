@@ -33,10 +33,10 @@ static void line_grow(Line *line, size_t n)
 void line_append_text(Line *line, const char *text, size_t text_size)
 {
     size_t col = line->size;
-    line_insert_text_sized_before(line, text, text_size, &col);
+    line_insert_text_before(line, text, text_size, &col);
 }
 
-void line_insert_text_sized_before(Line *line, const char *text, size_t text_size, size_t *col)
+void line_insert_text_before(Line *line, const char *text, size_t text_size, size_t *col)
 {
     if (*col > line->size) {
         *col = line->size;
@@ -50,11 +50,6 @@ void line_insert_text_sized_before(Line *line, const char *text, size_t text_siz
     memcpy(line->chars + *col, text, text_size);
     line->size += text_size;
     *col += text_size;
-}
-
-void line_insert_text_before(Line *line, const char *text, size_t *col)
-{
-    line_insert_text_sized_before(line, text, strlen(text), col);
 }
 
 void line_backspace(Line *line, size_t *col)
@@ -139,7 +134,7 @@ static void editor_create_first_new_line(Editor *editor)
 void editor_insert_text_before_cursor(Editor *editor, const char *text)
 {
     editor_create_first_new_line(editor);
-    line_insert_text_before(&editor->lines[editor->cursor_row], text, &editor->cursor_col);
+    line_insert_text_before(&editor->lines[editor->cursor_row], text, strlen(text), &editor->cursor_col);
 }
 
 void editor_backspace(Editor *editor)
