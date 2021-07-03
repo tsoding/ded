@@ -4,161 +4,25 @@
 
 #include <SDL.h>
 
-#include "./la.h"
-
 #define STB_IMAGE_IMPLEMENTATION
 #include "./stb_image.h"
 
+#define SV_IMPLEMENTATION
+#include "./sv.h"
+
 #include "./editor.h"
+#include "./la.h"
+#include "./sdl_extra.h"
+#include "./font.h"
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 #define FPS 60
 #define DELTA_TIME (1.0f / FPS)
 
-#define FONT_WIDTH 128
-#define FONT_HEIGHT 64
-#define FONT_COLS 18
-#define FONT_ROWS 7
-#define FONT_CHAR_WIDTH  (FONT_WIDTH  / FONT_COLS)
-#define FONT_CHAR_HEIGHT (FONT_HEIGHT / FONT_ROWS)
-#define FONT_SCALE 5
-
-void scc(int code)
-{
-    if (code < 0) {
-        fprintf(stderr, "SDL ERROR: %s\n", SDL_GetError());
-        exit(1);
-    }
-}
-
-void *scp(void *ptr)
-{
-    if (ptr == NULL) {
-        fprintf(stderr, "SDL ERROR: %s\n", SDL_GetError());
-        exit(1);
-    }
-
-    return ptr;
-}
-
-SDL_Surface *surface_from_file(const char *file_path)
-{
-    int width, height, n;
-    unsigned char *pixels = stbi_load(file_path, &width, &height, &n, STBI_rgb_alpha);
-    if (pixels == NULL) {
-        fprintf(stderr, "ERROR: could not load file %s: %s\n",
-                file_path, stbi_failure_reason());
-        exit(1);
-    }
-
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    const Uint32 rmask = 0xff000000;
-    const Uint32 gmask = 0x00ff0000;
-    const Uint32 bmask = 0x0000ff00;
-    const Uint32 amask = 0x000000ff;
-#else // little endian, like x86
-    const Uint32 rmask = 0x000000ff;
-    const Uint32 gmask = 0x0000ff00;
-    const Uint32 bmask = 0x00ff0000;
-    const Uint32 amask = 0xff000000;
-#endif
-
-    const int depth = 32;
-    const int pitch = 4*width;
-
-    return scp(SDL_CreateRGBSurfaceFrom(
-                   (void*)pixels, width, height, depth, pitch,
-                   rmask, gmask, bmask, amask));
-}
-
-#define ASCII_DISPLAY_LOW 32
-#define ASCII_DISPLAY_HIGH 126
-
-typedef struct {
-    SDL_Texture *spritesheet;
-    SDL_Rect glyph_table[ASCII_DISPLAY_HIGH - ASCII_DISPLAY_LOW + 1];
-} Font;
-
-Font font_load_from_file(SDL_Renderer *renderer, const char *file_path)
-{
-    Font font = {0};
-
-    SDL_Surface *font_surface = surface_from_file(file_path);
-    scc(SDL_SetColorKey(font_surface, SDL_TRUE, 0xFF000000));
-    font.spritesheet = scp(SDL_CreateTextureFromSurface(renderer, font_surface));
-    SDL_FreeSurface(font_surface);
-
-    for (size_t ascii = ASCII_DISPLAY_LOW; ascii <= ASCII_DISPLAY_HIGH; ++ascii) {
-        const size_t index = ascii - ASCII_DISPLAY_LOW;
-        const size_t col = index % FONT_COLS;
-        const size_t row = index / FONT_COLS;
-        font.glyph_table[index] = (SDL_Rect) {
-            .x = (int) col * FONT_CHAR_WIDTH,
-            .y = (int) row * FONT_CHAR_HEIGHT,
-            .w = FONT_CHAR_WIDTH,
-            .h = FONT_CHAR_HEIGHT,
-        };
-    }
-
-    return font;
-}
-
-void render_char(SDL_Renderer *renderer, const Font *font, char c, Vec2f pos, float scale)
-{
-    const SDL_Rect dst = {
-        .x = (int) floorf(pos.x),
-        .y = (int) floorf(pos.y),
-        .w = (int) floorf(FONT_CHAR_WIDTH * scale),
-        .h = (int) floorf(FONT_CHAR_HEIGHT * scale),
-    };
-
-    size_t index = '?' - ASCII_DISPLAY_LOW;
-    if (ASCII_DISPLAY_LOW <= c && c <= ASCII_DISPLAY_HIGH) {
-        index = c - ASCII_DISPLAY_LOW;
-    }
-
-    scc(SDL_RenderCopy(renderer, font->spritesheet, &font->glyph_table[index], &dst));
-}
-
-void set_texture_color(SDL_Texture *texture, Uint32 color)
-{
-    scc(SDL_SetTextureColorMod(
-            texture,
-            (color >> (8 * 0)) & 0xff,
-            (color >> (8 * 1)) & 0xff,
-            (color >> (8 * 2)) & 0xff));
-
-    scc(SDL_SetTextureAlphaMod(texture, (color >> (8 * 3)) & 0xff));
-}
-
-void render_text_sized(SDL_Renderer *renderer, Font *font, const char *text, size_t text_size, Vec2f pos, Uint32 color, float scale)
-{
-    set_texture_color(font->spritesheet, color);
-
-    Vec2f pen = pos;
-    for (size_t i = 0; i < text_size; ++i) {
-        render_char(renderer, font, text[i], pen, scale);
-        pen.x += FONT_CHAR_WIDTH * scale;
-    }
-}
-
 Editor editor = {0};
 Vec2f camera_pos = {0};
 Vec2f camera_vel = {0};
-
-#define UNHEX(color) \
-    ((color) >> (8 * 0)) & 0xFF, \
-    ((color) >> (8 * 1)) & 0xFF, \
-    ((color) >> (8 * 2)) & 0xFF, \
-    ((color) >> (8 * 3)) & 0xFF
-
-Vec2f window_size(SDL_Window *window)
-{
-    int w, h;
-    SDL_GetWindowSize(window, &w, &h);
-    return vec2f((float) w, (float) h);
-}
 
 Vec2f camera_project_point(SDL_Window *window, Vec2f point)
 {
@@ -341,7 +205,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-
-#define SV_IMPLEMENTATION
-#include "./sv.h"
-
