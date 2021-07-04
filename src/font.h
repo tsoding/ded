@@ -1,7 +1,7 @@
 #ifndef FONT_H_
 #define FONT_H_
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 #include "./la.h"
 

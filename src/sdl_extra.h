@@ -1,7 +1,7 @@
 #ifndef SDL_EXTRA_H_
 #define SDL_EXTRA_H_
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 #include "./la.h"
 
