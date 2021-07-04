@@ -12,7 +12,7 @@ jobs:
       - name: install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -qq libsdl2-dev
+          sudo apt-get install -qq libsdl2-dev libglew-dev
       - name: build te
         run: |
           make
@@ -25,7 +25,7 @@ jobs:
       - name: install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -qq libsdl2-dev
+          sudo apt-get install -qq libsdl2-dev libglew-dev
       - name: build te
         run: |
           make
@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: install dependencies
-        run: brew install sdl2 pkg-config
+        run: brew install sdl2 pkg-config glew
       - name: build te
         run: |
           make
