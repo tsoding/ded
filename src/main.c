@@ -2,7 +2,11 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
+#define GLEW_STATIC
+#include <GL/glew.h>
+#define GL_GLEXT_PROTOTYPES
+#include <SDL2/SDL_opengl.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "./stb_image.h"
@@ -13,6 +17,7 @@
 #include "./editor.h"
 #include "./la.h"
 #include "./sdl_extra.h"
+#include "./gl_extra.h"
 #include "./font.h"
 
 #define SCREEN_WIDTH 800
@@ -70,6 +75,271 @@ void usage(FILE *stream)
 // TODO: Delete line
 // TODO: Split the line on Enter
 
+// #define OPENGL_RENDERER
+
+#ifdef OPENGL_RENDERER
+void MessageCallback(GLenum source,
+                     GLenum type,
+                     GLuint id,
+                     GLenum severity,
+                     GLsizei length,
+                     const GLchar* message,
+                     const void* userParam)
+{
+    (void) source;
+    (void) id;
+    (void) length;
+    (void) userParam;
+    fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+            (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""),
+            type, severity, message);
+}
+
+typedef struct {
+    Vec2f pos;
+    float scale;
+    float ch;
+    Vec4f color;
+} Glyph;
+
+typedef enum {
+    GLYPH_ATTR_POS = 0,
+    GLYPH_ATTR_SCALE,
+    GLYPH_ATTR_CH,
+    GLYPH_ATTR_COLOR,
+    COUNT_GLYPH_ATTRS,
+} Glyph_Attr;
+
+typedef struct {
+    size_t offset;
+    size_t comps;
+} Glyph_Attr_Def;
+
+static const Glyph_Attr_Def glyph_attr_defs[COUNT_GLYPH_ATTRS] = {
+    [GLYPH_ATTR_POS]   = {
+        .offset = offsetof(Glyph, pos),
+        .comps = 2,
+    },
+    [GLYPH_ATTR_SCALE] = {
+        .offset = offsetof(Glyph, scale),
+        .comps = 1,
+    },
+    [GLYPH_ATTR_CH]    = {
+        .offset = offsetof(Glyph, ch),
+        .comps = 1,
+    },
+    [GLYPH_ATTR_COLOR] = {
+        .offset = offsetof(Glyph, color),
+        .comps = 4,
+    },
+};
+static_assert(COUNT_GLYPH_ATTRS == 4, "The amount of glyph vertex attributes have changed");
+
+#define GLYPH_BUFFER_CAP 1024
+
+Glyph glyph_buffer[GLYPH_BUFFER_CAP];
+size_t glyph_buffer_count = 0;
+
+void glyph_buffer_push(Glyph glyph)
+{
+    assert(glyph_buffer_count < GLYPH_BUFFER_CAP);
+    glyph_buffer[glyph_buffer_count++] = glyph;
+}
+
+void glyph_buffer_sync(void)
+{
+    glBufferSubData(GL_ARRAY_BUFFER,
+                    0,
+                    glyph_buffer_count * sizeof(Glyph),
+                    glyph_buffer);
+}
+
+void gl_render_text(const char *text, size_t text_size,
+                    Vec2f pos, float scale, Vec4f color)
+{
+    for (size_t i = 0; i < text_size; ++i) {
+        const Vec2f char_size = vec2f(FONT_CHAR_WIDTH, FONT_CHAR_HEIGHT);
+        const Glyph glyph = {
+            .pos = vec2f_add(pos, vec2f_mul3(char_size,
+                                             vec2f((float) i, 0.0f),
+                                             vec2fs(scale))),
+            .scale = scale,
+            .ch = (float) text[i],
+            .color = color
+        };
+        glyph_buffer_push(glyph);
+    }
+}
+
+int main(int argc, char **argv)
+{
+    (void) argc;
+    (void) argv;
+
+    scc(SDL_Init(SDL_INIT_VIDEO));
+
+    SDL_Window *window =
+        scp(SDL_CreateWindow("Text Editor",
+                             0, 0,
+                             SCREEN_WIDTH, SCREEN_HEIGHT,
+                             SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL));
+
+    {
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
+        int major;
+        int minor;
+        SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &major);
+        SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &minor);
+        printf("GL version %d.%d\n", major, minor);
+    }
+
+    scp(SDL_GL_CreateContext(window));
+
+    if (GLEW_OK != glewInit()) {
+        fprintf(stderr, "Could not initialize GLEW!");
+        exit(1);
+    }
+
+    if (!GLEW_ARB_draw_instanced) {
+        fprintf(stderr, "ARB_draw_instanced is not supported; game may not work properly!!\n");
+        exit(1);
+    }
+
+    if (!GLEW_ARB_instanced_arrays) {
+        fprintf(stderr, "ARB_instanced_arrays is not supported; game may not work properly!!\n");
+        exit(1);
+    }
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    if (GLEW_ARB_debug_output) {
+        glEnable(GL_DEBUG_OUTPUT);
+        glDebugMessageCallback(MessageCallback, 0);
+    } else {
+        fprintf(stderr, "WARNING! GLEW_ARB_debug_output is not available");
+    }
+
+    GLint time_uniform;
+    GLint resolution_uniform;
+
+    // Initialize Shaders
+    {
+        GLuint vert_shader = 0;
+        if (!compile_shader_file("./shaders/font.vert", GL_VERTEX_SHADER, &vert_shader)) {
+            exit(1);
+        }
+        GLuint frag_shader = 0;
+        if (!compile_shader_file("./shaders/font.frag", GL_FRAGMENT_SHADER, &frag_shader)) {
+            exit(1);
+        }
+
+        GLuint program = 0;
+        if (!link_program(vert_shader, frag_shader, &program)) {
+            exit(1);
+        }
+
+        glUseProgram(program);
+
+        time_uniform = glGetUniformLocation(program, "time");
+        resolution_uniform = glGetUniformLocation(program, "resolution");
+
+        glUniform2f(resolution_uniform, SCREEN_WIDTH, SCREEN_HEIGHT);
+    }
+
+    // Init Font Texture
+    {
+        const char *file_path = "charmap-oldschool_white.png";
+        int width, height, n;
+        unsigned char *pixels = stbi_load(file_path, &width, &height, &n, STBI_rgb_alpha);
+        if (pixels == NULL) {
+            fprintf(stderr, "ERROR: could not load file %s: %s\n",
+                    file_path, stbi_failure_reason());
+            exit(1);
+        }
+
+        glActiveTexture(GL_TEXTURE0);
+
+        GLuint font_texture = 0;
+        glGenTextures(1, &font_texture);
+        glBindTexture(GL_TEXTURE_2D, font_texture);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        glTexImage2D(GL_TEXTURE_2D,
+                     0,
+                     GL_RGBA,
+                     width,
+                     height,
+                     0,
+                     GL_RGBA,
+                     GL_UNSIGNED_BYTE,
+                     pixels);
+    }
+
+    // Init Buffers
+    {
+        GLuint vao = 0;
+        glGenVertexArrays(1, &vao);
+        glBindVertexArray(vao);
+
+        GLuint vbo = 0;
+        glGenBuffers(1, &vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER,
+                     sizeof(glyph_buffer),
+                     glyph_buffer,
+                     GL_DYNAMIC_DRAW);
+
+        for (Glyph_Attr attr = 0; attr < COUNT_GLYPH_ATTRS; ++attr) {
+            glEnableVertexAttribArray(attr);
+            glVertexAttribPointer(
+                attr,
+                glyph_attr_defs[attr].comps,
+                GL_FLOAT,
+                GL_FALSE,
+                sizeof(Glyph),
+                (void*) glyph_attr_defs[attr].offset);
+            glVertexAttribDivisor(attr, 1);
+        }
+    }
+
+    const char *text = "Hello, World";
+    Vec4f color = vec4f(1.0f, 0.0f, 0.0f, 1.0f);
+    gl_render_text(text, strlen(text), vec2fs(0.0f), 5.0f, color);
+    glyph_buffer_sync();
+
+    bool quit = false;
+    while (!quit) {
+        SDL_Event event = {0};
+        while (SDL_PollEvent(&event)) {
+            switch (event.type) {
+            case SDL_QUIT: {
+                quit = true;
+            }
+            break;
+            }
+        }
+
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glUniform1f(time_uniform, (float) SDL_GetTicks() / 1000.0f);
+
+        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, glyph_buffer_count);
+
+        SDL_GL_SwapWindow(window);
+    }
+
+    return 0;
+}
+#else
 int main(int argc, char **argv)
 {
     const char *file_path = NULL;
@@ -205,3 +475,4 @@ int main(int argc, char **argv)
 
     return 0;
 }
+#endif // OPENGL_RENDERER
