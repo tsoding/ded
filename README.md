@@ -3,6 +3,6 @@
 # Quick Start
 
 ```console
-$ make
+$ ./build.sh
 $ ./te main.c
 ```
