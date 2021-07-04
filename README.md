@@ -1,8 +1,18 @@
 # Text Editor
 
-# Quick Start
+# Quick Start 
+
+## POSIX
 
 ```console
 $ ./build.sh
-$ ./te main.c
+$ ./te src\main.c
+```
+
+## Windows MSVC
+
+```console
+> .\setup_dependencies.bat
+> .\build_msvc.bat
+> .\te src\main.c
 ```
