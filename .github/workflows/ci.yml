@@ -42,7 +42,7 @@ jobs:
           ./build.sh
         env:
           CC: clang
-  # TODO: Windows MSVC build is broken
+  # TODO(#12): Windows MSVC build is broken
   # ---
   # build-windows-msvc:
   #   runs-on: windows-2019
