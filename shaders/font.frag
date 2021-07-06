@@ -16,11 +16,11 @@ uniform sampler2D font;
 uniform float time;
 
 in vec2 uv;
-in float glyph_ch;
+flat in int glyph_ch;
 in vec4 glyph_color;
 
 void main() {
-    int ch = int(glyph_ch);
+    int ch = glyph_ch;
     if (!(ASCII_DISPLAY_LOW <= ch && ch <= ASCII_DISPLAY_HIGH)) {
         ch = 63;
     }
@@ -32,5 +32,5 @@ void main() {
     vec2 size = vec2(FONT_CHAR_WIDTH_UV, -FONT_CHAR_HEIGHT_UV);
     vec2 t = pos + size * uv;
 
-    gl_FragColor = texture(font, t)* glyph_color;
+    gl_FragColor = texture(font, t) * glyph_color;
 }

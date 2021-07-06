@@ -75,7 +75,7 @@ void usage(FILE *stream)
 // TODO: Delete line
 // TODO: Split the line on Enter
 
-#define OPENGL_RENDERER
+// #define OPENGL_RENDERER
 
 #ifdef OPENGL_RENDERER
 void MessageCallback(GLenum source,
@@ -96,15 +96,13 @@ void MessageCallback(GLenum source,
 }
 
 typedef struct {
-    Vec2f pos;
-    float scale;
-    float ch;
+    Vec2i tile;
+    int ch;
     Vec4f color;
 } Glyph;
 
 typedef enum {
-    GLYPH_ATTR_POS = 0,
-    GLYPH_ATTR_SCALE,
+    GLYPH_ATTR_TILE = 0,
     GLYPH_ATTR_CH,
     GLYPH_ATTR_COLOR,
     COUNT_GLYPH_ATTRS,
@@ -113,27 +111,27 @@ typedef enum {
 typedef struct {
     size_t offset;
     size_t comps;
+    GLenum type;
 } Glyph_Attr_Def;
 
 static const Glyph_Attr_Def glyph_attr_defs[COUNT_GLYPH_ATTRS] = {
-    [GLYPH_ATTR_POS]   = {
-        .offset = offsetof(Glyph, pos),
+    [GLYPH_ATTR_TILE]   = {
+        .offset = offsetof(Glyph, tile),
         .comps = 2,
-    },
-    [GLYPH_ATTR_SCALE] = {
-        .offset = offsetof(Glyph, scale),
-        .comps = 1,
+        .type = GL_INT
     },
     [GLYPH_ATTR_CH]    = {
         .offset = offsetof(Glyph, ch),
         .comps = 1,
+        .type = GL_INT
     },
     [GLYPH_ATTR_COLOR] = {
         .offset = offsetof(Glyph, color),
         .comps = 4,
+        .type = GL_FLOAT
     },
 };
-static_assert(COUNT_GLYPH_ATTRS == 4, "The amount of glyph vertex attributes have changed");
+static_assert(COUNT_GLYPH_ATTRS == 3, "The amount of glyph vertex attributes have changed");
 
 #define GLYPH_BUFFER_CAP 1024
 
@@ -154,20 +152,14 @@ void glyph_buffer_sync(void)
                     glyph_buffer);
 }
 
-void gl_render_text(const char *text, size_t text_size,
-                    Vec2f pos, float scale, Vec4f color)
+void gl_render_text(const char *text, size_t text_size, Vec2i tile, Vec4f color)
 {
     for (size_t i = 0; i < text_size; ++i) {
-        const Vec2f char_size = vec2f(FONT_CHAR_WIDTH, FONT_CHAR_HEIGHT);
-        const Glyph glyph = {
-            .pos = vec2f_add(pos, vec2f_mul3(char_size,
-                                             vec2f((float) i, 0.0f),
-                                             vec2fs(scale))),
-            .scale = scale,
-            .ch = (float) text[i],
+        glyph_buffer_push((Glyph) {
+            .tile = vec2i_add(tile, vec2i(i, 0)),
+            .ch = text[i],
             .color = color
-        };
-        glyph_buffer_push(glyph);
+        });
     }
 }
 
@@ -225,6 +217,7 @@ int main(int argc, char **argv)
 
     GLint time_uniform;
     GLint resolution_uniform;
+    GLint scale_uniform;
 
     // Initialize Shaders
     {
@@ -246,6 +239,9 @@ int main(int argc, char **argv)
 
         time_uniform = glGetUniformLocation(program, "time");
         resolution_uniform = glGetUniformLocation(program, "resolution");
+        scale_uniform = glGetUniformLocation(program, "scale");
+
+        glUniform2f(scale_uniform, 5.0f, 5.0f);
     }
 
     // Init Font Texture
@@ -297,20 +293,38 @@ int main(int argc, char **argv)
 
         for (Glyph_Attr attr = 0; attr < COUNT_GLYPH_ATTRS; ++attr) {
             glEnableVertexAttribArray(attr);
-            glVertexAttribPointer(
-                attr,
-                glyph_attr_defs[attr].comps,
-                GL_FLOAT,
-                GL_FALSE,
-                sizeof(Glyph),
-                (void*) glyph_attr_defs[attr].offset);
+            switch (glyph_attr_defs[attr].type) {
+            case GL_FLOAT:
+                glVertexAttribPointer(
+                    attr,
+                    glyph_attr_defs[attr].comps,
+                    glyph_attr_defs[attr].type,
+                    GL_FALSE,
+                    sizeof(Glyph),
+                    (void*) glyph_attr_defs[attr].offset);
+                break;
+
+            case GL_INT:
+                glVertexAttribIPointer(
+                    attr,
+                    glyph_attr_defs[attr].comps,
+                    glyph_attr_defs[attr].type,
+                    sizeof(Glyph),
+                    (void*) glyph_attr_defs[attr].offset);
+                break;
+
+            default:
+                assert(false && "unreachable");
+                exit(1);
+            }
             glVertexAttribDivisor(attr, 1);
         }
     }
 
     const char *text = "Hello, World";
-    Vec4f color = vec4f(1.0f, 0.0f, 0.0f, 1.0f);
-    gl_render_text(text, strlen(text), vec2fs(0.0f), 5.0f, color);
+    const char *foobar = "Foo Bar";
+    gl_render_text(text, strlen(text), vec2is(0), vec4f(1.0f, 0.0f, 0.0f, 1.0f));
+    gl_render_text(foobar, strlen(foobar), vec2i(0, -1), vec4f(0.0f, 1.0f, 0.0f, 1.0f));
     glyph_buffer_sync();
 
     bool quit = false;
@@ -328,6 +342,7 @@ int main(int argc, char **argv)
         {
             int w, h;
             SDL_GetWindowSize(window, &w, &h);
+            // TODO: update the viewport and the resolution only on actual window change
             glViewport(0, 0, w, h);
             glUniform2f(resolution_uniform, (float) w, (float) h);
         }

@@ -38,6 +38,48 @@ Vec2f vec2f_div(Vec2f a, Vec2f b)
     return vec2f(a.x / b.x, a.y / b.y);
 }
 
+//////////////////////////////
+
+Vec2i vec2i(int x, int y)
+{
+    return (Vec2i) {
+        .x = x,
+        .y = y,
+    };
+}
+
+Vec2i vec2is(int x)
+{
+    return vec2i(x, x);
+}
+
+Vec2i vec2i_add(Vec2i a, Vec2i b)
+{
+    return vec2i(a.x + b.x, a.y + b.y);
+}
+
+Vec2i vec2i_sub(Vec2i a, Vec2i b)
+{
+    return vec2i(a.x - b.x, a.y - b.y);
+}
+
+Vec2i vec2i_mul(Vec2i a, Vec2i b)
+{
+    return vec2i(a.x * b.x, a.y * b.y);
+}
+
+Vec2i vec2i_mul3(Vec2i a, Vec2i b, Vec2i c)
+{
+    return vec2i_mul(vec2i_mul(a, b), c);
+}
+
+Vec2i vec2i_div(Vec2i a, Vec2i b)
+{
+    return vec2i(a.x / b.x, a.y / b.y);
+}
+
+//////////////////////////////
+
 Vec4f vec4f(float x, float y, float z, float w)
 {
     return (Vec4f) {
