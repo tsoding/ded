@@ -450,7 +450,7 @@ int main(int argc, char **argv)
         {
             int w, h;
             SDL_GetWindowSize(window, &w, &h);
-            // TODO: update the viewport and the resolution only on actual window change
+            // TODO(#19): update the viewport and the resolution only on actual window change
             glViewport(0, 0, w, h);
             glUniform2f(resolution_uniform, (float) w, (float) h);
         }
