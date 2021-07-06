@@ -436,6 +436,21 @@ int main(int argc, char **argv)
                 editor_insert_text_before_cursor(&editor, event.text.text);
             }
             break;
+
+            case SDL_MOUSEBUTTONDOWN: {
+                Vec2f mouse_click = vec2f((float) event.button.x, (float) event.button.y);
+                switch(event.button.button) { 
+                case SDL_BUTTON_LEFT: {
+                    Vec2f cursor_click = vec2f_add(mouse_click, vec2f_sub(camera_pos, vec2f_div(window_size(window), vec2fs(2.0f))));
+                    if(cursor_click.x > 0.0f && cursor_click.y > 0.0f) {
+                        editor.cursor_col = (size_t) floorf(cursor_click.x / ((float) FONT_CHAR_WIDTH * FONT_SCALE));
+                        editor.cursor_row = (size_t) floorf(cursor_click.y / ((float) FONT_CHAR_HEIGHT * FONT_SCALE));
+                    }
+                }
+                break;
+                }
+            }
+            break;
             }
         }
 
