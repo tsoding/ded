@@ -285,9 +285,9 @@ int main(int argc, char **argv)
 
     // Init Font Texture
     {
-        const char *file_path = "charmap-oldschool_white.png";
+        const char *font_file_path = "charmap-oldschool_white.png";
         int width, height, n;
-        unsigned char *pixels = stbi_load(file_path, &width, &height, &n, STBI_rgb_alpha);
+        unsigned char *pixels = stbi_load(font_file_path, &width, &height, &n, STBI_rgb_alpha);
         if (pixels == NULL) {
             fprintf(stderr, "ERROR: could not load file %s: %s\n",
                     file_path, stbi_failure_reason());
