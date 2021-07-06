@@ -75,7 +75,7 @@ void usage(FILE *stream)
 // TODO: Delete line
 // TODO: Split the line on Enter
 
-// #define OPENGL_RENDERER
+#define OPENGL_RENDERER
 
 #ifdef OPENGL_RENDERER
 void MessageCallback(GLenum source,
@@ -98,13 +98,15 @@ void MessageCallback(GLenum source,
 typedef struct {
     Vec2i tile;
     int ch;
-    Vec4f color;
+    Vec4f fg_color;
+    Vec4f bg_color;
 } Glyph;
 
 typedef enum {
     GLYPH_ATTR_TILE = 0,
     GLYPH_ATTR_CH,
-    GLYPH_ATTR_COLOR,
+    GLYPH_ATTR_FG_COLOR,
+    GLYPH_ATTR_BG_COLOR,
     COUNT_GLYPH_ATTRS,
 } Glyph_Attr;
 
@@ -125,13 +127,18 @@ static const Glyph_Attr_Def glyph_attr_defs[COUNT_GLYPH_ATTRS] = {
         .comps = 1,
         .type = GL_INT
     },
-    [GLYPH_ATTR_COLOR] = {
-        .offset = offsetof(Glyph, color),
+    [GLYPH_ATTR_FG_COLOR] = {
+        .offset = offsetof(Glyph, fg_color),
+        .comps = 4,
+        .type = GL_FLOAT
+    },
+    [GLYPH_ATTR_BG_COLOR] = {
+        .offset = offsetof(Glyph, bg_color),
         .comps = 4,
         .type = GL_FLOAT
     },
 };
-static_assert(COUNT_GLYPH_ATTRS == 3, "The amount of glyph vertex attributes have changed");
+static_assert(COUNT_GLYPH_ATTRS == 4, "The amount of glyph vertex attributes have changed");
 
 #define GLYPH_BUFFER_CAP 1024
 
@@ -152,15 +159,21 @@ void glyph_buffer_sync(void)
                     glyph_buffer);
 }
 
-void gl_render_text(const char *text, size_t text_size, Vec2i tile, Vec4f color)
+void gl_render_text_sized(const char *text, size_t text_size, Vec2i tile, Vec4f fg_color, Vec4f bg_color)
 {
     for (size_t i = 0; i < text_size; ++i) {
         glyph_buffer_push((Glyph) {
             .tile = vec2i_add(tile, vec2i(i, 0)),
             .ch = text[i],
-            .color = color
+            .fg_color = fg_color,
+            .bg_color = bg_color,
         });
     }
+}
+
+void gl_render_text(const char *text, Vec2i tile, Vec4f fg_color, Vec4f bg_color)
+{
+    gl_render_text_sized(text, strlen(text), tile, fg_color, bg_color);
 }
 
 int main(int argc, char **argv)
@@ -323,8 +336,8 @@ int main(int argc, char **argv)
 
     const char *text = "Hello, World";
     const char *foobar = "Foo Bar";
-    gl_render_text(text, strlen(text), vec2is(0), vec4f(1.0f, 0.0f, 0.0f, 1.0f));
-    gl_render_text(foobar, strlen(foobar), vec2i(0, -1), vec4f(0.0f, 1.0f, 0.0f, 1.0f));
+    gl_render_text(text, vec2is(0), vec4f(1.0f, 0.0f, 0.0f, 1.0f), vec4fs(1.0f));
+    gl_render_text(foobar, vec2i(0, -1), vec4f(0.0f, 1.0f, 0.0f, 1.0f), vec4fs(0.0f));
     glyph_buffer_sync();
 
     bool quit = false;

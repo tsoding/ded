@@ -12,11 +12,13 @@ uniform vec2 scale;
 
 layout(location = 0) in ivec2 tile;
 layout(location = 1) in int ch;
-layout(location = 2) in vec4 color;
+layout(location = 2) in vec4 fg_color;
+layout(location = 3) in vec4 bg_color;
 
 out vec2 uv;
 flat out int glyph_ch;
-out vec4 glyph_color;
+out vec4 glyph_fg_color;
+out vec4 glyph_bg_color;
 
 vec2 project_point(vec2 point)
 {
@@ -29,5 +31,7 @@ void main() {
     vec2 pos = tile * char_size * scale;
     gl_Position = vec4(project_point(uv * char_size * scale + pos), 0.0, 1.0);
     glyph_ch = ch;
-    glyph_color = color;
+
+    glyph_fg_color = fg_color;
+    glyph_bg_color = bg_color;
 }
