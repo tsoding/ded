@@ -6,7 +6,7 @@
 
 ```console
 $ ./build.sh
-$ ./ded src\main.c
+$ ./build/ded src\main.c
 ```
 
 ## Windows MSVC
@@ -14,5 +14,5 @@ $ ./ded src\main.c
 ```console
 > .\setup_dependencies.bat
 > .\build_msvc.bat
-> .\ded.exe src\main.c
+> .\build\ded.exe src\main.c
 ```
