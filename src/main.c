@@ -290,7 +290,7 @@ int main(int argc, char **argv)
         unsigned char *pixels = stbi_load(font_file_path, &width, &height, &n, STBI_rgb_alpha);
         if (pixels == NULL) {
             fprintf(stderr, "ERROR: could not load file %s: %s\n",
-                    file_path, stbi_failure_reason());
+                    font_file_path, stbi_failure_reason());
             exit(1);
         }
 
