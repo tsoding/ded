@@ -1,4 +1,4 @@
-# Text Editor
+# Dramatic EDitor
 
 # Quick Start 
 
@@ -6,7 +6,7 @@
 
 ```console
 $ ./build.sh
-$ ./te src\main.c
+$ ./ded src\main.c
 ```
 
 ## Windows MSVC
@@ -14,5 +14,5 @@ $ ./te src\main.c
 ```console
 > .\setup_dependencies.bat
 > .\build_msvc.bat
-> .\te src\main.c
+> .\ded.exe src\main.c
 ```
