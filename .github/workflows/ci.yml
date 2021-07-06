@@ -13,7 +13,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -qq libsdl2-dev libglew-dev
-      - name: build te
+      - name: build ded
         run: |
           ./build.sh
         env:
@@ -26,7 +26,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -qq libsdl2-dev libglew-dev
-      - name: build te
+      - name: build ded
         run: |
           ./build.sh
         env:
@@ -37,7 +37,7 @@ jobs:
       - uses: actions/checkout@v1
       - name: install dependencies
         run: brew install sdl2 pkg-config glew
-      - name: build te
+      - name: build ded
         run: |
           ./build.sh
         env:
@@ -51,7 +51,7 @@ jobs:
       - name: Install dependencies
         run: |
           ./setup_dependencies.bat
-      - name: build te
+      - name: build ded
         shell: cmd
         run: |
           ./build_msvc.bat
