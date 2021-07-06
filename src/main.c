@@ -428,7 +428,7 @@ int main(int argc, char **argv)
             break;
 
             case SDL_MOUSEBUTTONDOWN: {
-                // TODO: mouse click is broken, because the coordinates need to be mapped differently
+                // TODO(#18): mouse click is broken, because the coordinates need to be mapped differently
                 // The feature was initially introduced in #14
             }
             break;
