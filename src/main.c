@@ -140,10 +140,15 @@ static const Glyph_Attr_Def glyph_attr_defs[COUNT_GLYPH_ATTRS] = {
 };
 static_assert(COUNT_GLYPH_ATTRS == 4, "The amount of glyph vertex attributes have changed");
 
-#define GLYPH_BUFFER_CAP 1024
+#define GLYPH_BUFFER_CAP (640 * 1024)
 
 Glyph glyph_buffer[GLYPH_BUFFER_CAP];
 size_t glyph_buffer_count = 0;
+
+void glyph_buffer_clear(void)
+{
+    glyph_buffer_count = 0;
+}
 
 void glyph_buffer_push(Glyph glyph)
 {
@@ -176,10 +181,29 @@ void gl_render_text(const char *text, Vec2i tile, Vec4f fg_color, Vec4f bg_color
     gl_render_text_sized(text, strlen(text), tile, fg_color, bg_color);
 }
 
+void gl_render_cursor()
+{
+    const char *c = editor_char_under_cursor(&editor);
+    Vec2i tile = vec2i(editor.cursor_col, -(int) editor.cursor_row);
+    gl_render_text_sized(c ? c : " ", 1, tile, vec4fs(0.0f), vec4fs(1.0f));
+}
+
+// OPENGL
 int main(int argc, char **argv)
 {
-    (void) argc;
-    (void) argv;
+    const char *file_path = NULL;
+
+    if (argc > 1) {
+        file_path = argv[1];
+    }
+
+    if (file_path) {
+        FILE *file = fopen(file_path, "r");
+        if (file != NULL) {
+            editor_load_from_file(&editor, file);
+            fclose(file);
+        }
+    }
 
     scc(SDL_Init(SDL_INIT_VIDEO));
 
@@ -231,6 +255,7 @@ int main(int argc, char **argv)
     GLint time_uniform;
     GLint resolution_uniform;
     GLint scale_uniform;
+    GLint camera_uniform;
 
     // Initialize Shaders
     {
@@ -253,8 +278,9 @@ int main(int argc, char **argv)
         time_uniform = glGetUniformLocation(program, "time");
         resolution_uniform = glGetUniformLocation(program, "resolution");
         scale_uniform = glGetUniformLocation(program, "scale");
+        camera_uniform = glGetUniformLocation(program, "camera");
 
-        glUniform2f(scale_uniform, 5.0f, 5.0f);
+        glUniform2f(scale_uniform, FONT_SCALE, FONT_SCALE);
     }
 
     // Init Font Texture
@@ -334,14 +360,9 @@ int main(int argc, char **argv)
         }
     }
 
-    const char *text = "Hello, World";
-    const char *foobar = "Foo Bar";
-    gl_render_text(text, vec2is(0), vec4f(1.0f, 0.0f, 0.0f, 1.0f), vec4fs(1.0f));
-    gl_render_text(foobar, vec2i(0, -1), vec4f(0.0f, 1.0f, 0.0f, 1.0f), vec4fs(0.0f));
-    glyph_buffer_sync();
-
     bool quit = false;
     while (!quit) {
+        const Uint32 start = SDL_GetTicks();
         SDL_Event event = {0};
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
@@ -349,7 +370,81 @@ int main(int argc, char **argv)
                 quit = true;
             }
             break;
+
+            case SDL_KEYDOWN: {
+                switch (event.key.keysym.sym) {
+                case SDLK_BACKSPACE: {
+                    editor_backspace(&editor);
+                }
+                break;
+
+                case SDLK_F2: {
+                    if (file_path) {
+                        editor_save_to_file(&editor, file_path);
+                    }
+                }
+                break;
+
+                case SDLK_RETURN: {
+                    editor_insert_new_line(&editor);
+                }
+                break;
+
+                case SDLK_DELETE: {
+                    editor_delete(&editor);
+                }
+                break;
+
+                case SDLK_UP: {
+                    if (editor.cursor_row > 0) {
+                        editor.cursor_row -= 1;
+                    }
+                }
+                break;
+
+                case SDLK_DOWN: {
+                    editor.cursor_row += 1;
+                }
+                break;
+
+                case SDLK_LEFT: {
+                    if (editor.cursor_col > 0) {
+                        editor.cursor_col -= 1;
+                    }
+                }
+                break;
+
+                case SDLK_RIGHT: {
+                    editor.cursor_col += 1;
+                }
+                break;
+                }
             }
+            break;
+
+            case SDL_TEXTINPUT: {
+                editor_insert_text_before_cursor(&editor, event.text.text);
+            }
+            break;
+
+            case SDL_MOUSEBUTTONDOWN: {
+                // TODO: mouse click is broken, because the coordinates need to be mapped differently
+                // The feature was initially introduced in #14
+            }
+            break;
+            }
+        }
+
+        {
+            const Vec2f cursor_pos =
+                vec2f((float) editor.cursor_col * FONT_CHAR_WIDTH * FONT_SCALE,
+                      (float) (-(int)editor.cursor_row) * FONT_CHAR_HEIGHT * FONT_SCALE);
+
+            camera_vel = vec2f_mul(
+                             vec2f_sub(cursor_pos, camera_pos),
+                             vec2fs(2.0f));
+
+            camera_pos = vec2f_add(camera_pos, vec2f_mul(camera_vel, vec2fs(DELTA_TIME)));
         }
 
         {
@@ -360,19 +455,44 @@ int main(int argc, char **argv)
             glUniform2f(resolution_uniform, (float) w, (float) h);
         }
 
+        glyph_buffer_clear();
+        {
+            for (size_t row = 0; row < editor.size; ++row) {
+                const Line *line = editor.lines + row;
+                gl_render_text_sized(line->chars, line->size, vec2i(0, -row), vec4fs(1.0f), vec4fs(0.0f));
+            }
+        }
+        glyph_buffer_sync();
+
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUniform1f(time_uniform, (float) SDL_GetTicks() / 1000.0f);
+        glUniform2f(camera_uniform, camera_pos.x, camera_pos.y);
+
+        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, glyph_buffer_count);
+
+        glyph_buffer_clear();
+        {
+            gl_render_cursor();
+        }
+        glyph_buffer_sync();
 
         glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, glyph_buffer_count);
 
         SDL_GL_SwapWindow(window);
+
+        const Uint32 duration = SDL_GetTicks() - start;
+        const Uint32 delta_time_ms = 1000 / FPS;
+        if (duration < delta_time_ms) {
+            SDL_Delay(delta_time_ms - duration);
+        }
     }
 
     return 0;
 }
 #else
+// SDL
 int main(int argc, char **argv)
 {
     const char *file_path = NULL;
