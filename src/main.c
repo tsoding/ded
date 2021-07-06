@@ -75,7 +75,7 @@ void usage(FILE *stream)
 // TODO: Delete line
 // TODO: Split the line on Enter
 
-// #define OPENGL_RENDERER
+#define OPENGL_RENDERER
 
 #ifdef OPENGL_RENDERER
 void MessageCallback(GLenum source,
@@ -96,49 +96,59 @@ void MessageCallback(GLenum source,
 }
 
 typedef struct {
-    Vec2f pos;
-    float scale;
-    float ch;
-    Vec4f color;
+    Vec2i tile;
+    int ch;
+    Vec4f fg_color;
+    Vec4f bg_color;
 } Glyph;
 
 typedef enum {
-    GLYPH_ATTR_POS = 0,
-    GLYPH_ATTR_SCALE,
+    GLYPH_ATTR_TILE = 0,
     GLYPH_ATTR_CH,
-    GLYPH_ATTR_COLOR,
+    GLYPH_ATTR_FG_COLOR,
+    GLYPH_ATTR_BG_COLOR,
     COUNT_GLYPH_ATTRS,
 } Glyph_Attr;
 
 typedef struct {
     size_t offset;
-    size_t comps;
+    GLint comps;
+    GLenum type;
 } Glyph_Attr_Def;
 
 static const Glyph_Attr_Def glyph_attr_defs[COUNT_GLYPH_ATTRS] = {
-    [GLYPH_ATTR_POS]   = {
-        .offset = offsetof(Glyph, pos),
+    [GLYPH_ATTR_TILE]   = {
+        .offset = offsetof(Glyph, tile),
         .comps = 2,
-    },
-    [GLYPH_ATTR_SCALE] = {
-        .offset = offsetof(Glyph, scale),
-        .comps = 1,
+        .type = GL_INT
     },
     [GLYPH_ATTR_CH]    = {
         .offset = offsetof(Glyph, ch),
         .comps = 1,
+        .type = GL_INT
     },
-    [GLYPH_ATTR_COLOR] = {
-        .offset = offsetof(Glyph, color),
+    [GLYPH_ATTR_FG_COLOR] = {
+        .offset = offsetof(Glyph, fg_color),
         .comps = 4,
+        .type = GL_FLOAT
+    },
+    [GLYPH_ATTR_BG_COLOR] = {
+        .offset = offsetof(Glyph, bg_color),
+        .comps = 4,
+        .type = GL_FLOAT
     },
 };
 static_assert(COUNT_GLYPH_ATTRS == 4, "The amount of glyph vertex attributes have changed");
 
-#define GLYPH_BUFFER_CAP 1024
+#define GLYPH_BUFFER_CAP (640 * 1024)
 
 Glyph glyph_buffer[GLYPH_BUFFER_CAP];
 size_t glyph_buffer_count = 0;
+
+void glyph_buffer_clear(void)
+{
+    glyph_buffer_count = 0;
+}
 
 void glyph_buffer_push(Glyph glyph)
 {
@@ -154,27 +164,46 @@ void glyph_buffer_sync(void)
                     glyph_buffer);
 }
 
-void gl_render_text(const char *text, size_t text_size,
-                    Vec2f pos, float scale, Vec4f color)
+void gl_render_text_sized(const char *text, size_t text_size, Vec2i tile, Vec4f fg_color, Vec4f bg_color)
 {
     for (size_t i = 0; i < text_size; ++i) {
-        const Vec2f char_size = vec2f(FONT_CHAR_WIDTH, FONT_CHAR_HEIGHT);
-        const Glyph glyph = {
-            .pos = vec2f_add(pos, vec2f_mul3(char_size,
-                                             vec2f((float) i, 0.0f),
-                                             vec2fs(scale))),
-            .scale = scale,
-            .ch = (float) text[i],
-            .color = color
-        };
-        glyph_buffer_push(glyph);
+        glyph_buffer_push((Glyph) {
+            .tile = vec2i_add(tile, vec2i((int) i, 0)),
+            .ch = text[i],
+            .fg_color = fg_color,
+            .bg_color = bg_color,
+        });
     }
 }
 
+void gl_render_text(const char *text, Vec2i tile, Vec4f fg_color, Vec4f bg_color)
+{
+    gl_render_text_sized(text, strlen(text), tile, fg_color, bg_color);
+}
+
+void gl_render_cursor()
+{
+    const char *c = editor_char_under_cursor(&editor);
+    Vec2i tile = vec2i((int) editor.cursor_col, -(int) editor.cursor_row);
+    gl_render_text_sized(c ? c : " ", 1, tile, vec4fs(0.0f), vec4fs(1.0f));
+}
+
+// OPENGL
 int main(int argc, char **argv)
 {
-    (void) argc;
-    (void) argv;
+    const char *file_path = NULL;
+
+    if (argc > 1) {
+        file_path = argv[1];
+    }
+
+    if (file_path) {
+        FILE *file = fopen(file_path, "r");
+        if (file != NULL) {
+            editor_load_from_file(&editor, file);
+            fclose(file);
+        }
+    }
 
     scc(SDL_Init(SDL_INIT_VIDEO));
 
@@ -225,6 +254,8 @@ int main(int argc, char **argv)
 
     GLint time_uniform;
     GLint resolution_uniform;
+    GLint scale_uniform;
+    GLint camera_uniform;
 
     // Initialize Shaders
     {
@@ -246,15 +277,17 @@ int main(int argc, char **argv)
 
         time_uniform = glGetUniformLocation(program, "time");
         resolution_uniform = glGetUniformLocation(program, "resolution");
+        scale_uniform = glGetUniformLocation(program, "scale");
+        camera_uniform = glGetUniformLocation(program, "camera");
 
-        glUniform2f(resolution_uniform, SCREEN_WIDTH, SCREEN_HEIGHT);
+        glUniform2f(scale_uniform, FONT_SCALE, FONT_SCALE);
     }
 
     // Init Font Texture
     {
-        const char *file_path = "charmap-oldschool_white.png";
+        const char *font_file_path = "charmap-oldschool_white.png";
         int width, height, n;
-        unsigned char *pixels = stbi_load(file_path, &width, &height, &n, STBI_rgb_alpha);
+        unsigned char *pixels = stbi_load(font_file_path, &width, &height, &n, STBI_rgb_alpha);
         if (pixels == NULL) {
             fprintf(stderr, "ERROR: could not load file %s: %s\n",
                     file_path, stbi_failure_reason());
@@ -299,24 +332,37 @@ int main(int argc, char **argv)
 
         for (Glyph_Attr attr = 0; attr < COUNT_GLYPH_ATTRS; ++attr) {
             glEnableVertexAttribArray(attr);
-            glVertexAttribPointer(
-                attr,
-                glyph_attr_defs[attr].comps,
-                GL_FLOAT,
-                GL_FALSE,
-                sizeof(Glyph),
-                (void*) glyph_attr_defs[attr].offset);
+            switch (glyph_attr_defs[attr].type) {
+            case GL_FLOAT:
+                glVertexAttribPointer(
+                    attr,
+                    glyph_attr_defs[attr].comps,
+                    glyph_attr_defs[attr].type,
+                    GL_FALSE,
+                    sizeof(Glyph),
+                    (void*) glyph_attr_defs[attr].offset);
+                break;
+
+            case GL_INT:
+                glVertexAttribIPointer(
+                    attr,
+                    glyph_attr_defs[attr].comps,
+                    glyph_attr_defs[attr].type,
+                    sizeof(Glyph),
+                    (void*) glyph_attr_defs[attr].offset);
+                break;
+
+            default:
+                assert(false && "unreachable");
+                exit(1);
+            }
             glVertexAttribDivisor(attr, 1);
         }
     }
 
-    const char *text = "Hello, World";
-    Vec4f color = vec4f(1.0f, 0.0f, 0.0f, 1.0f);
-    gl_render_text(text, strlen(text), vec2fs(0.0f), 5.0f, color);
-    glyph_buffer_sync();
-
     bool quit = false;
     while (!quit) {
+        const Uint32 start = SDL_GetTicks();
         SDL_Event event = {0};
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
@@ -324,22 +370,129 @@ int main(int argc, char **argv)
                 quit = true;
             }
             break;
+
+            case SDL_KEYDOWN: {
+                switch (event.key.keysym.sym) {
+                case SDLK_BACKSPACE: {
+                    editor_backspace(&editor);
+                }
+                break;
+
+                case SDLK_F2: {
+                    if (file_path) {
+                        editor_save_to_file(&editor, file_path);
+                    }
+                }
+                break;
+
+                case SDLK_RETURN: {
+                    editor_insert_new_line(&editor);
+                }
+                break;
+
+                case SDLK_DELETE: {
+                    editor_delete(&editor);
+                }
+                break;
+
+                case SDLK_UP: {
+                    if (editor.cursor_row > 0) {
+                        editor.cursor_row -= 1;
+                    }
+                }
+                break;
+
+                case SDLK_DOWN: {
+                    editor.cursor_row += 1;
+                }
+                break;
+
+                case SDLK_LEFT: {
+                    if (editor.cursor_col > 0) {
+                        editor.cursor_col -= 1;
+                    }
+                }
+                break;
+
+                case SDLK_RIGHT: {
+                    editor.cursor_col += 1;
+                }
+                break;
+                }
+            }
+            break;
+
+            case SDL_TEXTINPUT: {
+                editor_insert_text_before_cursor(&editor, event.text.text);
+            }
+            break;
+
+            case SDL_MOUSEBUTTONDOWN: {
+                // TODO(#18): mouse click is broken, because the coordinates need to be mapped differently
+                // The feature was initially introduced in #14
+            }
+            break;
             }
         }
+
+        {
+            const Vec2f cursor_pos =
+                vec2f((float) editor.cursor_col * FONT_CHAR_WIDTH * FONT_SCALE,
+                      (float) (-(int)editor.cursor_row) * FONT_CHAR_HEIGHT * FONT_SCALE);
+
+            camera_vel = vec2f_mul(
+                             vec2f_sub(cursor_pos, camera_pos),
+                             vec2fs(2.0f));
+
+            camera_pos = vec2f_add(camera_pos, vec2f_mul(camera_vel, vec2fs(DELTA_TIME)));
+        }
+
+        {
+            int w, h;
+            SDL_GetWindowSize(window, &w, &h);
+            // TODO(#19): update the viewport and the resolution only on actual window change
+            glViewport(0, 0, w, h);
+            glUniform2f(resolution_uniform, (float) w, (float) h);
+        }
+
+        glyph_buffer_clear();
+        {
+            for (size_t row = 0; row < editor.size; ++row) {
+                const Line *line = editor.lines + row;
+                gl_render_text_sized(line->chars, line->size, vec2i(0, -(int)row), vec4fs(1.0f), vec4fs(0.0f));
+            }
+        }
+        glyph_buffer_sync();
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUniform1f(time_uniform, (float) SDL_GetTicks() / 1000.0f);
+        glUniform2f(camera_uniform, camera_pos.x, camera_pos.y);
 
-        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, glyph_buffer_count);
+        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, (GLsizei) glyph_buffer_count);
+
+        glyph_buffer_clear();
+        {
+            gl_render_cursor();
+        }
+        glyph_buffer_sync();
+
+        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, (GLsizei) glyph_buffer_count);
 
         SDL_GL_SwapWindow(window);
+
+        const Uint32 duration = SDL_GetTicks() - start;
+        const Uint32 delta_time_ms = 1000 / FPS;
+        if (duration < delta_time_ms) {
+            SDL_Delay(delta_time_ms - duration);
+        }
     }
 
     return 0;
 }
 #else
+// SDL
 int main(int argc, char **argv)
 {
     const char *file_path = NULL;
@@ -439,7 +592,7 @@ int main(int argc, char **argv)
 
             case SDL_MOUSEBUTTONDOWN: {
                 Vec2f mouse_click = vec2f((float) event.button.x, (float) event.button.y);
-                switch(event.button.button) { 
+                switch(event.button.button) {
                 case SDL_BUTTON_LEFT: {
                     Vec2f cursor_click = vec2f_add(mouse_click, vec2f_sub(camera_pos, vec2f_div(window_size(window), vec2fs(2.0f))));
                     if(cursor_click.x > 0.0f && cursor_click.y > 0.0f) {
