@@ -78,7 +78,7 @@ void usage(FILE *stream)
 #define OPENGL_RENDERER
 
 #ifdef OPENGL_RENDERER
-void MessageCallback(GLenum source,
+void __stdcall MessageCallback(GLenum source,
                      GLenum type,
                      GLuint id,
                      GLenum severity,
