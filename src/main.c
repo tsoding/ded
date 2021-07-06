@@ -75,7 +75,7 @@ void usage(FILE *stream)
 // TODO: Delete line
 // TODO: Split the line on Enter
 
-// #define OPENGL_RENDERER
+#define OPENGL_RENDERER
 
 #ifdef OPENGL_RENDERER
 void MessageCallback(GLenum source,
@@ -246,8 +246,6 @@ int main(int argc, char **argv)
 
         time_uniform = glGetUniformLocation(program, "time");
         resolution_uniform = glGetUniformLocation(program, "resolution");
-
-        glUniform2f(resolution_uniform, SCREEN_WIDTH, SCREEN_HEIGHT);
     }
 
     // Init Font Texture
@@ -325,6 +323,13 @@ int main(int argc, char **argv)
             }
             break;
             }
+        }
+
+        {
+            int w, h;
+            SDL_GetWindowSize(window, &w, &h);
+            glViewport(0, 0, w, h);
+            glUniform2f(resolution_uniform, (float) w, (float) h);
         }
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -439,7 +444,7 @@ int main(int argc, char **argv)
 
             case SDL_MOUSEBUTTONDOWN: {
                 Vec2f mouse_click = vec2f((float) event.button.x, (float) event.button.y);
-                switch(event.button.button) { 
+                switch(event.button.button) {
                 case SDL_BUTTON_LEFT: {
                     Vec2f cursor_click = vec2f_add(mouse_click, vec2f_sub(camera_pos, vec2f_div(window_size(window), vec2fs(2.0f))));
                     if(cursor_click.x > 0.0f && cursor_click.y > 0.0f) {
