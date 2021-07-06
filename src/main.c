@@ -112,7 +112,7 @@ typedef enum {
 
 typedef struct {
     size_t offset;
-    size_t comps;
+    GLint comps;
     GLenum type;
 } Glyph_Attr_Def;
 
@@ -168,7 +168,7 @@ void gl_render_text_sized(const char *text, size_t text_size, Vec2i tile, Vec4f 
 {
     for (size_t i = 0; i < text_size; ++i) {
         glyph_buffer_push((Glyph) {
-            .tile = vec2i_add(tile, vec2i(i, 0)),
+            .tile = vec2i_add(tile, vec2i((int) i, 0)),
             .ch = text[i],
             .fg_color = fg_color,
             .bg_color = bg_color,
@@ -184,7 +184,7 @@ void gl_render_text(const char *text, Vec2i tile, Vec4f fg_color, Vec4f bg_color
 void gl_render_cursor()
 {
     const char *c = editor_char_under_cursor(&editor);
-    Vec2i tile = vec2i(editor.cursor_col, -(int) editor.cursor_row);
+    Vec2i tile = vec2i((int) editor.cursor_col, -(int) editor.cursor_row);
     gl_render_text_sized(c ? c : " ", 1, tile, vec4fs(0.0f), vec4fs(1.0f));
 }
 
@@ -459,7 +459,7 @@ int main(int argc, char **argv)
         {
             for (size_t row = 0; row < editor.size; ++row) {
                 const Line *line = editor.lines + row;
-                gl_render_text_sized(line->chars, line->size, vec2i(0, -row), vec4fs(1.0f), vec4fs(0.0f));
+                gl_render_text_sized(line->chars, line->size, vec2i(0, -(int)row), vec4fs(1.0f), vec4fs(0.0f));
             }
         }
         glyph_buffer_sync();
@@ -470,7 +470,7 @@ int main(int argc, char **argv)
         glUniform1f(time_uniform, (float) SDL_GetTicks() / 1000.0f);
         glUniform2f(camera_uniform, camera_pos.x, camera_pos.y);
 
-        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, glyph_buffer_count);
+        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, (GLsizei) glyph_buffer_count);
 
         glyph_buffer_clear();
         {
@@ -478,7 +478,7 @@ int main(int argc, char **argv)
         }
         glyph_buffer_sync();
 
-        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, glyph_buffer_count);
+        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, (GLsizei) glyph_buffer_count);
 
         SDL_GL_SwapWindow(window);
 
