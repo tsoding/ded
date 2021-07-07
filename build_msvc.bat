@@ -3,7 +3,7 @@ rem launch this from msvc-enabled console
 
 set CFLAGS=/W4 /WX /std:c11 /wd4996 /wd5105 /FC /TC /Zi /nologo
 set INCLUDES=/I dependencies\SDL2\include /I dependencies\GLFW\include /I dependencies\GLEW\include
-set BASE_FILES=src\main.c src\la.c src\editor.c src\font.c src\sdl_extra.c src\file.c src\gl_extra.c
+set BASE_FILES=src\main.c src\la.c src\editor.c src\sdl_extra.c src\file.c src\gl_extra.c
 set LIBS=dependencies\SDL2\lib\x64\SDL2.lib ^
          dependencies\SDL2\lib\x64\SDL2main.lib ^
          dependencies\GLFW\lib\glfw3.lib ^
