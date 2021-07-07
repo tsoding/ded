@@ -8,6 +8,8 @@ del SDL2-devel-2.0.12-VC.zip
 if not exist dependencies\SDL2\temp\ mkdir dependencies\SDL2\temp\
 move dependencies\SDL2\include dependencies\SDL2\temp\SDL2
 move dependencies\SDL2\temp dependencies\SDL2\include
+if not exist build\ mkdir build\
+copy dependencies\SDL2\lib\x64\SDL2.dll build\SDL2.dll
 
 curl -fsSL -o glfw-3.3.2.bin.WIN64.zip https://github.com/glfw/glfw/releases/download/3.3.2/glfw-3.3.2.bin.WIN64.zip
 tar -xf glfw-3.3.2.bin.WIN64.zip
