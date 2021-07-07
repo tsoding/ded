@@ -18,12 +18,19 @@
 #include "./la.h"
 #include "./sdl_extra.h"
 #include "./gl_extra.h"
-#include "./font.h"
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 #define FPS 60
 #define DELTA_TIME (1.0f / FPS)
+
+#define FONT_SCALE 5
+#define FONT_WIDTH 128
+#define FONT_HEIGHT 64
+#define FONT_COLS 18
+#define FONT_ROWS 7
+#define FONT_CHAR_WIDTH  (FONT_WIDTH  / FONT_COLS)
+#define FONT_CHAR_HEIGHT (FONT_HEIGHT / FONT_ROWS)
 
 Editor editor = {0};
 Vec2f camera_pos = {0};
