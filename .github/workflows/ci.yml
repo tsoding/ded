@@ -66,3 +66,34 @@ jobs:
         with:
           name: WindowsBinaries
           path: ./winbin/
+  build-windows-msys2:
+    runs-on: windows-2019
+    steps:
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MSYS
+          path-type: minimal
+          install: >-
+            git
+            base-devel
+            mingw-w64-i686-gcc
+            mingw-w64-i686-glew
+            mingw-w64-i686-mesa
+            mingw-w64-i686-SDL2
+            mingw-w64-i686-pkg-config
+      - uses: actions/checkout@v1
+      - name: build ded
+        shell: msys2 {0}
+        run: |
+          ./build.sh --static "-static -lopengl32"
+      - name: Prepare Windows_MSYS2_Binaries artifacts
+        shell: cmd
+        run: |
+          mkdir winbin
+          copy /B *.exe winbin
+          copy /B *.png winbin
+      - name: Upload Windows_MSYS2_Binaries artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: Windows_MSYS2_Binaries
+          path: ./winbin/
