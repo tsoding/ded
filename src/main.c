@@ -428,8 +428,20 @@ int main(int argc, char **argv)
             break;
 
             case SDL_MOUSEBUTTONDOWN: {
-                // TODO(#18): mouse click is broken, because the coordinates need to be mapped differently
-                // The feature was initially introduced in #14
+                const Vec2f mouse_pos = vec2f((float) event.button.x, (float) event.button.y);
+                switch(event.button.button) {
+                case SDL_BUTTON_LEFT: {
+                    const Vec2f click_pos =
+                        vec2f_add(mouse_pos, vec2f_sub(vec2f(camera_pos.x, -camera_pos.y + FONT_CHAR_HEIGHT * FONT_SCALE),
+                                                       vec2f_mul(window_size(window), vec2fs(0.5f))));
+
+                    if(click_pos.x > 0.0f && click_pos.y > 0.0f) {
+                        editor.cursor_col = (size_t) floorf(click_pos.x / ((float) FONT_CHAR_WIDTH * FONT_SCALE));
+                        editor.cursor_row = (size_t) floorf(click_pos.y / ((float) FONT_CHAR_HEIGHT * FONT_SCALE));
+                    }
+                }
+                break;
+                }
             }
             break;
             }
