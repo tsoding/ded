@@ -74,8 +74,13 @@ void gl_render_cursor(Tile_Glyph_Buffer *tgb)
     tile_glyph_render_line_sized(tgb, c ? c : " ", 1, tile, vec4fs(0.0f), vec4fs(1.0f));
 }
 
+// #define TILE_GLYPH_RENDER
+
+#ifdef TILE_GLYPH_RENDER
 static Tile_Glyph_Buffer tgb = {0};
+#else
 static Free_Glyph_Buffer fgb = {0};
+#endif
 
 void render_editor_into_tgb(SDL_Window *window, Tile_Glyph_Buffer *tgb, Editor *editor)
 {
@@ -231,15 +236,17 @@ int main(int argc, char **argv)
         fprintf(stderr, "WARNING! GLEW_ARB_debug_output is not available");
     }
 
-    // tile_glyph_buffer_init(&tgb,
-    //                        "./charmap-oldschool_white.png",
-    //                        "./shaders/tile_glyph.vert",
-    //                        "./shaders/tile_glyph.frag");
-
+#ifdef TILE_GLYPH_RENDER
+    tile_glyph_buffer_init(&tgb,
+                           "./charmap-oldschool_white.png",
+                           "./shaders/tile_glyph.vert",
+                           "./shaders/tile_glyph.frag");
+#else
     free_glyph_buffer_init(&fgb,
                            face,
                            "./shaders/free_glyph.vert",
                            "./shaders/free_glyph.frag");
+#endif
 
     bool quit = false;
     while (!quit) {
@@ -350,8 +357,11 @@ int main(int argc, char **argv)
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // render_editor_into_tgb(window, &tgb, &editor);
+#ifdef TILE_GLYPH_RENDER
+        render_editor_into_tgb(window, &tgb, &editor);
+#else
         render_editor_into_fgb(window, &fgb, &editor);
+#endif // TILE_GLYPH_RENDER
 
         SDL_GL_SwapWindow(window);
 
