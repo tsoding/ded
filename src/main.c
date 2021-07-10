@@ -82,8 +82,6 @@ void render_editor_into_tgb(SDL_Window *window, Tile_Glyph_Buffer *tgb, Editor *
     {
         int w, h;
         SDL_GetWindowSize(window, &w, &h);
-        // TODO(#19): update the viewport and the resolution only on actual window change
-        glViewport(0, 0, w, h);
         glUniform2f(tgb->resolution_uniform, (float) w, (float) h);
     }
 
@@ -118,13 +116,9 @@ void render_editor_into_tgb(SDL_Window *window, Tile_Glyph_Buffer *tgb, Editor *
 
 void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Editor *editor)
 {
-    (void) editor;
-
     {
         int w, h;
         SDL_GetWindowSize(window, &w, &h);
-        // TODO(#19): update the viewport and the resolution only on actual window change
-        glViewport(0, 0, w, h);
         glUniform2f(fgb->resolution_uniform, (float) w, (float) h);
     }
 
@@ -332,6 +326,13 @@ int main(int argc, char **argv)
             }
             break;
             }
+        }
+
+        {
+            int w, h;
+            SDL_GetWindowSize(window, &w, &h);
+            // TODO(#19): update the viewport and the resolution only on actual window change
+            glViewport(0, 0, w, h);
         }
 
         {
