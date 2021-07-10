@@ -8,8 +8,14 @@
 #define GL_GLEXT_PROTOTYPES
 #include <SDL2/SDL_opengl.h>
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "./stb_image.h"
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "./stb_image_write.h"
 
 #define SV_IMPLEMENTATION
 #include "./sv.h"
@@ -85,13 +91,11 @@ void render_editor_into_tgb(SDL_Window *window, Tile_Glyph_Buffer *tgb, Editor *
     {
         for (size_t row = 0; row < editor->size; ++row) {
             const Line *line = editor->lines + row;
+
             tile_glyph_render_line_sized(tgb, line->chars, line->size, vec2i(0, -(int)row), vec4fs(1.0f), vec4fs(0.0f));
         }
     }
     tile_glyph_buffer_sync(tgb);
-
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     glUniform1f(tgb->time_uniform, (float) SDL_GetTicks() / 1000.0f);
     glUniform2f(tgb->camera_uniform, camera_pos.x, camera_pos.y);
@@ -107,16 +111,71 @@ void render_editor_into_tgb(SDL_Window *window, Tile_Glyph_Buffer *tgb, Editor *
     tile_glyph_buffer_draw(tgb);
 }
 
-void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *tgb, Editor *editor)
+#define FREE_GLYPH_FONT_SIZE 64
+
+// TODO: Free_Glyph renderer does not support cursor
+// TODO: Camera location is broken in Free_Glyph Renderer
+
+void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Editor *editor)
 {
-    (void) window;
-    (void) tgb;
     (void) editor;
+
+    {
+        int w, h;
+        SDL_GetWindowSize(window, &w, &h);
+        // TODO(#19): update the viewport and the resolution only on actual window change
+        glViewport(0, 0, w, h);
+        glUniform2f(fgb->resolution_uniform, (float) w, (float) h);
+    }
+
+    glUniform1f(fgb->time_uniform, (float) SDL_GetTicks() / 1000.0f);
+    glUniform2f(fgb->camera_uniform, camera_pos.x, camera_pos.y);
+
+    free_glyph_buffer_clear(fgb);
+
+    {
+        for (size_t row = 0; row < editor->size; ++row) {
+            const Line *line = editor->lines + row;
+            free_glyph_buffer_render_line_sized(
+                fgb, line->chars, line->size,
+                vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE),
+                vec4fs(1.0f), vec4fs(0.0f));
+        }
+    }
+
+    free_glyph_buffer_sync(fgb);
+    free_glyph_buffer_draw(fgb);
 }
 
-// OPENGL
 int main(int argc, char **argv)
 {
+    FT_Library library = {0};
+
+    FT_Error error = FT_Init_FreeType(&library);
+    if (error) {
+        fprintf(stderr, "ERROR: could initialize FreeType2 library\n");
+        exit(1);
+    }
+
+    const char *const font_file_path = "./VictorMono-Regular.ttf";
+
+    FT_Face face;
+    error = FT_New_Face(library, font_file_path, 0, &face);
+    if (error == FT_Err_Unknown_File_Format) {
+        fprintf(stderr, "ERROR: `%s` has an unknown format\n", font_file_path);
+        exit(1);
+    } else if (error) {
+        fprintf(stderr, "ERROR: could not load file `%s`\n", font_file_path);
+        exit(1);
+    }
+
+    FT_UInt pixel_size = FREE_GLYPH_FONT_SIZE;
+    error = FT_Set_Pixel_Sizes(face, 0, pixel_size);
+    if (error) {
+        fprintf(stderr, "ERROR: could not set pixel size to %u\n", pixel_size);
+        exit(1);
+    }
+
     const char *file_path = NULL;
 
     if (argc > 1) {
@@ -184,6 +243,7 @@ int main(int argc, char **argv)
     //                        "./shaders/tile_glyph.frag");
 
     free_glyph_buffer_init(&fgb,
+                           face,
                            "./shaders/free_glyph.vert",
                            "./shaders/free_glyph.frag");
 
@@ -285,6 +345,9 @@ int main(int argc, char **argv)
 
             camera_pos = vec2f_add(camera_pos, vec2f_mul(camera_vel, vec2fs(DELTA_TIME)));
         }
+
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         // render_editor_into_tgb(window, &tgb, &editor);
         render_editor_into_fgb(window, &fgb, &editor);

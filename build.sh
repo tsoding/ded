@@ -3,7 +3,7 @@
 set -xe
 
 CC="${CXX:-cc}"
-PKGS="sdl2 glew"
+PKGS="sdl2 glew freetype2"
 CFLAGS="-Wall -Wextra -std=c11 -pedantic -ggdb"
 LIBS=-lm
 SRC="src/main.c src/la.c src/editor.c src/sdl_extra.c src/file.c src/gl_extra.c src/tile_glyph.c src/free_glyph.c"
