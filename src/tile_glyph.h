@@ -33,12 +33,6 @@ typedef enum {
     COUNT_TILE_GLYPH_ATTRS,
 } Tile_Glyph_Attr;
 
-typedef struct {
-    size_t offset;
-    GLint comps;
-    GLenum type;
-} Attr_Def;
-
 #define TILE_GLYPH_BUFFER_CAP (640 * 1024)
 
 typedef struct {
@@ -60,14 +54,13 @@ void tile_glyph_buffer_init(Tile_Glyph_Buffer *buffer,
                             const char *texture_file_path,
                             const char *vert_file_path,
                             const char *frag_file_path);
-
 void tile_glyph_buffer_clear(Tile_Glyph_Buffer *buffer);
 void tile_glyph_buffer_push(Tile_Glyph_Buffer *buffer, Tile_Glyph glyph);
 void tile_glyph_buffer_sync(Tile_Glyph_Buffer *buffer);
+void tile_glyph_buffer_draw(Tile_Glyph_Buffer *buffer);
 
 void tile_glyph_render_line_sized(Tile_Glyph_Buffer *buffer, const char *text, size_t text_size, Vec2i tile, Vec4f fg_color, Vec4f bg_color);
 void tile_glyph_render_line(Tile_Glyph_Buffer *buffer, const char *text, Vec2i tile, Vec4f fg_color, Vec4f bg_color);
 
-void tile_glyph_buffer_draw(Tile_Glyph_Buffer *buffer);
 
 #endif // TILE_GLYPH_H_

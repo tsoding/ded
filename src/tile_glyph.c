@@ -5,6 +5,12 @@
 #include "./tile_glyph.h"
 #include "./gl_extra.h"
 
+typedef struct {
+    size_t offset;
+    GLint comps;
+    GLenum type;
+} Attr_Def;
+
 static const Attr_Def glyph_attr_defs[COUNT_TILE_GLYPH_ATTRS] = {
     [TILE_GLYPH_ATTR_TILE]   = {
         .offset = offsetof(Tile_Glyph, tile),

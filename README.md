@@ -16,3 +16,7 @@ $ ./ded src\main.c
 > .\build_msvc.bat
 > .\ded.exe src\main.c
 ```
+
+# Font
+
+Victor Mono: https://rubjo.github.io/victor-mono/

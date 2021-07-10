@@ -19,6 +19,7 @@
 #include "./sdl_extra.h"
 #include "./gl_extra.h"
 #include "./tile_glyph.h"
+#include "./free_glyph.h"
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
@@ -68,6 +69,50 @@ void gl_render_cursor(Tile_Glyph_Buffer *tgb)
 }
 
 static Tile_Glyph_Buffer tgb = {0};
+static Free_Glyph_Buffer fgb = {0};
+
+void render_editor_into_tgb(SDL_Window *window, Tile_Glyph_Buffer *tgb, Editor *editor)
+{
+    {
+        int w, h;
+        SDL_GetWindowSize(window, &w, &h);
+        // TODO(#19): update the viewport and the resolution only on actual window change
+        glViewport(0, 0, w, h);
+        glUniform2f(tgb->resolution_uniform, (float) w, (float) h);
+    }
+
+    tile_glyph_buffer_clear(tgb);
+    {
+        for (size_t row = 0; row < editor->size; ++row) {
+            const Line *line = editor->lines + row;
+            tile_glyph_render_line_sized(tgb, line->chars, line->size, vec2i(0, -(int)row), vec4fs(1.0f), vec4fs(0.0f));
+        }
+    }
+    tile_glyph_buffer_sync(tgb);
+
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glUniform1f(tgb->time_uniform, (float) SDL_GetTicks() / 1000.0f);
+    glUniform2f(tgb->camera_uniform, camera_pos.x, camera_pos.y);
+
+    tile_glyph_buffer_draw(tgb);
+
+    tile_glyph_buffer_clear(tgb);
+    {
+        gl_render_cursor(tgb);
+    }
+    tile_glyph_buffer_sync(tgb);
+
+    tile_glyph_buffer_draw(tgb);
+}
+
+void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *tgb, Editor *editor)
+{
+    (void) window;
+    (void) tgb;
+    (void) editor;
+}
 
 // OPENGL
 int main(int argc, char **argv)
@@ -133,10 +178,14 @@ int main(int argc, char **argv)
         fprintf(stderr, "WARNING! GLEW_ARB_debug_output is not available");
     }
 
-    tile_glyph_buffer_init(&tgb,
-                           "./charmap-oldschool_white.png",
-                           "./shaders/tile_glyph.vert",
-                           "./shaders/tile_glyph.frag");
+    // tile_glyph_buffer_init(&tgb,
+    //                        "./charmap-oldschool_white.png",
+    //                        "./shaders/tile_glyph.vert",
+    //                        "./shaders/tile_glyph.frag");
+
+    free_glyph_buffer_init(&fgb,
+                           "./shaders/free_glyph.vert",
+                           "./shaders/free_glyph.frag");
 
     bool quit = false;
     while (!quit) {
@@ -237,38 +286,8 @@ int main(int argc, char **argv)
             camera_pos = vec2f_add(camera_pos, vec2f_mul(camera_vel, vec2fs(DELTA_TIME)));
         }
 
-        {
-            int w, h;
-            SDL_GetWindowSize(window, &w, &h);
-            // TODO(#19): update the viewport and the resolution only on actual window change
-            glViewport(0, 0, w, h);
-            glUniform2f(tgb.resolution_uniform, (float) w, (float) h);
-        }
-
-        tile_glyph_buffer_clear(&tgb);
-        {
-            for (size_t row = 0; row < editor.size; ++row) {
-                const Line *line = editor.lines + row;
-                tile_glyph_render_line_sized(&tgb, line->chars, line->size, vec2i(0, -(int)row), vec4fs(1.0f), vec4fs(0.0f));
-            }
-        }
-        tile_glyph_buffer_sync(&tgb);
-
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        glUniform1f(tgb.time_uniform, (float) SDL_GetTicks() / 1000.0f);
-        glUniform2f(tgb.camera_uniform, camera_pos.x, camera_pos.y);
-
-        tile_glyph_buffer_draw(&tgb);
-
-        tile_glyph_buffer_clear(&tgb);
-        {
-            gl_render_cursor(&tgb);
-        }
-        tile_glyph_buffer_sync(&tgb);
-
-        tile_glyph_buffer_draw(&tgb);
+        // render_editor_into_tgb(window, &tgb, &editor);
+        render_editor_into_fgb(window, &fgb, &editor);
 
         SDL_GL_SwapWindow(window);
 
