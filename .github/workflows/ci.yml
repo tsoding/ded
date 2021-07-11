@@ -42,6 +42,45 @@ jobs:
           ./build.sh
         env:
           CC: clang
+  build-windows-msys2:
+    runs-on: windows-2019
+    steps:
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW32
+          path-type: minimal
+          install: >-
+            git
+            base-devel
+            mingw-w64-i686-gcc
+            mingw-w64-i686-glew
+            mingw-w64-i686-mesa
+            mingw-w64-i686-SDL2
+            mingw-w64-i686-pkg-config
+            mingw-w64-i686-freetype
+      - name: fix brotli bugged library names
+        shell: msys2 {0}
+        run: |
+          cp "D:\a\_temp\msys\msys64\\$1\lib\libbrotlicommon-static.a" "D:\a\_temp\msys\msys64\\mingw32\lib\libbrotlicommon.a"
+          cp "D:\a\_temp\msys\msys64\\$1\lib\libbrotlidec-static.a" "D:\a\_temp\msys\msys64\\mingw32\lib\libbrotlidec.a"
+          cp "D:\a\_temp\msys\msys64\\$1\lib\libbrotlienc-static.a" "D:\a\_temp\msys\msys64\\mingw32\lib\libbrotlienc.a"
+      - uses: actions/checkout@v1
+      - name: build ded
+        shell: msys2 {0}
+        run: |
+          ./build.sh --static "-static -lopengl32 -lstdc++"
+      - name: Prepare Windows_MSYS2_Binaries artifacts
+        shell: cmd
+        run: |
+          mkdir winbin\shaders
+          copy /B *.exe winbin
+          copy /B *.png winbin
+          copy /B shaders\*.* winbin\shaders
+      - name: Upload Windows_MSYS2_Binaries artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: Windows_MSYS2_Binaries
+          path: ./winbin/
   # TODO(#29): build-windows-msvc is broken
   # ---
   # build-windows-msvc:
