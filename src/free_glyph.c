@@ -102,16 +102,15 @@ void free_glyph_buffer_init(Free_Glyph_Buffer *fgb,
             exit(1);
         }
 
-        GLuint program = 0;
-        if (!link_program(vert_shader, frag_shader, &program)) {
+        if (!link_program(vert_shader, frag_shader, &fgb->program)) {
             exit(1);
         }
 
-        glUseProgram(program);
+        glUseProgram(fgb->program);
 
-        fgb->time_uniform = glGetUniformLocation(program, "time");
-        fgb->resolution_uniform = glGetUniformLocation(program, "resolution");
-        fgb->camera_uniform = glGetUniformLocation(program, "camera");
+        fgb->time_uniform = glGetUniformLocation(fgb->program, "time");
+        fgb->resolution_uniform = glGetUniformLocation(fgb->program, "resolution");
+        fgb->camera_uniform = glGetUniformLocation(fgb->program, "camera");
     }
 
     // Glyph Texture Atlas
@@ -185,6 +184,13 @@ void free_glyph_buffer_init(Free_Glyph_Buffer *fgb,
     }
 }
 
+void free_glyph_buffer_use(const Free_Glyph_Buffer *fgb)
+{
+    glBindVertexArray(fgb->vao);
+    glBindBuffer(GL_ARRAY_BUFFER, fgb->vbo);
+    glUseProgram(fgb->program);
+}
+
 void free_glyph_buffer_clear(Free_Glyph_Buffer *fgb)
 {
     fgb->glyphs_count = 0;
@@ -207,6 +213,21 @@ void free_glyph_buffer_sync(Free_Glyph_Buffer *fgb)
 void free_glyph_buffer_draw(Free_Glyph_Buffer *fgb)
 {
     glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, (GLsizei) fgb->glyphs_count);
+}
+
+float free_glyph_buffer_cursor_pos(const Free_Glyph_Buffer *fgb, const char *text, size_t text_size, Vec2f pos, size_t col)
+{
+    for (size_t i = 0; i < text_size; ++i) {
+        if (i == col) {
+            return pos.x;
+        }
+
+        Glyph_Metric metric = fgb->metrics[(int) text[i]];
+        pos.x += metric.ax;
+        pos.y += metric.ay;
+    }
+
+    return pos.x;
 }
 
 void free_glyph_buffer_render_line_sized(Free_Glyph_Buffer *fgb, const char *text, size_t text_size, Vec2f pos, Vec4f fg_color, Vec4f bg_color)
