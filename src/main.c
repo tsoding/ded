@@ -87,6 +87,18 @@ static Cursor_Renderer cr = {0};
 void render_editor_into_tgb(SDL_Window *window, Tile_Glyph_Buffer *tgb, Editor *editor)
 {
     {
+        const Vec2f cursor_pos =
+            vec2f((float) editor->cursor_col * FONT_CHAR_WIDTH * FONT_SCALE,
+                  (float) (-(int)editor->cursor_row) * FONT_CHAR_HEIGHT * FONT_SCALE);
+
+        camera_vel = vec2f_mul(
+                         vec2f_sub(cursor_pos, camera_pos),
+                         vec2fs(2.0f));
+
+        camera_pos = vec2f_add(camera_pos, vec2f_mul(camera_vel, vec2fs(DELTA_TIME)));
+    }
+
+    {
         int w, h;
         SDL_GetWindowSize(window, &w, &h);
         glUniform2f(tgb->resolution_uniform, (float) w, (float) h);
@@ -148,6 +160,16 @@ void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Cursor_R
         free_glyph_buffer_draw(fgb);
     }
 
+    Vec2f cursor_pos = vec2fs(0.0f);
+    {
+        cursor_pos.y = -(float) editor->cursor_row * FREE_GLYPH_FONT_SIZE;
+
+        if (editor->cursor_row < editor->size) {
+            Line *line = &editor->lines[editor->cursor_row];
+            cursor_pos.x = free_glyph_buffer_cursor_pos(fgb, line->chars, line->size, vec2f(0.0, cursor_pos.y), editor->cursor_col);
+        }
+    }
+
     cursor_renderer_use(cr);
     {
         glUniform2f(cr->resolution_uniform, (float) w, (float) h);
@@ -155,16 +177,16 @@ void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Cursor_R
         glUniform2f(cr->camera_uniform, camera_pos.x, camera_pos.y);
         glUniform1f(cr->height_uniform, FREE_GLYPH_FONT_SIZE);
 
-        float y = -(float) editor->cursor_row * FREE_GLYPH_FONT_SIZE;
-
-        float x = 0.0f;
-        if (editor->cursor_row < editor->size) {
-            Line *line = &editor->lines[editor->cursor_row];
-            x = free_glyph_buffer_cursor_pos(fgb, line->chars, line->size, vec2f(0.0, y), editor->cursor_col);
-        }
-
-        cursor_renderer_move_to(cr, vec2f(x, y));
+        cursor_renderer_move_to(cr, cursor_pos);
         cursor_renderer_draw();
+    }
+
+    {
+        camera_vel = vec2f_mul(
+                         vec2f_sub(cursor_pos, camera_pos),
+                         vec2fs(2.0f));
+
+        camera_pos = vec2f_add(camera_pos, vec2f_mul(camera_vel, vec2fs(DELTA_TIME)));
     }
 }
 
@@ -372,24 +394,6 @@ int main(int argc, char **argv)
 #endif
             }
             break;
-
-            case SDL_MOUSEBUTTONDOWN: {
-                const Vec2f mouse_pos = vec2f((float) event.button.x, (float) event.button.y);
-                switch(event.button.button) {
-                case SDL_BUTTON_LEFT: {
-                    const Vec2f click_pos =
-                        vec2f_add(mouse_pos, vec2f_sub(vec2f(camera_pos.x, -camera_pos.y + FONT_CHAR_HEIGHT * FONT_SCALE),
-                                                       vec2f_mul(window_size(window), vec2fs(0.5f))));
-
-                    if(click_pos.x > 0.0f && click_pos.y > 0.0f) {
-                        editor.cursor_col = (size_t) floorf(click_pos.x / ((float) FONT_CHAR_WIDTH * FONT_SCALE));
-                        editor.cursor_row = (size_t) floorf(click_pos.y / ((float) FONT_CHAR_HEIGHT * FONT_SCALE));
-                    }
-                }
-                break;
-                }
-            }
-            break;
             }
         }
 
@@ -398,18 +402,6 @@ int main(int argc, char **argv)
             SDL_GetWindowSize(window, &w, &h);
             // TODO(#19): update the viewport and the resolution only on actual window change
             glViewport(0, 0, w, h);
-        }
-
-        {
-            const Vec2f cursor_pos =
-                vec2f((float) editor.cursor_col * FONT_CHAR_WIDTH * FONT_SCALE,
-                      (float) (-(int)editor.cursor_row) * FONT_CHAR_HEIGHT * FONT_SCALE);
-
-            camera_vel = vec2f_mul(
-                             vec2f_sub(cursor_pos, camera_pos),
-                             vec2fs(2.0f));
-
-            camera_pos = vec2f_add(camera_pos, vec2f_mul(camera_vel, vec2fs(DELTA_TIME)));
         }
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
