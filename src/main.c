@@ -26,6 +26,7 @@
 #include "./gl_extra.h"
 #include "./tile_glyph.h"
 #include "./free_glyph.h"
+#include "./cursor_renderer.h"
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
@@ -80,6 +81,7 @@ void gl_render_cursor(Tile_Glyph_Buffer *tgb)
 static Tile_Glyph_Buffer tgb = {0};
 #else
 static Free_Glyph_Buffer fgb = {0};
+static Cursor_Renderer cr = {0};
 #endif
 
 void render_editor_into_tgb(SDL_Window *window, Tile_Glyph_Buffer *tgb, Editor *editor)
@@ -119,31 +121,51 @@ void render_editor_into_tgb(SDL_Window *window, Tile_Glyph_Buffer *tgb, Editor *
 // TODO(#27): Free_Glyph renderer does not support cursor
 // TODO(#28): Camera location is broken in Free_Glyph Renderer
 
-void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Editor *editor)
+void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Cursor_Renderer *cr, Editor *editor)
 {
+    int w, h;
+    SDL_GetWindowSize(window, &w, &h);
+
+    free_glyph_buffer_use(fgb);
     {
-        int w, h;
-        SDL_GetWindowSize(window, &w, &h);
         glUniform2f(fgb->resolution_uniform, (float) w, (float) h);
-    }
+        glUniform1f(fgb->time_uniform, (float) SDL_GetTicks() / 1000.0f);
+        glUniform2f(fgb->camera_uniform, camera_pos.x, camera_pos.y);
 
-    glUniform1f(fgb->time_uniform, (float) SDL_GetTicks() / 1000.0f);
-    glUniform2f(fgb->camera_uniform, camera_pos.x, camera_pos.y);
+        free_glyph_buffer_clear(fgb);
 
-    free_glyph_buffer_clear(fgb);
-
-    {
-        for (size_t row = 0; row < editor->size; ++row) {
-            const Line *line = editor->lines + row;
-            free_glyph_buffer_render_line_sized(
-                fgb, line->chars, line->size,
-                vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE),
-                vec4fs(1.0f), vec4fs(0.0f));
+        {
+            for (size_t row = 0; row < editor->size; ++row) {
+                const Line *line = editor->lines + row;
+                free_glyph_buffer_render_line_sized(
+                    fgb, line->chars, line->size,
+                    vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE),
+                    vec4fs(1.0f), vec4fs(0.0f));
+            }
         }
+
+        free_glyph_buffer_sync(fgb);
+        free_glyph_buffer_draw(fgb);
     }
 
-    free_glyph_buffer_sync(fgb);
-    free_glyph_buffer_draw(fgb);
+    cursor_renderer_use(cr);
+    {
+        glUniform2f(cr->resolution_uniform, (float) w, (float) h);
+        glUniform1f(cr->time_uniform, (float) SDL_GetTicks() / 1000.0f);
+        glUniform2f(cr->camera_uniform, camera_pos.x, camera_pos.y);
+        glUniform1f(cr->height_uniform, FREE_GLYPH_FONT_SIZE);
+
+        float y = -(float) editor->cursor_row * FREE_GLYPH_FONT_SIZE;
+
+        float x = 0.0f;
+        if (editor->cursor_row < editor->size) {
+            Line *line = &editor->lines[editor->cursor_row];
+            x = free_glyph_buffer_cursor_pos(fgb, line->chars, line->size, vec2f(0.0, y), editor->cursor_col);
+        }
+
+        cursor_renderer_move_to(cr, vec2f(x, y));
+        cursor_renderer_draw();
+    }
 }
 
 int main(int argc, char **argv)
@@ -246,6 +268,9 @@ int main(int argc, char **argv)
                            face,
                            "./shaders/free_glyph.vert",
                            "./shaders/free_glyph.frag");
+    cursor_renderer_init(&cr,
+                         "./shaders/cursor.vert",
+                         "./shaders/cursor.frag");
 #endif
 
     bool quit = false;
@@ -263,6 +288,10 @@ int main(int argc, char **argv)
                 switch (event.key.keysym.sym) {
                 case SDLK_BACKSPACE: {
                     editor_backspace(&editor);
+#ifndef TILE_GLYPH_RENDER
+                    cursor_renderer_use(&cr);
+                    glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
+#endif
                 }
                 break;
 
@@ -275,11 +304,19 @@ int main(int argc, char **argv)
 
                 case SDLK_RETURN: {
                     editor_insert_new_line(&editor);
+#ifndef TILE_GLYPH_RENDER
+                    cursor_renderer_use(&cr);
+                    glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
+#endif
                 }
                 break;
 
                 case SDLK_DELETE: {
                     editor_delete(&editor);
+#ifndef TILE_GLYPH_RENDER
+                    cursor_renderer_use(&cr);
+                    glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
+#endif
                 }
                 break;
 
@@ -287,23 +324,40 @@ int main(int argc, char **argv)
                     if (editor.cursor_row > 0) {
                         editor.cursor_row -= 1;
                     }
+#ifndef TILE_GLYPH_RENDER
+                    cursor_renderer_use(&cr);
+                    glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
+#endif
                 }
                 break;
 
                 case SDLK_DOWN: {
                     editor.cursor_row += 1;
+#ifndef TILE_GLYPH_RENDER
+                    cursor_renderer_use(&cr);
+                    glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
+#endif
                 }
                 break;
 
                 case SDLK_LEFT: {
                     if (editor.cursor_col > 0) {
                         editor.cursor_col -= 1;
+#ifndef TILE_GLYPH_RENDER
+                        cursor_renderer_use(&cr);
+                        glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
+#endif
                     }
                 }
                 break;
 
                 case SDLK_RIGHT: {
                     editor.cursor_col += 1;
+#ifndef TILE_GLYPH_RENDER
+                    cursor_renderer_use(&cr);
+                    glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
+#endif
+
                 }
                 break;
                 }
@@ -312,6 +366,10 @@ int main(int argc, char **argv)
 
             case SDL_TEXTINPUT: {
                 editor_insert_text_before_cursor(&editor, event.text.text);
+#ifndef TILE_GLYPH_RENDER
+                cursor_renderer_use(&cr);
+                glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
+#endif
             }
             break;
 
@@ -360,7 +418,7 @@ int main(int argc, char **argv)
 #ifdef TILE_GLYPH_RENDER
         render_editor_into_tgb(window, &tgb, &editor);
 #else
-        render_editor_into_fgb(window, &fgb, &editor);
+        render_editor_into_fgb(window, &fgb, &cr, &editor);
 #endif // TILE_GLYPH_RENDER
 
         SDL_GL_SwapWindow(window);
