@@ -398,6 +398,19 @@ int main(int argc, char **argv)
             }
             break;
 
+	    case SDL_WINDOWEVENT: {
+	        switch(event.window.event) {
+	        case SDL_WINDOWEVENT_RESIZED: {
+	            int w, h;
+	            SDL_GetWindowSize(window, &w, &h);
+	            glViewport(0, 0, w, h);
+	            glUniform2f(resolution_uniform, (float) w, (float) h);
+  	        }
+	        break;
+	        }
+	    }
+	    break;
+
             case SDL_MOUSEBUTTONDOWN: {
                 const Vec2f mouse_pos = vec2f((float) event.button.x, (float) event.button.y);
                 switch(event.button.button) {
@@ -428,14 +441,6 @@ int main(int argc, char **argv)
                              vec2fs(2.0f));
 
             camera_pos = vec2f_add(camera_pos, vec2f_mul(camera_vel, vec2fs(DELTA_TIME)));
-        }
-
-        {
-            int w, h;
-            SDL_GetWindowSize(window, &w, &h);
-            // TODO(#19): update the viewport and the resolution only on actual window change
-            glViewport(0, 0, w, h);
-            glUniform2f(resolution_uniform, (float) w, (float) h);
         }
 
         glyph_buffer_clear();
