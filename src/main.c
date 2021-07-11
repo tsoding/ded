@@ -117,7 +117,7 @@ void render_editor_into_tgb(SDL_Window *window, Tile_Glyph_Buffer *tgb, Editor *
 #define FREE_GLYPH_FONT_SIZE 64
 
 // TODO(#27): Free_Glyph renderer does not support cursor
-// TODO: Camera location is broken in Free_Glyph Renderer
+// TODO(#28): Camera location is broken in Free_Glyph Renderer
 
 void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Editor *editor)
 {
