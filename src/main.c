@@ -349,13 +349,6 @@ int main(int argc, char **argv)
         }
 
         {
-            int w, h;
-            SDL_GetWindowSize(window, &w, &h);
-            // TODO(#19): update the viewport and the resolution only on actual window change
-            glViewport(0, 0, w, h);
-        }
-
-        {
             const Vec2f cursor_pos =
                 vec2f((float) editor.cursor_col * FONT_CHAR_WIDTH * FONT_SCALE,
                       (float) (-(int)editor.cursor_row) * FONT_CHAR_HEIGHT * FONT_SCALE);
