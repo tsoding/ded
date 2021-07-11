@@ -75,6 +75,7 @@ jobs:
           mkdir winbin\shaders
           copy /B *.exe winbin
           copy /B *.png winbin
+          copy /B *.ttf winbin
           copy /B shaders\*.* winbin\shaders
       - name: Upload Windows_MSYS2_Binaries artifacts
         uses: actions/upload-artifact@v2
