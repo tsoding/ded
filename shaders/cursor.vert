@@ -9,15 +9,13 @@ uniform float height;
 
 out vec2 uv;
 
-vec2 project_point(vec2 point)
-{
-    return 2.0 * (point - camera) / resolution;
-}
+vec2 camera_project(vec2 point);
 
 void main() {
-    uv = vec2(float(gl_VertexID & 1), float((gl_VertexID >> 1) & 1));
+    uv = vec2(float(gl_VertexID & 1),
+              float((gl_VertexID >> 1) & 1));
     gl_Position = vec4(
-        project_point(uv * vec2(WIDTH, height) + pos),
+        camera_project(uv * vec2(WIDTH, height) + pos),
         0.0,
         1.0);
 }

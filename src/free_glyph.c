@@ -93,16 +93,21 @@ void free_glyph_buffer_init(Free_Glyph_Buffer *fgb,
 
     // Init Shaders
     {
-        GLuint vert_shader = 0;
-        if (!compile_shader_file(vert_file_path, GL_VERTEX_SHADER, &vert_shader)) {
+        GLuint shaders[3] = {0};
+
+        if (!compile_shader_file(vert_file_path, GL_VERTEX_SHADER, &shaders[0])) {
             exit(1);
         }
-        GLuint frag_shader = 0;
-        if (!compile_shader_file(frag_file_path, GL_FRAGMENT_SHADER, &frag_shader)) {
+        if (!compile_shader_file(frag_file_path, GL_FRAGMENT_SHADER, &shaders[1])) {
+            exit(1);
+        }
+        if (!compile_shader_file("./shaders/camera.vert", GL_VERTEX_SHADER, &shaders[2])) {
             exit(1);
         }
 
-        if (!link_program(vert_shader, frag_shader, &fgb->program)) {
+        fgb->program = glCreateProgram();
+        attach_shaders_to_program(shaders, sizeof(shaders) / sizeof(shaders[0]), fgb->program);
+        if (!link_program(fgb->program, __FILE__, __LINE__)) {
             exit(1);
         }
 

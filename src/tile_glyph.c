@@ -114,17 +114,18 @@ void tile_glyph_buffer_init(Tile_Glyph_Buffer *tgb, const char *texture_file_pat
 
     // Init Shaders
     {
-        GLuint vert_shader = 0;
-        if (!compile_shader_file(vert_file_path, GL_VERTEX_SHADER, &vert_shader)) {
+        GLuint shaders[2] = {0};
+
+        if (!compile_shader_file(vert_file_path, GL_VERTEX_SHADER, &shaders[0])) {
             exit(1);
         }
-        GLuint frag_shader = 0;
-        if (!compile_shader_file(frag_file_path, GL_FRAGMENT_SHADER, &frag_shader)) {
+        if (!compile_shader_file(frag_file_path, GL_FRAGMENT_SHADER, &shaders[1])) {
             exit(1);
         }
 
-        GLuint program = 0;
-        if (!link_program(vert_shader, frag_shader, &program)) {
+        GLuint program = glCreateProgram();
+        attach_shaders_to_program(shaders, sizeof(shaders) / sizeof(shaders[0]), program);
+        if (!link_program(program, __FILE__, __LINE__)) {
             exit(1);
         }
 
