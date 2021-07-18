@@ -24,7 +24,6 @@
 #include "./la.h"
 #include "./sdl_extra.h"
 #include "./gl_extra.h"
-#include "./tile_glyph.h"
 #include "./free_glyph.h"
 #include "./cursor_renderer.h"
 
@@ -71,69 +70,10 @@ void MessageCallback(GLenum source,
             type, severity, message);
 }
 
-void gl_render_cursor(Tile_Glyph_Buffer *tgb)
-{
-    const char *c = editor_char_under_cursor(&editor);
-    Vec2i tile = vec2i((int) editor.cursor_col, -(int) editor.cursor_row);
-    tile_glyph_render_line_sized(tgb, c ? c : " ", 1, tile, vec4fs(0.0f), vec4fs(1.0f));
-}
-
-// #define TILE_GLYPH_RENDER
-
-#ifdef TILE_GLYPH_RENDER
-static Tile_Glyph_Buffer tgb = {0};
-#else
 static Free_Glyph_Buffer fgb = {0};
 static Cursor_Renderer cr = {0};
-#endif
-
-void render_editor_into_tgb(SDL_Window *window, Tile_Glyph_Buffer *tgb, Editor *editor)
-{
-    {
-        // TODO: Zoom
-        const Vec2f cursor_pos =
-            vec2f((float) editor->cursor_col * FONT_CHAR_WIDTH * FONT_SCALE,
-                  (float) (-(int)editor->cursor_row) * FONT_CHAR_HEIGHT * FONT_SCALE);
-
-        camera_vel = vec2f_mul(
-                         vec2f_sub(cursor_pos, camera_pos),
-                         vec2fs(2.0f));
-
-        camera_pos = vec2f_add(camera_pos, vec2f_mul(camera_vel, vec2fs(DELTA_TIME)));
-    }
-
-    {
-        int w, h;
-        SDL_GetWindowSize(window, &w, &h);
-        glUniform2f(tgb->resolution_uniform, (float) w, (float) h);
-    }
-
-    tile_glyph_buffer_clear(tgb);
-    {
-        for (size_t row = 0; row < editor->size; ++row) {
-            const Line *line = editor->lines + row;
-
-            tile_glyph_render_line_sized(tgb, line->chars, line->size, vec2i(0, -(int)row), vec4fs(1.0f), vec4fs(0.0f));
-        }
-    }
-    tile_glyph_buffer_sync(tgb);
-
-    glUniform1f(tgb->time_uniform, (float) SDL_GetTicks() / 1000.0f);
-    glUniform2f(tgb->camera_uniform, camera_pos.x, camera_pos.y);
-
-    tile_glyph_buffer_draw(tgb);
-
-    tile_glyph_buffer_clear(tgb);
-    {
-        gl_render_cursor(tgb);
-    }
-    tile_glyph_buffer_sync(tgb);
-
-    tile_glyph_buffer_draw(tgb);
-}
 
 #define FREE_GLYPH_FONT_SIZE 64
-
 
 void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Cursor_Renderer *cr, Editor *editor)
 {
@@ -202,7 +142,8 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    const char *const font_file_path = "./VictorMono-Regular.ttf";
+    // const char *const font_file_path = "./VictorMono-Regular.ttf";
+    const char *const font_file_path = "./ComicNeue-Regular.otf";
 
     FT_Face face;
     error = FT_New_Face(library, font_file_path, 0, &face);
@@ -284,12 +225,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "WARNING! GLEW_ARB_debug_output is not available");
     }
 
-#ifdef TILE_GLYPH_RENDER
-    tile_glyph_buffer_init(&tgb,
-                           "./charmap-oldschool_white.png",
-                           "./shaders/tile_glyph.vert",
-                           "./shaders/tile_glyph.frag");
-#else
+
     free_glyph_buffer_init(&fgb,
                            face,
                            "./shaders/free_glyph.vert",
@@ -297,7 +233,6 @@ int main(int argc, char **argv)
     cursor_renderer_init(&cr,
                          "./shaders/cursor.vert",
                          "./shaders/cursor.frag");
-#endif
 
     bool quit = false;
     while (!quit) {
@@ -411,11 +346,7 @@ int main(int argc, char **argv)
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-#ifdef TILE_GLYPH_RENDER
-        render_editor_into_tgb(window, &tgb, &editor);
-#else
         render_editor_into_fgb(window, &fgb, &cr, &editor);
-#endif // TILE_GLYPH_RENDER
 
         SDL_GL_SwapWindow(window);
 
