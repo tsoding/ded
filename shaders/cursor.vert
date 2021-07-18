@@ -1,9 +1,8 @@
 #version 330 core
 
 uniform vec2 resolution;
-uniform vec2 camera;
-uniform vec2 pos;
-uniform float height;
+uniform vec2 cursor_pos;
+uniform float cursor_height;
 
 #define WIDTH 5.0
 
@@ -15,7 +14,7 @@ void main() {
     uv = vec2(float(gl_VertexID & 1),
               float((gl_VertexID >> 1) & 1));
     gl_Position = vec4(
-        camera_project(uv * vec2(WIDTH, height) + pos),
+        camera_project(uv * vec2(WIDTH, cursor_height) + cursor_pos),
         0.0,
         1.0);
 }

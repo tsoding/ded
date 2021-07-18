@@ -1,9 +1,7 @@
 #version 330 core
 
 uniform vec2 resolution;
-uniform vec2 camera;
 uniform float time;
-// uniform float camera_scale;
 
 layout(location = 0) in vec2 pos;
 layout(location = 1) in vec2 size;

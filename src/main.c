@@ -82,9 +82,10 @@ void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Cursor_R
 
     free_glyph_buffer_use(fgb);
     {
-        glUniform2f(fgb->resolution_uniform, (float) w, (float) h);
-        glUniform1f(fgb->time_uniform, (float) SDL_GetTicks() / 1000.0f);
-        glUniform2f(fgb->camera_uniform, camera_pos.x, camera_pos.y);
+        glUniform2f(fgb->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
+        glUniform1f(fgb->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
+        glUniform2f(fgb->uniforms[UNIFORM_SLOT_CAMERA_POS], camera_pos.x, camera_pos.y);
+        glUniform1f(fgb->uniforms[UNIFORM_SLOT_CAMERA_SCALE], 1.0f);
 
         free_glyph_buffer_clear(fgb);
 
@@ -114,10 +115,11 @@ void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Cursor_R
 
     cursor_renderer_use(cr);
     {
-        glUniform2f(cr->resolution_uniform, (float) w, (float) h);
-        glUniform1f(cr->time_uniform, (float) SDL_GetTicks() / 1000.0f);
-        glUniform2f(cr->camera_uniform, camera_pos.x, camera_pos.y);
-        glUniform1f(cr->height_uniform, FREE_GLYPH_FONT_SIZE);
+        glUniform2f(cr->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
+        glUniform1f(cr->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
+        glUniform2f(cr->uniforms[UNIFORM_SLOT_CAMERA_POS], camera_pos.x, camera_pos.y);
+        glUniform1f(cr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], 1.0f);
+        glUniform1f(cr->uniforms[UNIFORM_SLOT_CURSOR_HEIGHT], FREE_GLYPH_FONT_SIZE);
 
         cursor_renderer_move_to(cr, cursor_pos);
         cursor_renderer_draw();
@@ -142,8 +144,7 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    // const char *const font_file_path = "./VictorMono-Regular.ttf";
-    const char *const font_file_path = "./ComicNeue-Regular.otf";
+    const char *const font_file_path = "./VictorMono-Regular.ttf";
 
     FT_Face face;
     error = FT_New_Face(library, font_file_path, 0, &face);
@@ -249,10 +250,8 @@ int main(int argc, char **argv)
                 switch (event.key.keysym.sym) {
                 case SDLK_BACKSPACE: {
                     editor_backspace(&editor);
-#ifndef TILE_GLYPH_RENDER
                     cursor_renderer_use(&cr);
-                    glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
-#endif
+                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
                 }
                 break;
 
@@ -265,19 +264,15 @@ int main(int argc, char **argv)
 
                 case SDLK_RETURN: {
                     editor_insert_new_line(&editor);
-#ifndef TILE_GLYPH_RENDER
                     cursor_renderer_use(&cr);
-                    glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
-#endif
+                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
                 }
                 break;
 
                 case SDLK_DELETE: {
                     editor_delete(&editor);
-#ifndef TILE_GLYPH_RENDER
                     cursor_renderer_use(&cr);
-                    glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
-#endif
+                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
                 }
                 break;
 
@@ -285,39 +280,31 @@ int main(int argc, char **argv)
                     if (editor.cursor_row > 0) {
                         editor.cursor_row -= 1;
                     }
-#ifndef TILE_GLYPH_RENDER
                     cursor_renderer_use(&cr);
-                    glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
-#endif
+                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
                 }
                 break;
 
                 case SDLK_DOWN: {
                     editor.cursor_row += 1;
-#ifndef TILE_GLYPH_RENDER
                     cursor_renderer_use(&cr);
-                    glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
-#endif
+                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
                 }
                 break;
 
                 case SDLK_LEFT: {
                     if (editor.cursor_col > 0) {
                         editor.cursor_col -= 1;
-#ifndef TILE_GLYPH_RENDER
                         cursor_renderer_use(&cr);
-                        glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
-#endif
+                        glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
                     }
                 }
                 break;
 
                 case SDLK_RIGHT: {
                     editor.cursor_col += 1;
-#ifndef TILE_GLYPH_RENDER
                     cursor_renderer_use(&cr);
-                    glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
-#endif
+                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
 
                 }
                 break;
@@ -327,10 +314,8 @@ int main(int argc, char **argv)
 
             case SDL_TEXTINPUT: {
                 editor_insert_text_before_cursor(&editor, event.text.text);
-#ifndef TILE_GLYPH_RENDER
                 cursor_renderer_use(&cr);
-                glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
-#endif
+                glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
             }
             break;
             }

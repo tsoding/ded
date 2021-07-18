@@ -1,10 +1,8 @@
 uniform vec2 resolution;
-uniform vec2 camera;
-uniform float time;
-// uniform float camera_scale;
+uniform float camera_scale;
+uniform vec2 camera_pos;
 
 vec2 camera_project(vec2 point)
 {
-    float camera_scale = 1.0 + (sin(time) + 1.0) / 2.0;
-    return 2.0 * (point - camera) * camera_scale / resolution;
+    return 2.0 * (point - camera_pos) * camera_scale / resolution;
 }

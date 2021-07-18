@@ -112,10 +112,7 @@ void free_glyph_buffer_init(Free_Glyph_Buffer *fgb,
         }
 
         glUseProgram(fgb->program);
-
-        fgb->time_uniform = glGetUniformLocation(fgb->program, "time");
-        fgb->resolution_uniform = glGetUniformLocation(fgb->program, "resolution");
-        fgb->camera_uniform = glGetUniformLocation(fgb->program, "camera");
+        get_uniform_location(fgb->program, fgb->uniforms);
     }
 
     // Glyph Texture Atlas

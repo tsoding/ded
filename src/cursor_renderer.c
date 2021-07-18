@@ -27,13 +27,7 @@ void cursor_renderer_init(Cursor_Renderer *cr,
         }
 
         glUseProgram(cr->program);
-
-        cr->time_uniform = glGetUniformLocation(cr->program, "time");
-        cr->resolution_uniform = glGetUniformLocation(cr->program, "resolution");
-        cr->camera_uniform = glGetUniformLocation(cr->program, "camera");
-        cr->pos_uniform = glGetUniformLocation(cr->program, "pos");
-        cr->height_uniform = glGetUniformLocation(cr->program, "height");
-        cr->last_stroke_uniform = glGetUniformLocation(cr->program, "last_stroke");
+        get_uniform_location(cr->program, cr->uniforms);
     }
 }
 
@@ -44,7 +38,7 @@ void cursor_renderer_use(const Cursor_Renderer *cr)
 
 void cursor_renderer_move_to(const Cursor_Renderer *cr, Vec2f pos)
 {
-    glUniform2f(cr->pos_uniform, pos.x, pos.y);
+    glUniform2f(cr->uniforms[UNIFORM_SLOT_CURSOR_POS], pos.x, pos.y);
 }
 
 void cursor_renderer_draw()
