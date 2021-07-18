@@ -93,24 +93,26 @@ void free_glyph_buffer_init(Free_Glyph_Buffer *fgb,
 
     // Init Shaders
     {
-        GLuint vert_shader = 0;
-        if (!compile_shader_file(vert_file_path, GL_VERTEX_SHADER, &vert_shader)) {
+        GLuint shaders[3] = {0};
+
+        if (!compile_shader_file(vert_file_path, GL_VERTEX_SHADER, &shaders[0])) {
             exit(1);
         }
-        GLuint frag_shader = 0;
-        if (!compile_shader_file(frag_file_path, GL_FRAGMENT_SHADER, &frag_shader)) {
+        if (!compile_shader_file(frag_file_path, GL_FRAGMENT_SHADER, &shaders[1])) {
+            exit(1);
+        }
+        if (!compile_shader_file("./shaders/camera.vert", GL_VERTEX_SHADER, &shaders[2])) {
             exit(1);
         }
 
-        if (!link_program(vert_shader, frag_shader, &fgb->program)) {
+        fgb->program = glCreateProgram();
+        attach_shaders_to_program(shaders, sizeof(shaders) / sizeof(shaders[0]), fgb->program);
+        if (!link_program(fgb->program, __FILE__, __LINE__)) {
             exit(1);
         }
 
         glUseProgram(fgb->program);
-
-        fgb->time_uniform = glGetUniformLocation(fgb->program, "time");
-        fgb->resolution_uniform = glGetUniformLocation(fgb->program, "resolution");
-        fgb->camera_uniform = glGetUniformLocation(fgb->program, "camera");
+        get_uniform_location(fgb->program, fgb->uniforms);
     }
 
     // Glyph Texture Atlas
@@ -230,17 +232,17 @@ float free_glyph_buffer_cursor_pos(const Free_Glyph_Buffer *fgb, const char *tex
     return pos.x;
 }
 
-void free_glyph_buffer_render_line_sized(Free_Glyph_Buffer *fgb, const char *text, size_t text_size, Vec2f pos, Vec4f fg_color, Vec4f bg_color)
+void free_glyph_buffer_render_line_sized(Free_Glyph_Buffer *fgb, const char *text, size_t text_size, Vec2f *pos, Vec4f fg_color, Vec4f bg_color)
 {
     for (size_t i = 0; i < text_size; ++i) {
         Glyph_Metric metric = fgb->metrics[(int) text[i]];
-        float x2 = pos.x + metric.bl;
-        float y2 = -pos.y - metric.bt;
+        float x2 = pos->x + metric.bl;
+        float y2 = -pos->y - metric.bt;
         float w  = metric.bw;
         float h  = metric.bh;
 
-        pos.x += metric.ax;
-        pos.y += metric.ay;
+        pos->x += metric.ax;
+        pos->y += metric.ay;
 
         Free_Glyph glyph = {0};
         glyph.pos = vec2f(x2, -y2);
@@ -253,7 +255,3 @@ void free_glyph_buffer_render_line_sized(Free_Glyph_Buffer *fgb, const char *tex
     }
 }
 
-void free_glyph_buffer_render_line(Free_Glyph_Buffer *fgb, const char *text, Vec2f pos, Vec4f fg_color, Vec4f bg_color)
-{
-    free_glyph_buffer_render_line_sized(fgb, text, strlen(text), pos, fg_color, bg_color);
-}

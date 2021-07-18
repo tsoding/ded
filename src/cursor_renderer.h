@@ -8,16 +8,12 @@
 #include <SDL2/SDL_opengl.h>
 
 #include "./la.h"
+#include "./uniforms.h"
 
 typedef struct {
     GLuint program;
 
-    GLint time_uniform;
-    GLint resolution_uniform;
-    GLint camera_uniform;
-    GLint pos_uniform;
-    GLint height_uniform;
-    GLint last_stroke_uniform;
+    GLint uniforms[COUNT_UNIFORM_SLOTS];
 } Cursor_Renderer;
 
 void cursor_renderer_init(Cursor_Renderer *cr,
