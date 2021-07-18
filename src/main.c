@@ -35,6 +35,8 @@
 
 Editor editor = {0};
 Vec2f camera_pos = {0};
+float camera_scale = 3.0f;
+float camera_scale_vel = 0.0f;
 Vec2f camera_vel = {0};
 
 void usage(FILE *stream)
@@ -74,28 +76,39 @@ static Free_Glyph_Buffer fgb = {0};
 static Cursor_Renderer cr = {0};
 
 #define FREE_GLYPH_FONT_SIZE 64
+#define ZOOM_OUT_GLYPH_THRESHOLD 30
 
 void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Cursor_Renderer *cr, Editor *editor)
 {
     int w, h;
     SDL_GetWindowSize(window, &w, &h);
 
+    float max_line_len = 0.0f;
+
     free_glyph_buffer_use(fgb);
     {
         glUniform2f(fgb->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
         glUniform1f(fgb->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
         glUniform2f(fgb->uniforms[UNIFORM_SLOT_CAMERA_POS], camera_pos.x, camera_pos.y);
-        glUniform1f(fgb->uniforms[UNIFORM_SLOT_CAMERA_SCALE], 1.0f);
+        glUniform1f(fgb->uniforms[UNIFORM_SLOT_CAMERA_SCALE], camera_scale);
 
         free_glyph_buffer_clear(fgb);
 
         {
             for (size_t row = 0; row < editor->size; ++row) {
                 const Line *line = editor->lines + row;
+
+                const Vec2f begin = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
+                Vec2f end = begin;
                 free_glyph_buffer_render_line_sized(
                     fgb, line->chars, line->size,
-                    vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE),
+                    &end,
                     vec4fs(1.0f), vec4fs(0.0f));
+                // TODO: the max_line_len should be calculated based on what's visible on the screen right now
+                float line_len = fabsf(end.x - begin.x);
+                if (line_len > max_line_len) {
+                    max_line_len = line_len;
+                }
             }
         }
 
@@ -118,7 +131,7 @@ void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Cursor_R
         glUniform2f(cr->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
         glUniform1f(cr->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
         glUniform2f(cr->uniforms[UNIFORM_SLOT_CAMERA_POS], camera_pos.x, camera_pos.y);
-        glUniform1f(cr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], 1.0f);
+        glUniform1f(cr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], camera_scale);
         glUniform1f(cr->uniforms[UNIFORM_SLOT_CURSOR_HEIGHT], FREE_GLYPH_FONT_SIZE);
 
         cursor_renderer_move_to(cr, cursor_pos);
@@ -126,11 +139,22 @@ void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Cursor_R
     }
 
     {
+        float target_scale = 3.0f;
+        if (max_line_len > 0.0f) {
+            target_scale = SCREEN_WIDTH / max_line_len;
+        }
+
+        if (target_scale > 3.0f) {
+            target_scale = 3.0f;
+        }
+
         camera_vel = vec2f_mul(
                          vec2f_sub(cursor_pos, camera_pos),
                          vec2fs(2.0f));
+        camera_scale_vel = (target_scale - camera_scale) * 2.0f;
 
         camera_pos = vec2f_add(camera_pos, vec2f_mul(camera_vel, vec2fs(DELTA_TIME)));
+        camera_scale = camera_scale + camera_scale_vel * DELTA_TIME;
     }
 }
 

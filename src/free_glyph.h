@@ -81,7 +81,7 @@ void free_glyph_buffer_draw(Free_Glyph_Buffer *fgb);
 
 float free_glyph_buffer_cursor_pos(const Free_Glyph_Buffer *fgb, const char *text, size_t text_size, Vec2f pos, size_t col);
 
-void free_glyph_buffer_render_line_sized(Free_Glyph_Buffer *fgb, const char *text, size_t text_size, Vec2f pos, Vec4f fg_color, Vec4f bg_color);
-void free_glyph_buffer_render_line(Free_Glyph_Buffer *fgb, const char *text, Vec2f pos, Vec4f fg_color, Vec4f bg_color);
+void free_glyph_buffer_render_line_sized(Free_Glyph_Buffer *fgb, const char *text, size_t text_size, Vec2f *pos, Vec4f fg_color, Vec4f bg_color);
+
 
 #endif // FREE_GLYPH_H_

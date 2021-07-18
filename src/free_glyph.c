@@ -232,17 +232,17 @@ float free_glyph_buffer_cursor_pos(const Free_Glyph_Buffer *fgb, const char *tex
     return pos.x;
 }
 
-void free_glyph_buffer_render_line_sized(Free_Glyph_Buffer *fgb, const char *text, size_t text_size, Vec2f pos, Vec4f fg_color, Vec4f bg_color)
+void free_glyph_buffer_render_line_sized(Free_Glyph_Buffer *fgb, const char *text, size_t text_size, Vec2f *pos, Vec4f fg_color, Vec4f bg_color)
 {
     for (size_t i = 0; i < text_size; ++i) {
         Glyph_Metric metric = fgb->metrics[(int) text[i]];
-        float x2 = pos.x + metric.bl;
-        float y2 = -pos.y - metric.bt;
+        float x2 = pos->x + metric.bl;
+        float y2 = -pos->y - metric.bt;
         float w  = metric.bw;
         float h  = metric.bh;
 
-        pos.x += metric.ax;
-        pos.y += metric.ay;
+        pos->x += metric.ax;
+        pos->y += metric.ay;
 
         Free_Glyph glyph = {0};
         glyph.pos = vec2f(x2, -y2);
@@ -255,7 +255,3 @@ void free_glyph_buffer_render_line_sized(Free_Glyph_Buffer *fgb, const char *tex
     }
 }
 
-void free_glyph_buffer_render_line(Free_Glyph_Buffer *fgb, const char *text, Vec2f pos, Vec4f fg_color, Vec4f bg_color)
-{
-    free_glyph_buffer_render_line_sized(fgb, text, strlen(text), pos, fg_color, bg_color);
-}
