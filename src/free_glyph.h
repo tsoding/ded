@@ -13,6 +13,8 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include "./uniforms.h"
+
 // https://en.wikibooks.org/wiki/OpenGL_Programming/Modern_OpenGL_Tutorial_Text_Rendering_02
 
 typedef struct {
@@ -59,9 +61,7 @@ typedef struct {
 
     GLuint glyphs_texture;
 
-    GLint time_uniform;
-    GLint resolution_uniform;
-    GLint camera_uniform;
+    GLint uniforms[COUNT_UNIFORM_SLOTS];
 
     size_t glyphs_count;
     Free_Glyph glyphs[FREE_GLYPH_BUFFER_CAP];
@@ -81,7 +81,7 @@ void free_glyph_buffer_draw(Free_Glyph_Buffer *fgb);
 
 float free_glyph_buffer_cursor_pos(const Free_Glyph_Buffer *fgb, const char *text, size_t text_size, Vec2f pos, size_t col);
 
-void free_glyph_buffer_render_line_sized(Free_Glyph_Buffer *fgb, const char *text, size_t text_size, Vec2f pos, Vec4f fg_color, Vec4f bg_color);
-void free_glyph_buffer_render_line(Free_Glyph_Buffer *fgb, const char *text, Vec2f pos, Vec4f fg_color, Vec4f bg_color);
+void free_glyph_buffer_render_line_sized(Free_Glyph_Buffer *fgb, const char *text, size_t text_size, Vec2f *pos, Vec4f fg_color, Vec4f bg_color);
+
 
 #endif // FREE_GLYPH_H_

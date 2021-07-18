@@ -24,7 +24,6 @@
 #include "./la.h"
 #include "./sdl_extra.h"
 #include "./gl_extra.h"
-#include "./tile_glyph.h"
 #include "./free_glyph.h"
 #include "./cursor_renderer.h"
 
@@ -36,6 +35,8 @@
 
 Editor editor = {0};
 Vec2f camera_pos = {0};
+float camera_scale = 3.0f;
+float camera_scale_vel = 0.0f;
 Vec2f camera_vel = {0};
 
 void usage(FILE *stream)
@@ -71,90 +72,43 @@ void MessageCallback(GLenum source,
             type, severity, message);
 }
 
-void gl_render_cursor(Tile_Glyph_Buffer *tgb)
-{
-    const char *c = editor_char_under_cursor(&editor);
-    Vec2i tile = vec2i((int) editor.cursor_col, -(int) editor.cursor_row);
-    tile_glyph_render_line_sized(tgb, c ? c : " ", 1, tile, vec4fs(0.0f), vec4fs(1.0f));
-}
-
-// #define TILE_GLYPH_RENDER
-
-#ifdef TILE_GLYPH_RENDER
-static Tile_Glyph_Buffer tgb = {0};
-#else
 static Free_Glyph_Buffer fgb = {0};
 static Cursor_Renderer cr = {0};
-#endif
-
-void render_editor_into_tgb(SDL_Window *window, Tile_Glyph_Buffer *tgb, Editor *editor)
-{
-    {
-        // TODO: Zoom
-        const Vec2f cursor_pos =
-            vec2f((float) editor->cursor_col * FONT_CHAR_WIDTH * FONT_SCALE,
-                  (float) (-(int)editor->cursor_row) * FONT_CHAR_HEIGHT * FONT_SCALE);
-
-        camera_vel = vec2f_mul(
-                         vec2f_sub(cursor_pos, camera_pos),
-                         vec2fs(2.0f));
-
-        camera_pos = vec2f_add(camera_pos, vec2f_mul(camera_vel, vec2fs(DELTA_TIME)));
-    }
-
-    {
-        int w, h;
-        SDL_GetWindowSize(window, &w, &h);
-        glUniform2f(tgb->resolution_uniform, (float) w, (float) h);
-    }
-
-    tile_glyph_buffer_clear(tgb);
-    {
-        for (size_t row = 0; row < editor->size; ++row) {
-            const Line *line = editor->lines + row;
-
-            tile_glyph_render_line_sized(tgb, line->chars, line->size, vec2i(0, -(int)row), vec4fs(1.0f), vec4fs(0.0f));
-        }
-    }
-    tile_glyph_buffer_sync(tgb);
-
-    glUniform1f(tgb->time_uniform, (float) SDL_GetTicks() / 1000.0f);
-    glUniform2f(tgb->camera_uniform, camera_pos.x, camera_pos.y);
-
-    tile_glyph_buffer_draw(tgb);
-
-    tile_glyph_buffer_clear(tgb);
-    {
-        gl_render_cursor(tgb);
-    }
-    tile_glyph_buffer_sync(tgb);
-
-    tile_glyph_buffer_draw(tgb);
-}
 
 #define FREE_GLYPH_FONT_SIZE 64
-
+#define ZOOM_OUT_GLYPH_THRESHOLD 30
 
 void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Cursor_Renderer *cr, Editor *editor)
 {
     int w, h;
     SDL_GetWindowSize(window, &w, &h);
 
+    float max_line_len = 0.0f;
+
     free_glyph_buffer_use(fgb);
     {
-        glUniform2f(fgb->resolution_uniform, (float) w, (float) h);
-        glUniform1f(fgb->time_uniform, (float) SDL_GetTicks() / 1000.0f);
-        glUniform2f(fgb->camera_uniform, camera_pos.x, camera_pos.y);
+        glUniform2f(fgb->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
+        glUniform1f(fgb->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
+        glUniform2f(fgb->uniforms[UNIFORM_SLOT_CAMERA_POS], camera_pos.x, camera_pos.y);
+        glUniform1f(fgb->uniforms[UNIFORM_SLOT_CAMERA_SCALE], camera_scale);
 
         free_glyph_buffer_clear(fgb);
 
         {
             for (size_t row = 0; row < editor->size; ++row) {
                 const Line *line = editor->lines + row;
+
+                const Vec2f begin = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
+                Vec2f end = begin;
                 free_glyph_buffer_render_line_sized(
                     fgb, line->chars, line->size,
-                    vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE),
+                    &end,
                     vec4fs(1.0f), vec4fs(0.0f));
+                // TODO: the max_line_len should be calculated based on what's visible on the screen right now
+                float line_len = fabsf(end.x - begin.x);
+                if (line_len > max_line_len) {
+                    max_line_len = line_len;
+                }
             }
         }
 
@@ -174,21 +128,33 @@ void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Cursor_R
 
     cursor_renderer_use(cr);
     {
-        glUniform2f(cr->resolution_uniform, (float) w, (float) h);
-        glUniform1f(cr->time_uniform, (float) SDL_GetTicks() / 1000.0f);
-        glUniform2f(cr->camera_uniform, camera_pos.x, camera_pos.y);
-        glUniform1f(cr->height_uniform, FREE_GLYPH_FONT_SIZE);
+        glUniform2f(cr->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
+        glUniform1f(cr->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
+        glUniform2f(cr->uniforms[UNIFORM_SLOT_CAMERA_POS], camera_pos.x, camera_pos.y);
+        glUniform1f(cr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], camera_scale);
+        glUniform1f(cr->uniforms[UNIFORM_SLOT_CURSOR_HEIGHT], FREE_GLYPH_FONT_SIZE);
 
         cursor_renderer_move_to(cr, cursor_pos);
         cursor_renderer_draw();
     }
 
     {
+        float target_scale = 3.0f;
+        if (max_line_len > 0.0f) {
+            target_scale = SCREEN_WIDTH / max_line_len;
+        }
+
+        if (target_scale > 3.0f) {
+            target_scale = 3.0f;
+        }
+
         camera_vel = vec2f_mul(
                          vec2f_sub(cursor_pos, camera_pos),
                          vec2fs(2.0f));
+        camera_scale_vel = (target_scale - camera_scale) * 2.0f;
 
         camera_pos = vec2f_add(camera_pos, vec2f_mul(camera_vel, vec2fs(DELTA_TIME)));
+        camera_scale = camera_scale + camera_scale_vel * DELTA_TIME;
     }
 }
 
@@ -284,12 +250,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "WARNING! GLEW_ARB_debug_output is not available");
     }
 
-#ifdef TILE_GLYPH_RENDER
-    tile_glyph_buffer_init(&tgb,
-                           "./charmap-oldschool_white.png",
-                           "./shaders/tile_glyph.vert",
-                           "./shaders/tile_glyph.frag");
-#else
+
     free_glyph_buffer_init(&fgb,
                            face,
                            "./shaders/free_glyph.vert",
@@ -297,7 +258,6 @@ int main(int argc, char **argv)
     cursor_renderer_init(&cr,
                          "./shaders/cursor.vert",
                          "./shaders/cursor.frag");
-#endif
 
     bool quit = false;
     while (!quit) {
@@ -314,10 +274,8 @@ int main(int argc, char **argv)
                 switch (event.key.keysym.sym) {
                 case SDLK_BACKSPACE: {
                     editor_backspace(&editor);
-#ifndef TILE_GLYPH_RENDER
                     cursor_renderer_use(&cr);
-                    glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
-#endif
+                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
                 }
                 break;
 
@@ -330,19 +288,15 @@ int main(int argc, char **argv)
 
                 case SDLK_RETURN: {
                     editor_insert_new_line(&editor);
-#ifndef TILE_GLYPH_RENDER
                     cursor_renderer_use(&cr);
-                    glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
-#endif
+                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
                 }
                 break;
 
                 case SDLK_DELETE: {
                     editor_delete(&editor);
-#ifndef TILE_GLYPH_RENDER
                     cursor_renderer_use(&cr);
-                    glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
-#endif
+                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
                 }
                 break;
 
@@ -350,39 +304,31 @@ int main(int argc, char **argv)
                     if (editor.cursor_row > 0) {
                         editor.cursor_row -= 1;
                     }
-#ifndef TILE_GLYPH_RENDER
                     cursor_renderer_use(&cr);
-                    glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
-#endif
+                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
                 }
                 break;
 
                 case SDLK_DOWN: {
                     editor.cursor_row += 1;
-#ifndef TILE_GLYPH_RENDER
                     cursor_renderer_use(&cr);
-                    glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
-#endif
+                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
                 }
                 break;
 
                 case SDLK_LEFT: {
                     if (editor.cursor_col > 0) {
                         editor.cursor_col -= 1;
-#ifndef TILE_GLYPH_RENDER
                         cursor_renderer_use(&cr);
-                        glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
-#endif
+                        glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
                     }
                 }
                 break;
 
                 case SDLK_RIGHT: {
                     editor.cursor_col += 1;
-#ifndef TILE_GLYPH_RENDER
                     cursor_renderer_use(&cr);
-                    glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
-#endif
+                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
 
                 }
                 break;
@@ -392,10 +338,8 @@ int main(int argc, char **argv)
 
             case SDL_TEXTINPUT: {
                 editor_insert_text_before_cursor(&editor, event.text.text);
-#ifndef TILE_GLYPH_RENDER
                 cursor_renderer_use(&cr);
-                glUniform1f(cr.last_stroke_uniform, (float) SDL_GetTicks() / 1000.0f);
-#endif
+                glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
             }
             break;
             }
@@ -411,11 +355,7 @@ int main(int argc, char **argv)
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-#ifdef TILE_GLYPH_RENDER
-        render_editor_into_tgb(window, &tgb, &editor);
-#else
         render_editor_into_fgb(window, &fgb, &cr, &editor);
-#endif // TILE_GLYPH_RENDER
 
         SDL_GL_SwapWindow(window);
 
