@@ -43,8 +43,11 @@ void usage(FILE *stream)
     fprintf(stream, "Usage: te [FILE-PATH]\n");
 }
 
-// TODO: Save file
-// TODO: ncurses renderer
+// TODO: Save file dialog
+// Needed when ded is ran without any file so it does not know where to save.
+// TODO: File Manager
+// Any modern Text Editor should also be a File Manager
+
 // TODO: Jump forward/backward by a word
 // TODO: Delete a word
 // TODO: Blinking cursor
@@ -87,6 +90,7 @@ static Cursor_Renderer cr = {0};
 void render_editor_into_tgb(SDL_Window *window, Tile_Glyph_Buffer *tgb, Editor *editor)
 {
     {
+        // TODO: Zoom
         const Vec2f cursor_pos =
             vec2f((float) editor->cursor_col * FONT_CHAR_WIDTH * FONT_SCALE,
                   (float) (-(int)editor->cursor_row) * FONT_CHAR_HEIGHT * FONT_SCALE);
@@ -211,6 +215,8 @@ int main(int argc, char **argv)
     }
 
     FT_UInt pixel_size = FREE_GLYPH_FONT_SIZE;
+    // TODO: FT_Set_Pixel_Sizes does not produce good looking results
+    // We need to use something like FT_Set_Char_Size and properly set the device resolution
     error = FT_Set_Pixel_Sizes(face, 0, pixel_size);
     if (error) {
         fprintf(stderr, "ERROR: could not set pixel size to %u\n", pixel_size);
