@@ -6,7 +6,7 @@
 
 ```console
 $ ./build.sh
-$ ./ded src\main.c
+$ ./ded src/main.c
 ```
 
 ## Windows MSVC
