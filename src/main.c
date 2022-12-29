@@ -95,7 +95,7 @@ void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Cursor_R
 
         {
             for (size_t row = 0; row < editor->lines.count; ++row) {
-                Line_ line = editor->lines.items[row];
+                Line line = editor->lines.items[row];
 
                 const Vec2f begin = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
                 Vec2f end = begin;
@@ -118,7 +118,7 @@ void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Cursor_R
     Vec2f cursor_pos = vec2fs(0.0f);
     {
         size_t cursor_row = editor_cursor_row(editor);
-        Line_ line = editor->lines.items[cursor_row];
+        Line line = editor->lines.items[cursor_row];
         size_t cursor_col = editor->cursor - line.begin;
         cursor_pos.y = -(float) cursor_row * FREE_GLYPH_FONT_SIZE;
         cursor_pos.x = free_glyph_buffer_cursor_pos(

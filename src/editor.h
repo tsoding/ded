@@ -6,7 +6,7 @@
 typedef struct {
     size_t begin;
     size_t end;
-} Line_;
+} Line;
 
 typedef struct {
     char *items;
@@ -15,7 +15,7 @@ typedef struct {
 } Data;
 
 typedef struct {
-    Line_ *items;
+    Line *items;
     size_t count;
     size_t capacity;
 } Lines;

@@ -12,7 +12,7 @@ void editor_backspace(Editor *e)
         e->cursor = e->data.count;
     }
     if (e->cursor == 0) return;
-    
+
     memmove(
         &e->data.items[e->cursor - 1],
         &e->data.items[e->cursor],
@@ -84,7 +84,7 @@ size_t editor_cursor_row(const Editor *e)
 {
     assert(e->lines.count > 0);
     for (size_t row = 0; row < e->lines.count; ++row) {
-        Line_ line = e->lines.items[row];
+        Line line = e->lines.items[row];
         if (line.begin <= e->cursor && e->cursor <= line.end) {
             return row;
         }
@@ -97,7 +97,7 @@ void editor_move_line_up(Editor *e)
     size_t cursor_row = editor_cursor_row(e);
     size_t cursor_col = e->cursor - e->lines.items[cursor_row].begin;
     if (cursor_row > 0) {
-        Line_ next_line = e->lines.items[cursor_row - 1];
+        Line next_line = e->lines.items[cursor_row - 1];
         size_t next_line_size = next_line.end - next_line.begin;
         if (cursor_col > next_line_size) cursor_col = next_line_size;
         e->cursor = next_line.begin + cursor_col;
@@ -109,7 +109,7 @@ void editor_move_line_down(Editor *e)
     size_t cursor_row = editor_cursor_row(e);
     size_t cursor_col = e->cursor - e->lines.items[cursor_row].begin;
     if (cursor_row < e->lines.count - 1) {
-        Line_ next_line = e->lines.items[cursor_row + 1];
+        Line next_line = e->lines.items[cursor_row + 1];
         size_t next_line_size = next_line.end - next_line.begin;
         if (cursor_col > next_line_size) cursor_col = next_line_size;
         e->cursor = next_line.begin + cursor_col;
@@ -148,7 +148,7 @@ void editor_recompute_lines(Editor *e)
 {
     e->lines.count = 0;
 
-    Line_ line;
+    Line line;
     line.begin = 0;
 
     for (size_t i = 0; i < e->data.count; ++i) {
