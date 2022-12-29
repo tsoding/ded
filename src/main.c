@@ -32,7 +32,6 @@
 #define FPS 60
 #define DELTA_TIME (1.0f / FPS)
 
-
 Editor editor = {0};
 Vec2f camera_pos = {0};
 float camera_scale = 3.0f;
@@ -95,13 +94,13 @@ void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Cursor_R
         free_glyph_buffer_clear(fgb);
 
         {
-            for (size_t row = 0; row < editor->size; ++row) {
-                const Line *line = editor->lines + row;
+            for (size_t row = 0; row < editor->lines.count; ++row) {
+                Line_ line = editor->lines.items[row];
 
                 const Vec2f begin = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
                 Vec2f end = begin;
                 free_glyph_buffer_render_line_sized(
-                    fgb, line->chars, line->size,
+                    fgb, editor->data.items + line.begin, line.end - line.begin,
                     &end,
                     vec4fs(1.0f), vec4fs(0.0f));
                 // TODO: the max_line_len should be calculated based on what's visible on the screen right now
@@ -118,12 +117,16 @@ void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Cursor_R
 
     Vec2f cursor_pos = vec2fs(0.0f);
     {
-        cursor_pos.y = -(float) editor->cursor_row * FREE_GLYPH_FONT_SIZE;
-
-        if (editor->cursor_row < editor->size) {
-            Line *line = &editor->lines[editor->cursor_row];
-            cursor_pos.x = free_glyph_buffer_cursor_pos(fgb, line->chars, line->size, vec2f(0.0, cursor_pos.y), editor->cursor_col);
-        }
+        size_t cursor_row = editor_cursor_row(editor);
+        Line_ line = editor->lines.items[cursor_row];
+        size_t cursor_col = editor->cursor - line.begin;
+        cursor_pos.y = -(float) cursor_row * FREE_GLYPH_FONT_SIZE;
+        cursor_pos.x = free_glyph_buffer_cursor_pos(
+            fgb,
+            editor->data.items + line.begin, line.end - line.begin,
+            vec2f(0.0, cursor_pos.y),
+            cursor_col
+        );
     }
 
     cursor_renderer_use(cr);
@@ -160,6 +163,8 @@ void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Cursor_R
 
 int main(int argc, char **argv)
 {
+    editor_recompute_lines(&editor);
+
     FT_Library library = {0};
 
     FT_Error error = FT_Init_FreeType(&library);
@@ -287,7 +292,7 @@ int main(int argc, char **argv)
                 break;
 
                 case SDLK_RETURN: {
-                    editor_insert_new_line(&editor);
+                    editor_insert_char(&editor, '\n');
                     cursor_renderer_use(&cr);
                     glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
                 }
@@ -301,32 +306,28 @@ int main(int argc, char **argv)
                 break;
 
                 case SDLK_UP: {
-                    if (editor.cursor_row > 0) {
-                        editor.cursor_row -= 1;
-                    }
+                    editor_move_line_up(&editor);
                     cursor_renderer_use(&cr);
                     glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
                 }
                 break;
 
                 case SDLK_DOWN: {
-                    editor.cursor_row += 1;
+                    editor_move_line_down(&editor);
                     cursor_renderer_use(&cr);
                     glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
                 }
                 break;
 
                 case SDLK_LEFT: {
-                    if (editor.cursor_col > 0) {
-                        editor.cursor_col -= 1;
-                        cursor_renderer_use(&cr);
-                        glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
-                    }
+                    editor_move_char_left(&editor);
+                    cursor_renderer_use(&cr);
+                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
                 }
                 break;
 
                 case SDLK_RIGHT: {
-                    editor.cursor_col += 1;
+                    editor_move_char_right(&editor);
                     cursor_renderer_use(&cr);
                     glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
 
@@ -337,7 +338,11 @@ int main(int argc, char **argv)
             break;
 
             case SDL_TEXTINPUT: {
-                editor_insert_text_before_cursor(&editor, event.text.text);
+                const char *text = event.text.text;
+                size_t text_len = strlen(text);
+                for (size_t i = 0; i < text_len; ++i) {
+                    editor_insert_char(&editor, text[i]);
+                }
                 cursor_renderer_use(&cr);
                 glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
             }
