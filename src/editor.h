@@ -48,6 +48,8 @@ size_t editor_cursor_row(const Editor *e);
 void editor_move_line_up(Editor *e);
 void editor_move_line_down(Editor *e);
 void editor_move_char_left(Editor *e);
+void editor_move_char_home(Editor *e);
+void editor_move_char_end(Editor *e);
 void editor_move_char_right(Editor *e);
 void editor_insert_char(Editor *e, char x);
 void editor_recompute_lines(Editor *e);

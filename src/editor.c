@@ -121,6 +121,36 @@ void editor_move_char_left(Editor *e)
     if (e->cursor > 0) e->cursor -= 1;
 }
 
+void editor_move_char_home(Editor *e)
+{
+    size_t first = 0;
+
+    size_t i = e->cursor;
+    while (i-- > 0)
+    {
+        if (e->data.items[i] == '\n') {
+            first = i+1;
+            break;
+        }
+    }
+    if (e->cursor > first) e->cursor = first;
+}
+
+void editor_move_char_end(Editor *e)
+{
+    size_t last = e->data.count;
+
+    size_t i = e->cursor;
+    while (i++ < e->data.count)
+    {
+        if (e->data.items[i] == '\n') {
+            last = i;
+            break;
+        }
+    }
+    if (e->cursor < e->data.count) e->cursor = last;
+}
+
 void editor_move_char_right(Editor *e)
 {
     if (e->cursor < e->data.count) e->cursor += 1;
