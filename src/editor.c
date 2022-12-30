@@ -126,6 +126,17 @@ void editor_move_char_right(Editor *e)
     if (e->cursor < e->data.count) e->cursor += 1;
 }
 
+void editor_move_char_begin(Editor *e)
+{
+    size_t cursor_row = editor_cursor_row(e);
+    e->cursor = e->lines.items[cursor_row].begin;
+}
+void editor_move_char_end(Editor *e)
+{
+    size_t cursor_row = editor_cursor_row(e);
+    e->cursor = e->lines.items[cursor_row].end;
+}
+
 void editor_insert_char(Editor *e, char x)
 {
     if (e->cursor > e->data.count) {
