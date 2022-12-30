@@ -1,6 +1,8 @@
 # Dramatic EDitor
 
-# Quick Start 
+**THIS SOFTWARE IS UNFINISHED!!!**
+
+# Quick Start
 
 ## POSIX
 
