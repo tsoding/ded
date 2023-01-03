@@ -25,7 +25,7 @@
 #include "./sdl_extra.h"
 #include "./gl_extra.h"
 #include "./free_glyph.h"
-#include "./cursor_renderer.h"
+#include "./simple_renderer.h"
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
@@ -33,6 +33,7 @@
 #define DELTA_TIME (1.0f / FPS)
 
 Editor editor = {0};
+Uint32 last_stroke = 0;
 Vec2f camera_pos = {0};
 float camera_scale = 3.0f;
 float camera_scale_vel = 0.0f;
@@ -72,12 +73,12 @@ void MessageCallback(GLenum source,
 }
 
 static Free_Glyph_Buffer fgb = {0};
-static Cursor_Renderer cr = {0};
+static Simple_Renderer sr = {0};
 
 #define FREE_GLYPH_FONT_SIZE 64
 #define ZOOM_OUT_GLYPH_THRESHOLD 30
 
-void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Cursor_Renderer *cr, Editor *editor)
+void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Simple_Renderer *sr, Editor *editor)
 {
     int w, h;
     SDL_GetWindowSize(window, &w, &h);
@@ -122,23 +123,33 @@ void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Cursor_R
         size_t cursor_col = editor->cursor - line.begin;
         cursor_pos.y = -(float) cursor_row * FREE_GLYPH_FONT_SIZE;
         cursor_pos.x = free_glyph_buffer_cursor_pos(
-            fgb,
-            editor->data.items + line.begin, line.end - line.begin,
-            vec2f(0.0, cursor_pos.y),
-            cursor_col
-        );
+                           fgb,
+                           editor->data.items + line.begin, line.end - line.begin,
+                           vec2f(0.0, cursor_pos.y),
+                           cursor_col
+                       );
     }
 
-    cursor_renderer_use(cr);
+    simple_renderer_use(sr);
     {
-        glUniform2f(cr->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
-        glUniform1f(cr->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
-        glUniform2f(cr->uniforms[UNIFORM_SLOT_CAMERA_POS], camera_pos.x, camera_pos.y);
-        glUniform1f(cr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], camera_scale);
-        glUniform1f(cr->uniforms[UNIFORM_SLOT_CURSOR_HEIGHT], FREE_GLYPH_FONT_SIZE);
+        glUniform2f(sr->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
+        glUniform1f(sr->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
+        glUniform2f(sr->uniforms[UNIFORM_SLOT_CAMERA_POS], camera_pos.x, camera_pos.y);
+        glUniform1f(sr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], camera_scale);
 
-        cursor_renderer_move_to(cr, cursor_pos);
-        cursor_renderer_draw();
+        sr->verticies_count = 0;
+        float CURSOR_WIDTH = 5.0f;
+        Uint32 CURSOR_BLINK_THRESHOLD = 500;
+        Uint32 CURSOR_BLINK_PERIOD = 1000;
+        Uint32 t = SDL_GetTicks() - last_stroke;
+        if (t < CURSOR_BLINK_THRESHOLD || t/CURSOR_BLINK_PERIOD%2 != 0) {
+            simple_renderer_solid_rect(
+                sr,
+                cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE),
+                vec4fs(1));
+        }
+        simple_renderer_sync(sr);
+        simple_renderer_draw(sr);
     }
 
     {
@@ -260,9 +271,10 @@ int main(int argc, char **argv)
                            face,
                            "./shaders/free_glyph.vert",
                            "./shaders/free_glyph.frag");
-    cursor_renderer_init(&cr,
-                         "./shaders/cursor.vert",
-                         "./shaders/cursor.frag");
+
+    simple_renderer_init(&sr,
+                         "./shaders/simple.vert",
+                         "./shaders/simple.frag");
 
     bool quit = false;
     while (!quit) {
@@ -279,8 +291,7 @@ int main(int argc, char **argv)
                 switch (event.key.keysym.sym) {
                 case SDLK_BACKSPACE: {
                     editor_backspace(&editor);
-                    cursor_renderer_use(&cr);
-                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
+                    last_stroke = SDL_GetTicks();
                 }
                 break;
 
@@ -293,44 +304,37 @@ int main(int argc, char **argv)
 
                 case SDLK_RETURN: {
                     editor_insert_char(&editor, '\n');
-                    cursor_renderer_use(&cr);
-                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
+                    last_stroke = SDL_GetTicks();
                 }
                 break;
 
                 case SDLK_DELETE: {
                     editor_delete(&editor);
-                    cursor_renderer_use(&cr);
-                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
+                    last_stroke = SDL_GetTicks();
                 }
                 break;
 
                 case SDLK_UP: {
                     editor_move_line_up(&editor);
-                    cursor_renderer_use(&cr);
-                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
+                    last_stroke = SDL_GetTicks();
                 }
                 break;
 
                 case SDLK_DOWN: {
                     editor_move_line_down(&editor);
-                    cursor_renderer_use(&cr);
-                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
+                    last_stroke = SDL_GetTicks();
                 }
                 break;
 
                 case SDLK_LEFT: {
                     editor_move_char_left(&editor);
-                    cursor_renderer_use(&cr);
-                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
+                    last_stroke = SDL_GetTicks();
                 }
                 break;
 
                 case SDLK_RIGHT: {
                     editor_move_char_right(&editor);
-                    cursor_renderer_use(&cr);
-                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
-
+                    last_stroke = SDL_GetTicks();
                 }
                 break;
                 }
@@ -343,8 +347,7 @@ int main(int argc, char **argv)
                 for (size_t i = 0; i < text_len; ++i) {
                     editor_insert_char(&editor, text[i]);
                 }
-                cursor_renderer_use(&cr);
-                glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
+                last_stroke = SDL_GetTicks();
             }
             break;
             }
@@ -360,7 +363,7 @@ int main(int argc, char **argv)
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        render_editor_into_fgb(window, &fgb, &cr, &editor);
+        render_editor_into_fgb(window, &fgb, &sr, &editor);
 
         SDL_GL_SwapWindow(window);
 
