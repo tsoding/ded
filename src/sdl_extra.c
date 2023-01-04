@@ -1,5 +1,4 @@
 #include "./sdl_extra.h"
-#include "./stb_image.h"
 
 void scc(int code)
 {

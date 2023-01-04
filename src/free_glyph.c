@@ -3,9 +3,6 @@
 #include "./free_glyph.h"
 #include "./gl_extra.h"
 
-#include "./stb_image_write.h"
-#include "./stb_image.h"
-
 typedef struct {
     size_t offset;
     GLint comps;
@@ -254,4 +251,3 @@ void free_glyph_buffer_render_line_sized(Free_Glyph_Buffer *fgb, const char *tex
         free_glyph_buffer_push(fgb, glyph);
     }
 }
-
