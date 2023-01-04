@@ -26,3 +26,5 @@ if not exist dependencies\GLEW\include\GL\ mkdir dependencies\GLEW\include\GL\
 move glew-2.1.0\include\GL\glew.h dependencies\GLEW\include\GL\glew.h
 del glew-2.1.0-win32.zip
 rmdir /s /q glew-2.1.0
+
+git clone https://github.com/ubawurinna/freetype-windows-binaries.git dependencies/freetype2

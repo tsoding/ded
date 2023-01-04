@@ -22,6 +22,8 @@ char *slurp_file(const char *file_path)
     char *buffer = malloc(size + 1);
     if (buffer == NULL) SLURP_FILE_PANIC;
 
+    memset(buffer,0,_msize(buffer));
+    
     if (fseek(f, 0, SEEK_SET) < 0) SLURP_FILE_PANIC;
 
     fread(buffer, 1, size, f);

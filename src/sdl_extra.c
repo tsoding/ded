@@ -1,4 +1,5 @@
 #include "./sdl_extra.h"
+#include <stdio.h>
 
 void scc(int code)
 {
