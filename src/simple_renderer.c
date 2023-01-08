@@ -138,17 +138,14 @@ void simple_renderer_quad(Simple_Renderer *sr,
     simple_renderer_triangle(sr, p1, p2, p3, c1, c2, c3, uv1, uv2, uv3);
 }
 
-void simple_renderer_image_rect(Simple_Renderer *sr, Vec2f p, Vec2f s)
+void simple_renderer_image_rect(Simple_Renderer *sr, Vec2f p, Vec2f s, Vec2f uvp, Vec2f uvs)
 {
-    // 0.361321 0.000000
-    // 0.372065 0.712121
-
     Vec4f c = vec4fs(0);
     simple_renderer_quad(
         sr,
         p, vec2f_add(p, vec2f(s.x, 0)), vec2f_add(p, vec2f(0, s.y)), vec2f_add(p, s),
         c, c, c, c,
-        vec2f(0.361321, 0.000000), vec2f(0.372065, 0), vec2f(0.361321, 0.712121), vec2f(0.372065, 0.712121));
+        uvp, vec2f_add(uvp, vec2f(uvs.x, 0)), vec2f_add(uvp, vec2f(0, uvs.y)), vec2f_add(uvp, uvs));
 }
 
 void simple_renderer_solid_rect(Simple_Renderer *sr, Vec2f p, Vec2f s, Vec4f c)
