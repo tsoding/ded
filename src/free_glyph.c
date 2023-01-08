@@ -180,6 +180,15 @@ void free_glyph_buffer_init(Free_Glyph_Buffer *fgb,
                 face->glyph->bitmap.buffer);
             x += face->glyph->bitmap.width;
         }
+
+        #if 0
+        Glyph_Metric metric = fgb->metrics['E'];
+        Vec2f uv_pos = vec2f(metric.tx, 0.0f);
+        Vec2f uv_size = vec2f(metric.bw / (float) fgb->atlas_width, metric.bh / (float) fgb->atlas_height);
+        printf("%f %f\n", uv_pos.x, uv_pos.y);
+        printf("%f %f\n", uv_size.x, uv_size.y);
+        exit(69);
+        #endif
     }
 }
 

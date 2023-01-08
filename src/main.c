@@ -126,20 +126,41 @@ void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Simple_R
 
     simple_renderer_use(sr);
     {
+        float CURSOR_WIDTH = 5.0f;
+        Uint32 CURSOR_BLINK_THRESHOLD = 500;
+        Uint32 CURSOR_BLINK_PERIOD = 1000;
+        Uint32 t = SDL_GetTicks() - last_stroke;
+
+        //////////////////////////////
+
+        simple_renderer_set_shader(sr, SHADER_FOR_EPICNESS);
         glUniform2f(sr->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
         glUniform1f(sr->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
         glUniform2f(sr->uniforms[UNIFORM_SLOT_CAMERA_POS], camera_pos.x, camera_pos.y);
         glUniform1f(sr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], camera_scale);
 
         sr->verticies_count = 0;
-        float CURSOR_WIDTH = 5.0f;
-        Uint32 CURSOR_BLINK_THRESHOLD = 500;
-        Uint32 CURSOR_BLINK_PERIOD = 1000;
-        Uint32 t = SDL_GetTicks() - last_stroke;
+        if (t < CURSOR_BLINK_THRESHOLD || t/CURSOR_BLINK_PERIOD%2 != 0) {
+            simple_renderer_image_rect(
+                sr,
+                cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE));
+        }
+        simple_renderer_sync(sr);
+        simple_renderer_draw(sr);
+
+        //////////////////////////////
+
+        simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
+        glUniform2f(sr->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
+        glUniform1f(sr->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
+        glUniform2f(sr->uniforms[UNIFORM_SLOT_CAMERA_POS], camera_pos.x, camera_pos.y);
+        glUniform1f(sr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], camera_scale);
+        sr->verticies_count = 0;
         if (t < CURSOR_BLINK_THRESHOLD || t/CURSOR_BLINK_PERIOD%2 != 0) {
             simple_renderer_solid_rect(
                 sr,
-                cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE),
+                vec2f_add(cursor_pos, vec2f(CURSOR_WIDTH, 0)),
+                vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE),
                 vec4fs(1));
         }
         simple_renderer_sync(sr);
@@ -268,7 +289,9 @@ int main(int argc, char **argv)
 
     simple_renderer_init(&sr,
                          "./shaders/simple.vert",
-                         "./shaders/simple.frag");
+                         "./shaders/simple_color.frag",
+                         "./shaders/simple_image.frag",
+                         "./shaders/simple_epic.frag");
 
     bool quit = false;
     while (!quit) {
