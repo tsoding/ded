@@ -8,7 +8,14 @@
 #include <SDL2/SDL_opengl.h>
 
 #include "./la.h"
-#include "./uniforms.h"
+
+typedef enum {
+    UNIFORM_SLOT_TIME = 0,
+    UNIFORM_SLOT_RESOLUTION,
+    UNIFORM_SLOT_CAMERA_POS,
+    UNIFORM_SLOT_CAMERA_SCALE,
+    COUNT_UNIFORM_SLOTS,
+} Uniform_Slot;
 
 typedef enum {
     SIMPLE_VERTEX_ATTR_POSITION = 0,
@@ -27,7 +34,7 @@ typedef struct {
 typedef enum {
     SHADER_FOR_COLOR = 0,
     SHADER_FOR_IMAGE,
-    SHADER_FOR_EPICNESS,
+    SHADER_FOR_EPICNESS, // This is the one that does that cool rainbowish animation
     COUNT_SIMPLE_SHADERS,
 } Simple_Shader;
 
