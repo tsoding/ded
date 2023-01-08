@@ -13,7 +13,9 @@
 
 void simple_renderer_init(Simple_Renderer *sr,
                           const char *vert_file_path,
-                          const char *frag_file_path)
+                          const char *color_frag_file_path,
+                          const char *image_frag_file_path,
+                          const char *epic_frag_file_path)
 {
     {
         glGenVertexArrays(1, &sr->vao);
@@ -55,29 +57,52 @@ void simple_renderer_init(Simple_Renderer *sr,
     }
 
     GLuint shaders[2] = {0};
+
     if (!compile_shader_file(vert_file_path, GL_VERTEX_SHADER, &shaders[0])) {
         exit(1);
     }
-    if (!compile_shader_file(frag_file_path, GL_FRAGMENT_SHADER, &shaders[1])) {
-        exit(1);
+
+    // Shader for color
+    {
+        if (!compile_shader_file(color_frag_file_path, GL_FRAGMENT_SHADER, &shaders[1])) {
+            exit(1);
+        }
+        sr->programs[SHADER_FOR_COLOR] = glCreateProgram();
+        attach_shaders_to_program(shaders, sizeof(shaders) / sizeof(shaders[0]), sr->programs[SHADER_FOR_COLOR]);
+        if (!link_program(sr->programs[SHADER_FOR_COLOR], __FILE__, __LINE__)) {
+            exit(1);
+        }
     }
 
-    sr->program = glCreateProgram();
-    attach_shaders_to_program(shaders, sizeof(shaders) / sizeof(shaders[0]), sr->program);
-    if (!link_program(sr->program, __FILE__, __LINE__)) {
-        exit(1);
+    // Shader for image
+    {
+        if (!compile_shader_file(image_frag_file_path, GL_FRAGMENT_SHADER, &shaders[1])) {
+            exit(1);
+        }
+        sr->programs[SHADER_FOR_IMAGE] = glCreateProgram();
+        attach_shaders_to_program(shaders, sizeof(shaders) / sizeof(shaders[0]), sr->programs[SHADER_FOR_IMAGE]);
+        if (!link_program(sr->programs[SHADER_FOR_IMAGE], __FILE__, __LINE__)) {
+            exit(1);
+        }
     }
 
-    glUseProgram(sr->program);
-
-    get_uniform_location(sr->program, sr->uniforms);
+    // Shader for epicness
+    {
+        if (!compile_shader_file(epic_frag_file_path, GL_FRAGMENT_SHADER, &shaders[1])) {
+            exit(1);
+        }
+        sr->programs[SHADER_FOR_EPICNESS] = glCreateProgram();
+        attach_shaders_to_program(shaders, sizeof(shaders) / sizeof(shaders[0]), sr->programs[SHADER_FOR_EPICNESS]);
+        if (!link_program(sr->programs[SHADER_FOR_EPICNESS], __FILE__, __LINE__)) {
+            exit(1);
+        }
+    }
 }
 
 void simple_renderer_use(const Simple_Renderer *sr)
 {
     glBindVertexArray(sr->vao);
     glBindBuffer(GL_ARRAY_BUFFER, sr->vbo);
-    glUseProgram(sr->program);
 }
 
 void simple_renderer_vertex(Simple_Renderer *sr,
@@ -113,6 +138,16 @@ void simple_renderer_quad(Simple_Renderer *sr,
     simple_renderer_triangle(sr, p1, p2, p3, c1, c2, c3, uv1, uv2, uv3);
 }
 
+void simple_renderer_image_rect(Simple_Renderer *sr, Vec2f p, Vec2f s, Vec2f uvp, Vec2f uvs)
+{
+    Vec4f c = vec4fs(0);
+    simple_renderer_quad(
+        sr,
+        p, vec2f_add(p, vec2f(s.x, 0)), vec2f_add(p, vec2f(0, s.y)), vec2f_add(p, s),
+        c, c, c, c,
+        uvp, vec2f_add(uvp, vec2f(uvs.x, 0)), vec2f_add(uvp, vec2f(0, uvs.y)), vec2f_add(uvp, uvs));
+}
+
 void simple_renderer_solid_rect(Simple_Renderer *sr, Vec2f p, Vec2f s, Vec4f c)
 {
     Vec2f uv = vec2fs(0);
@@ -134,4 +169,11 @@ void simple_renderer_sync(Simple_Renderer *sr)
 void simple_renderer_draw(Simple_Renderer *sr)
 {
     glDrawArrays(GL_TRIANGLES, 0, sr->verticies_count);
+}
+
+void simple_renderer_set_shader(Simple_Renderer *sr, Simple_Shader shader)
+{
+    sr->current_shader = shader;
+    glUseProgram(sr->programs[sr->current_shader]);
+    get_uniform_location(sr->programs[sr->current_shader], sr->uniforms);
 }

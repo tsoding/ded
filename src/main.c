@@ -66,48 +66,46 @@ void MessageCallback(GLenum source,
             type, severity, message);
 }
 
-static Free_Glyph_Buffer fgb = {0};
+static Free_Glyph_Atlas atlas = {0};
 static Simple_Renderer sr = {0};
 
 #define FREE_GLYPH_FONT_SIZE 64
 #define ZOOM_OUT_GLYPH_THRESHOLD 30
 
-void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Simple_Renderer *sr, Editor *editor)
+void render_editor(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor)
 {
     int w, h;
     SDL_GetWindowSize(window, &w, &h);
 
     float max_line_len = 0.0f;
 
-    free_glyph_buffer_use(fgb);
+    simple_renderer_use(sr);
+
+    // Render text
+    simple_renderer_set_shader(sr, SHADER_FOR_EPICNESS);
+    glUniform2f(sr->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
+    glUniform1f(sr->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
+    glUniform2f(sr->uniforms[UNIFORM_SLOT_CAMERA_POS], camera_pos.x, camera_pos.y);
+    glUniform1f(sr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], camera_scale);
     {
-        glUniform2f(fgb->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
-        glUniform1f(fgb->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
-        glUniform2f(fgb->uniforms[UNIFORM_SLOT_CAMERA_POS], camera_pos.x, camera_pos.y);
-        glUniform1f(fgb->uniforms[UNIFORM_SLOT_CAMERA_SCALE], camera_scale);
+        for (size_t row = 0; row < editor->lines.count; ++row) {
+            Line line = editor->lines.items[row];
 
-        free_glyph_buffer_clear(fgb);
-
-        {
-            for (size_t row = 0; row < editor->lines.count; ++row) {
-                Line line = editor->lines.items[row];
-
-                const Vec2f begin = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
-                Vec2f end = begin;
-                free_glyph_buffer_render_line_sized(
-                    fgb, editor->data.items + line.begin, line.end - line.begin,
-                    &end,
-                    vec4fs(1.0f), vec4fs(0.0f));
-                // TODO: the max_line_len should be calculated based on what's visible on the screen right now
-                float line_len = fabsf(end.x - begin.x);
-                if (line_len > max_line_len) {
-                    max_line_len = line_len;
-                }
+            const Vec2f begin = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
+            Vec2f end = begin;
+            free_glyph_atlas_render_line_sized(
+                atlas, sr, editor->data.items + line.begin, line.end - line.begin,
+                &end);
+            // TODO: the max_line_len should be calculated based on what's visible on the screen right now
+            float line_len = fabsf(end.x - begin.x);
+            if (line_len > max_line_len) {
+                max_line_len = line_len;
             }
         }
 
-        free_glyph_buffer_sync(fgb);
-        free_glyph_buffer_draw(fgb);
+        simple_renderer_sync(sr);
+        simple_renderer_draw(sr);
+        sr->verticies_count = 0;
     }
 
     Vec2f cursor_pos = vec2fs(0.0f);
@@ -116,36 +114,40 @@ void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Simple_R
         Line line = editor->lines.items[cursor_row];
         size_t cursor_col = editor->cursor - line.begin;
         cursor_pos.y = -(float) cursor_row * FREE_GLYPH_FONT_SIZE;
-        cursor_pos.x = free_glyph_buffer_cursor_pos(
-                           fgb,
+        cursor_pos.x = free_glyph_atlas_cursor_pos(
+                           atlas,
                            editor->data.items + line.begin, line.end - line.begin,
                            vec2f(0.0, cursor_pos.y),
                            cursor_col
                        );
     }
 
-    simple_renderer_use(sr);
+    // Render cursor
+    simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
+    glUniform2f(sr->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
+    glUniform1f(sr->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
+    glUniform2f(sr->uniforms[UNIFORM_SLOT_CAMERA_POS], camera_pos.x, camera_pos.y);
+    glUniform1f(sr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], camera_scale);
     {
-        glUniform2f(sr->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
-        glUniform1f(sr->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
-        glUniform2f(sr->uniforms[UNIFORM_SLOT_CAMERA_POS], camera_pos.x, camera_pos.y);
-        glUniform1f(sr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], camera_scale);
-
-        sr->verticies_count = 0;
         float CURSOR_WIDTH = 5.0f;
         Uint32 CURSOR_BLINK_THRESHOLD = 500;
         Uint32 CURSOR_BLINK_PERIOD = 1000;
         Uint32 t = SDL_GetTicks() - last_stroke;
+
+        sr->verticies_count = 0;
         if (t < CURSOR_BLINK_THRESHOLD || t/CURSOR_BLINK_PERIOD%2 != 0) {
             simple_renderer_solid_rect(
                 sr,
                 cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE),
                 vec4fs(1));
         }
+
         simple_renderer_sync(sr);
         simple_renderer_draw(sr);
+        sr->verticies_count = 0;
     }
 
+    // Update camera
     {
         float target_scale = 3.0f;
         if (max_line_len > 0.0f) {
@@ -261,14 +263,12 @@ int main(int argc, char **argv)
     }
 
 
-    free_glyph_buffer_init(&fgb,
-                           face,
-                           "./shaders/free_glyph.vert",
-                           "./shaders/free_glyph.frag");
-
     simple_renderer_init(&sr,
                          "./shaders/simple.vert",
-                         "./shaders/simple.frag");
+                         "./shaders/simple_color.frag",
+                         "./shaders/simple_image.frag",
+                         "./shaders/simple_epic.frag");
+    free_glyph_atlas_init(&atlas, face);
 
     bool quit = false;
     while (!quit) {
@@ -357,7 +357,7 @@ int main(int argc, char **argv)
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        render_editor_into_fgb(window, &fgb, &sr, &editor);
+        render_editor(window, &atlas, &sr, &editor);
 
         SDL_GL_SwapWindow(window);
 
