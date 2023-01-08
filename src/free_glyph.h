@@ -18,16 +18,16 @@
 // https://en.wikibooks.org/wiki/OpenGL_Programming/Modern_OpenGL_Tutorial_Text_Rendering_02
 
 typedef struct {
-  float ax; // advance.x
-  float ay; // advance.y
-  
-  float bw; // bitmap.width;
-  float bh; // bitmap.rows;
-  
-  float bl; // bitmap_left;
-  float bt; // bitmap_top;
-  
-  float tx; // x offset of glyph in texture coordinates
+    float ax; // advance.x
+    float ay; // advance.y
+
+    float bw; // bitmap.width;
+    float bh; // bitmap.rows;
+
+    float bl; // bitmap_left;
+    float bt; // bitmap_top;
+
+    float tx; // x offset of glyph in texture coordinates
 } Glyph_Metric;
 
 typedef struct {
