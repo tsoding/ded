@@ -62,6 +62,7 @@ void simple_renderer_quad(Simple_Renderer *sr,
                           Vec2f uv0, Vec2f uv1, Vec2f uv2, Vec2f uv3);
 void simple_renderer_solid_rect(Simple_Renderer *sr, Vec2f p, Vec2f s, Vec4f c);
 void simple_renderer_image_rect(Simple_Renderer *sr, Vec2f p, Vec2f s, Vec2f uvp, Vec2f uvs);
+void simple_renderer_flush(Simple_Renderer *sr);
 void simple_renderer_sync(Simple_Renderer *sr);
 void simple_renderer_draw(Simple_Renderer *sr);
 

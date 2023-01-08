@@ -177,3 +177,10 @@ void simple_renderer_set_shader(Simple_Renderer *sr, Simple_Shader shader)
     glUseProgram(sr->programs[sr->current_shader]);
     get_uniform_location(sr->programs[sr->current_shader], sr->uniforms);
 }
+
+void simple_renderer_flush(Simple_Renderer *sr)
+{
+    simple_renderer_sync(sr);
+    simple_renderer_draw(sr);
+    sr->verticies_count = 0;
+}

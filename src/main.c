@@ -100,9 +100,7 @@ void render_editor(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             }
         }
 
-        simple_renderer_sync(sr);
-        simple_renderer_draw(sr);
-        sr->verticies_count = 0;
+        simple_renderer_flush(sr);
     }
 
     Vec2f cursor_pos = vec2fs(0.0f);
@@ -139,9 +137,7 @@ void render_editor(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 vec4fs(1));
         }
 
-        simple_renderer_sync(sr);
-        simple_renderer_draw(sr);
-        sr->verticies_count = 0;
+        simple_renderer_flush(sr);
     }
 
     // Update camera
