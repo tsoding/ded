@@ -40,6 +40,12 @@ typedef struct {
     GLint uniforms[COUNT_UNIFORM_SLOTS];
     Simple_Vertex verticies[SIMPLE_VERTICIES_CAP];
     size_t verticies_count;
+
+    Vec2f camera_pos;
+    float camera_scale;
+    float camera_scale_vel;
+    Vec2f camera_vel;
+
 } Simple_Renderer;
 
 void simple_renderer_init(Simple_Renderer *sr,

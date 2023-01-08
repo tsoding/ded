@@ -17,6 +17,8 @@ void simple_renderer_init(Simple_Renderer *sr,
                           const char *image_frag_file_path,
                           const char *epic_frag_file_path)
 {
+    sr->camera_scale = 3.0f;
+
     {
         glGenVertexArrays(1, &sr->vao);
         glBindVertexArray(sr->vao);

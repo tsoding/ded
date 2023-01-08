@@ -26,13 +26,6 @@
 #define FPS 60
 #define DELTA_TIME (1.0f / FPS)
 
-Editor editor = {0};
-Uint32 last_stroke = 0;
-Vec2f camera_pos = {0};
-float camera_scale = 3.0f;
-float camera_scale_vel = 0.0f;
-Vec2f camera_vel = {0};
-
 void usage(FILE *stream)
 {
     fprintf(stream, "Usage: te [FILE-PATH]\n");
@@ -65,6 +58,8 @@ void MessageCallback(GLenum source,
 
 static Free_Glyph_Atlas atlas = {0};
 static Simple_Renderer sr = {0};
+static Editor editor = {0};
+static Uint32 last_stroke = 0;
 
 #define FREE_GLYPH_FONT_SIZE 64
 #define ZOOM_OUT_GLYPH_THRESHOLD 30
@@ -82,8 +77,8 @@ void render_editor(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     simple_renderer_set_shader(sr, SHADER_FOR_EPICNESS);
     glUniform2f(sr->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
     glUniform1f(sr->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
-    glUniform2f(sr->uniforms[UNIFORM_SLOT_CAMERA_POS], camera_pos.x, camera_pos.y);
-    glUniform1f(sr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], camera_scale);
+    glUniform2f(sr->uniforms[UNIFORM_SLOT_CAMERA_POS], sr->camera_pos.x, sr->camera_pos.y);
+    glUniform1f(sr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], sr->camera_scale);
     {
         for (size_t row = 0; row < editor->lines.count; ++row) {
             Line line = editor->lines.items[row];
@@ -121,8 +116,8 @@ void render_editor(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
     glUniform2f(sr->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
     glUniform1f(sr->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
-    glUniform2f(sr->uniforms[UNIFORM_SLOT_CAMERA_POS], camera_pos.x, camera_pos.y);
-    glUniform1f(sr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], camera_scale);
+    glUniform2f(sr->uniforms[UNIFORM_SLOT_CAMERA_POS], sr->camera_pos.x, sr->camera_pos.y);
+    glUniform1f(sr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], sr->camera_scale);
     {
         float CURSOR_WIDTH = 5.0f;
         Uint32 CURSOR_BLINK_THRESHOLD = 500;
@@ -151,13 +146,13 @@ void render_editor(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             target_scale = 3.0f;
         }
 
-        camera_vel = vec2f_mul(
-                         vec2f_sub(cursor_pos, camera_pos),
-                         vec2fs(2.0f));
-        camera_scale_vel = (target_scale - camera_scale) * 2.0f;
+        sr->camera_vel = vec2f_mul(
+                             vec2f_sub(cursor_pos, sr->camera_pos),
+                             vec2fs(2.0f));
+        sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f;
 
-        camera_pos = vec2f_add(camera_pos, vec2f_mul(camera_vel, vec2fs(DELTA_TIME)));
-        camera_scale = camera_scale + camera_scale_vel * DELTA_TIME;
+        sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME)));
+        sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME;
     }
 }
 
