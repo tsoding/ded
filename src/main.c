@@ -45,9 +45,6 @@ void usage(FILE *stream)
 
 // TODO: Jump forward/backward by a word
 // TODO: Delete a word
-// TODO: Blinking cursor
-// TODO: Delete line
-// TODO: Split the line on Enter
 
 void MessageCallback(GLenum source,
                      GLenum type,
