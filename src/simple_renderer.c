@@ -210,6 +210,10 @@ void simple_renderer_set_shader(Simple_Renderer *sr, Simple_Shader shader)
     sr->current_shader = shader;
     glUseProgram(sr->programs[sr->current_shader]);
     get_uniform_location(sr->programs[sr->current_shader], sr->uniforms);
+    glUniform2f(sr->uniforms[UNIFORM_SLOT_RESOLUTION], sr->resolution.x, sr->resolution.y);
+    glUniform1f(sr->uniforms[UNIFORM_SLOT_TIME], sr->time);
+    glUniform2f(sr->uniforms[UNIFORM_SLOT_CAMERA_POS], sr->camera_pos.x, sr->camera_pos.y);
+    glUniform1f(sr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], sr->camera_scale);
 }
 
 void simple_renderer_flush(Simple_Renderer *sr)

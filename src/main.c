@@ -73,12 +73,11 @@ void render_editor(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
     simple_renderer_use(sr);
 
+    sr->resolution = vec2f(w, h);
+    sr->time = (float) SDL_GetTicks() / 1000.0f;
+
     // Render text
     simple_renderer_set_shader(sr, SHADER_FOR_EPICNESS);
-    glUniform2f(sr->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
-    glUniform1f(sr->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
-    glUniform2f(sr->uniforms[UNIFORM_SLOT_CAMERA_POS], sr->camera_pos.x, sr->camera_pos.y);
-    glUniform1f(sr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], sr->camera_scale);
     {
         for (size_t row = 0; row < editor->lines.count; ++row) {
             Line line = editor->lines.items[row];
@@ -114,10 +113,6 @@ void render_editor(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
     // Render cursor
     simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
-    glUniform2f(sr->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
-    glUniform1f(sr->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
-    glUniform2f(sr->uniforms[UNIFORM_SLOT_CAMERA_POS], sr->camera_pos.x, sr->camera_pos.y);
-    glUniform1f(sr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], sr->camera_scale);
     {
         float CURSOR_WIDTH = 5.0f;
         Uint32 CURSOR_BLINK_THRESHOLD = 500;
