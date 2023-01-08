@@ -35,6 +35,13 @@ void editor_delete(Editor *e)
     editor_recompute_lines(e);
 }
 
+void editor_tab(Editor *e)
+{
+    for(int i = 0; i < 4; i++) {
+        editor_insert_char(e, ' ');
+    }
+}
+
 void editor_save_to_file(const Editor *editor, const char *file_path)
 {
     FILE *f = fopen(file_path, "w");

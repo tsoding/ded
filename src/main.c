@@ -291,6 +291,12 @@ int main(int argc, char **argv)
                 }
                 break;
 
+                case SDLK_TAB: {
+                    editor_tab(&editor);
+                    last_stroke = SDL_GetTicks();
+                }
+                break;
+
                 case SDLK_UP: {
                     editor_move_line_up(&editor);
                     last_stroke = SDL_GetTicks();
