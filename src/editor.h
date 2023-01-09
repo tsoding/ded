@@ -49,6 +49,8 @@ void editor_move_line_up(Editor *e);
 void editor_move_line_down(Editor *e);
 void editor_move_char_left(Editor *e);
 void editor_move_char_right(Editor *e);
+void editor_move_char_begin(Editor *e);
+void editor_move_char_end(Editor *e);
 void editor_insert_char(Editor *e, char x);
 void editor_recompute_lines(Editor *e);
 

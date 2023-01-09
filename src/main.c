@@ -322,6 +322,34 @@ int main(int argc, char **argv)
                     last_stroke = SDL_GetTicks();
                 }
                 break;
+
+                case SDLK_HOME: {
+                    editor_move_char_begin(&editor);
+                    cursor_renderer_use(&cr);
+                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
+
+                }
+                break;
+
+                case SDLK_END: {
+                    editor_move_char_end(&editor);
+                    cursor_renderer_use(&cr);
+                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
+
+                }
+                break;                
+
+                case SDLK_TAB: {
+                    const char *text = "    ";
+                    size_t text_len = strlen(text);
+                    for (size_t i = 0; i < text_len; ++i) {
+                        editor_insert_char(&editor, text[i]);
+                    }
+                    cursor_renderer_use(&cr);
+                    glUniform1f(cr.uniforms[UNIFORM_SLOT_LAST_STROKE], (float) SDL_GetTicks() / 1000.0f);
+                }
+                break;
+
                 }
             }
             break;
