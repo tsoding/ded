@@ -16,7 +16,6 @@
 
 #include "./editor.h"
 #include "./la.h"
-#include "./sdl_extra.h"
 #include "./gl_extra.h"
 #include "./free_glyph.h"
 #include "./simple_renderer.h"
@@ -160,7 +159,7 @@ int main(int argc, char **argv)
     FT_Error error = FT_Init_FreeType(&library);
     if (error) {
         fprintf(stderr, "ERROR: could initialize FreeType2 library\n");
-        exit(1);
+        return 1;
     }
 
     const char *const font_file_path = "./VictorMono-Regular.ttf";
@@ -169,10 +168,10 @@ int main(int argc, char **argv)
     error = FT_New_Face(library, font_file_path, 0, &face);
     if (error == FT_Err_Unknown_File_Format) {
         fprintf(stderr, "ERROR: `%s` has an unknown format\n", font_file_path);
-        exit(1);
+        return 1;
     } else if (error) {
         fprintf(stderr, "ERROR: could not load file `%s`\n", font_file_path);
-        exit(1);
+        return 1;
     }
 
     FT_UInt pixel_size = FREE_GLYPH_FONT_SIZE;
@@ -181,7 +180,7 @@ int main(int argc, char **argv)
     error = FT_Set_Pixel_Sizes(face, 0, pixel_size);
     if (error) {
         fprintf(stderr, "ERROR: could not set pixel size to %u\n", pixel_size);
-        exit(1);
+        return 1;
     }
 
     const char *file_path = NULL;
@@ -198,13 +197,20 @@ int main(int argc, char **argv)
         }
     }
 
-    scc(SDL_Init(SDL_INIT_VIDEO));
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        fprintf(stderr, "ERROR: Could not initialize SDL: %s\n", SDL_GetError());
+        return 1;
+    }
 
     SDL_Window *window =
-        scp(SDL_CreateWindow("Text Editor",
-                             0, 0,
-                             SCREEN_WIDTH, SCREEN_HEIGHT,
-                             SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL));
+        SDL_CreateWindow("Text Editor",
+                         0, 0,
+                         SCREEN_WIDTH, SCREEN_HEIGHT,
+                         SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
+    if (window == NULL) {
+        fprintf(stderr, "ERROR: Could not create SDL window: %s\n", SDL_GetError());
+        return 1;
+    }
 
     {
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -218,21 +224,24 @@ int main(int argc, char **argv)
         printf("GL version %d.%d\n", major, minor);
     }
 
-    scp(SDL_GL_CreateContext(window));
+    if (SDL_GL_CreateContext(window) == NULL) {
+        fprintf(stderr, "Could not create OpenGL context: %s\n", SDL_GetError());
+        return 1;
+    }
 
     if (GLEW_OK != glewInit()) {
         fprintf(stderr, "Could not initialize GLEW!");
-        exit(1);
+        return 1;
     }
 
     if (!GLEW_ARB_draw_instanced) {
         fprintf(stderr, "ARB_draw_instanced is not supported; game may not work properly!!\n");
-        exit(1);
+        return 1;
     }
 
     if (!GLEW_ARB_instanced_arrays) {
         fprintf(stderr, "ARB_instanced_arrays is not supported; game may not work properly!!\n");
-        exit(1);
+        return 1;
     }
 
     glEnable(GL_BLEND);
