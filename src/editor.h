@@ -44,6 +44,7 @@ void editor_load_from_file(Editor *editor, FILE *file);
 
 void editor_backspace(Editor *editor);
 void editor_delete(Editor *editor);
+void editor_tab(Editor *editor);
 size_t editor_cursor_row(const Editor *e);
 void editor_move_line_up(Editor *e);
 void editor_move_line_down(Editor *e);
