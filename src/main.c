@@ -16,7 +16,6 @@
 
 #include "./editor.h"
 #include "./la.h"
-#include "./gl_extra.h"
 #include "./free_glyph.h"
 #include "./simple_renderer.h"
 
