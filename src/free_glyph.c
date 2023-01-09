@@ -100,17 +100,6 @@ void free_glyph_atlas_render_line_sized(Free_Glyph_Atlas *atlas, Simple_Renderer
         pos->x += metric.ax;
         pos->y += metric.ay;
 
-        /*
-        Free_Glyph glyph = {0};
-        glyph.pos = vec2f(x2, -y2);
-        glyph.size = vec2f(w, -h);
-        glyph.uv_pos = vec2f(metric.tx, 0.0f);
-        glyph.uv_size = vec2f(metric.bw / (float) atlas->atlas_width, metric.bh / (float) atlas->atlas_height);
-        glyph.fg_color = fg_color;
-        glyph.bg_color = bg_color;
-        free_glyph_buffer_push(atlas, glyph);
-        */
-
         simple_renderer_image_rect(
             sr,
             vec2f(x2, -y2),
