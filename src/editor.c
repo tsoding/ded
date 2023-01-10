@@ -36,17 +36,20 @@ void editor_delete(Editor *e)
     editor_recompute_lines(e);
 }
 
-void editor_save_to_file(const Editor *editor, const char *file_path)
+Errno editor_save_as(Editor *editor, const char *file_path)
 {
-    FILE *f = fopen(file_path, "w");
-    if (f == NULL) {
-        fprintf(stdout, "ERROR: could not open file `%s`: %s\n",
-                file_path, strerror(errno));
-        exit(1);
-    }
+    Errno err = write_entire_file(file_path, editor->data.items, editor->data.count);
+    if (err != 0) return err;
+    editor->file_path.count = 0;
+    sb_append_cstr(&editor->file_path, file_path);
+    sb_append_null(&editor->file_path);
+    return 0;
+}
 
-    fwrite(editor->data.items, 1, editor->data.count, f);
-    fclose(f);
+Errno editor_save(const Editor *editor)
+{
+    assert(editor->file_path.count > 0);
+    return write_entire_file(editor->file_path.items, editor->data.items, editor->data.count);
 }
 
 static Errno file_size(FILE *file, size_t *size)
@@ -88,6 +91,11 @@ Errno editor_load_from_file(Editor *e, const char *file_path)
     editor_recompute_lines(e);
 
 defer:
+    if (result == 0) {
+        e->file_path.count = 0;
+        sb_append_cstr(&e->file_path, file_path);
+        sb_append_null(&e->file_path);
+    }
     if (file) fclose(file);
     return result;
 }

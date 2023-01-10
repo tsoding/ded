@@ -21,14 +21,15 @@ typedef struct {
     size_t capacity;
 } Lines;
 
-
 typedef struct {
     Data data;
     Lines lines;
+    String_Builder file_path;
     size_t cursor;
 } Editor;
 
-void editor_save_to_file(const Editor *editor, const char *file_path);
+Errno editor_save_as(Editor *editor, const char *file_path);
+Errno editor_save(const Editor *editor);
 Errno editor_load_from_file(Editor *editor, const char *file_path);
 
 void editor_backspace(Editor *editor);

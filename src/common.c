@@ -56,6 +56,22 @@ defer:
     return result;
 }
 
+Errno write_entire_file(const char *file_path, const char *buf, size_t buf_size)
+{
+    Errno result = 0;
+    FILE *f = NULL;
+
+    f = fopen(file_path, "wb");
+    if (f == NULL) return_defer(errno);
+
+    fwrite(buf, 1, buf_size, f);
+    if (ferror(f)) return_defer(errno);
+
+defer:
+    if (f) fclose(f);
+    return result;
+}
+
 char *read_entire_file(const char *file_path)
 {
 #define SLURP_FILE_PANIC \

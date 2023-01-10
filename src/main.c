@@ -220,7 +220,7 @@ void render_editor(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 }
 
 // TODO: display errors reported via flash_error right in the text editor window somehow
-#define flash_error(fmt, ...) fprintf(stderr, fmt, __VA_ARGS__)
+#define flash_error(...) fprintf(stderr, __VA_ARGS__)
 
 int main(int argc, char **argv)
 {
@@ -257,16 +257,9 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    // TODO: move file_path inside of Editor
-    // Editor must own the file path it's currently editing. It's also important to transafer the ownership of
-    // the file name from File_Browser to Editor properly.
-    const char *file_path = NULL;
 
     if (argc > 1) {
-        file_path = argv[1];
-    }
-
-    if (file_path) {
+        const char *file_path = argv[1];
         err = editor_load_from_file(&editor, file_path);
         if (err != 0) {
             fprintf(stderr, "ERROR: Could ont read file %s: %s\n", file_path, strerror(err));
@@ -378,10 +371,11 @@ int main(int argc, char **argv)
 
                     case SDLK_RETURN: {
                         if (fb.cursor < fb.files.count) {
-                            file_path = fb.files.items[fb.cursor];
+                            // TODO: go into folders
+                            const char *file_path = fb.files.items[fb.cursor];
                             err = editor_load_from_file(&editor, file_path);
                             if (err != 0) {
-                                flash_error("Could not open file %s: %s", file_path, strerror(errno));
+                                flash_error("Could not open file %s: %s", file_path, strerror(err));
                             } else {
                                 file_browser = false;
                             }
@@ -398,8 +392,14 @@ int main(int argc, char **argv)
                     break;
 
                     case SDLK_F2: {
-                        if (file_path) {
-                            editor_save_to_file(&editor, file_path);
+                        if (editor.file_path.count > 0) {
+                            err = editor_save(&editor);
+                            if (err != 0) {
+                                flash_error("Could not save file currently edited file: %s", strerror(err));
+                            }
+                        } else {
+                            // TODO: as the user for the path to save to in this situation
+                            flash_error("No where to save the text");
                         }
                     }
                     break;
