@@ -13,9 +13,6 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#define SV_IMPLEMENTATION
-#include "./sv.h"
-
 #include "./editor.h"
 #include "./file_browser.h"
 #include "./la.h"
