@@ -224,6 +224,8 @@ void render_editor(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
 int main(int argc, char **argv)
 {
+    Errno err;
+
     editor_recompute_lines(&editor);
 
     FT_Library library = {0};
@@ -255,6 +257,9 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    // TODO: move file_path inside of Editor
+    // Editor must own the file path it's currently editing. It's also important to transafer the ownership of
+    // the file name from File_Browser to Editor properly.
     const char *file_path = NULL;
 
     if (argc > 1) {
@@ -262,17 +267,17 @@ int main(int argc, char **argv)
     }
 
     if (file_path) {
-        FILE *file = fopen(file_path, "r");
-        if (file != NULL) {
-            editor_load_from_file(&editor, file);
-            fclose(file);
+        err = editor_load_from_file(&editor, file_path);
+        if (err != 0) {
+            fprintf(stderr, "ERROR: Could ont read file %s: %s\n", file_path, strerror(err));
+            return 1;
         }
     }
 
     const char *dir_path = ".";
-    Errno err = fb_open_dir(&fb, dir_path);
+    err = fb_open_dir(&fb, dir_path);
     if (err != 0) {
-        fprintf(stderr, "ERROR: Could not read directory %s: %s\n", dir_path, strerror(errno));
+        fprintf(stderr, "ERROR: Could not read directory %s: %s\n", dir_path, strerror(err));
         return 1;
     }
 
@@ -374,11 +379,11 @@ int main(int argc, char **argv)
                     case SDLK_RETURN: {
                         if (fb.cursor < fb.files.count) {
                             file_path = fb.files.items[fb.cursor];
-                            FILE *file = fopen(file_path, "r");
-                            if (file != NULL) {
-                                editor_load_from_file(&editor, file);
+                            err = editor_load_from_file(&editor, file_path);
+                            if (err != 0) {
+                                flash_error("Could not open file %s: %s", file_path, strerror(errno));
+                            } else {
                                 file_browser = false;
-                                fclose(file);
                             }
                         }
                     }
