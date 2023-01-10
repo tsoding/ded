@@ -5,37 +5,7 @@
 #include <string.h>
 #include <errno.h>
 #include "./simple_renderer.h"
-
-static char *slurp_file(const char *file_path)
-{
-#define SLURP_FILE_PANIC \
-    do { \
-        fprintf(stderr, "Could not read file `%s`: %s\n", file_path, strerror(errno)); \
-        exit(1); \
-    } while (0)
-
-    FILE *f = fopen(file_path, "r");
-    if (f == NULL) SLURP_FILE_PANIC;
-    if (fseek(f, 0, SEEK_END) < 0) SLURP_FILE_PANIC;
-
-    long size = ftell(f);
-    if (size < 0) SLURP_FILE_PANIC;
-
-    char *buffer = malloc(size + 1);
-    if (buffer == NULL) SLURP_FILE_PANIC;
-
-    if (fseek(f, 0, SEEK_SET) < 0) SLURP_FILE_PANIC;
-
-    fread(buffer, 1, size, f);
-    if (ferror(f) < 0) SLURP_FILE_PANIC;
-
-    buffer[size] = '\0';
-
-    if (fclose(f) < 0) SLURP_FILE_PANIC;
-
-    return buffer;
-#undef SLURP_FILE_PANIC
-}
+#include "./common.h"
 
 static const char *shader_type_as_cstr(GLuint shader)
 {
@@ -72,7 +42,7 @@ static bool compile_shader_source(const GLchar *source, GLenum shader_type, GLui
 
 static bool compile_shader_file(const char *file_path, GLenum shader_type, GLuint *shader)
 {
-    char *source = slurp_file(file_path);
+    char *source = read_entire_file(file_path);
     bool ok = compile_shader_source(source, shader_type, shader);
     if (!ok) {
         fprintf(stderr, "ERROR: failed to compile `%s` shader file\n", file_path);
@@ -130,12 +100,6 @@ static const Uniform_Def uniform_defs[COUNT_UNIFORM_SLOTS] = {
     },
 };
 
-#define UNIMPLEMENTED(...)               \
-    do {                                 \
-        printf("%s:%d: UNIMPLEMENTED: %s \n", __FILE__, __LINE__, __VA_ARGS__); \
-        exit(1);                         \
-    } while(0)
-#define UNUSED(x) (void)(x)
 
 static void get_uniform_location(GLuint program, GLint locations[COUNT_UNIFORM_SLOTS])
 {
@@ -232,12 +196,6 @@ void simple_renderer_init(Simple_Renderer *sr,
             exit(1);
         }
     }
-}
-
-void simple_renderer_use(const Simple_Renderer *sr)
-{
-    glBindVertexArray(sr->vao);
-    glBindBuffer(GL_ARRAY_BUFFER, sr->vbo);
 }
 
 void simple_renderer_vertex(Simple_Renderer *sr,

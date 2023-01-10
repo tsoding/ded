@@ -63,7 +63,6 @@ void simple_renderer_init(Simple_Renderer *sr,
                           const char *image_frag_file_path,
                           const char *epic_frag_file_path);
 
-void simple_renderer_use(const Simple_Renderer *sr);
 void simple_renderer_vertex(Simple_Renderer *sr,
                             Vec2f p, Vec4f c, Vec2f uv);
 void simple_renderer_set_shader(Simple_Renderer *sr, Simple_Shader shader);

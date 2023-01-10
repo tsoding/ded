@@ -5,6 +5,7 @@
 #include <string.h>
 #include "./editor.h"
 #include "./sv.h"
+#include "common.h"
 
 void editor_backspace(Editor *e)
 {
@@ -35,37 +36,47 @@ void editor_delete(Editor *e)
     editor_recompute_lines(e);
 }
 
-void editor_save_to_file(const Editor *editor, const char *file_path)
+Errno editor_save_as(Editor *editor, const char *file_path)
 {
-    FILE *f = fopen(file_path, "w");
-    if (f == NULL) {
-        fprintf(stdout, "ERROR: could not open file `%s`: %s\n",
-                file_path, strerror(errno));
-        exit(1);
-    }
-
-    fwrite(editor->data.items, 1, editor->data.count, f);
-    fclose(f);
+    Errno err = write_entire_file(file_path, editor->data.items, editor->data.count);
+    if (err != 0) return err;
+    editor->file_path.count = 0;
+    sb_append_cstr(&editor->file_path, file_path);
+    sb_append_null(&editor->file_path);
+    return 0;
 }
 
-static size_t file_size(FILE *file)
+Errno editor_save(const Editor *editor)
+{
+    assert(editor->file_path.count > 0);
+    return write_entire_file(editor->file_path.items, editor->data.items, editor->data.count);
+}
+
+static Errno file_size(FILE *file, size_t *size)
 {
     long saved = ftell(file);
-    assert(saved >= 0);
-    int err = fseek(file, 0, SEEK_END);
-    assert(err == 0);
+    if (saved < 0) return errno;
+    if (fseek(file, 0, SEEK_END) < 0) return errno;
     long result = ftell(file);
-    assert(result >= 0);
-    err = fseek(file, saved, SEEK_SET);
-    assert(err == 0);
-    return result;
+    if (result < 0) return errno;
+    if (fseek(file, saved, SEEK_SET) < 0) return errno;
+    *size = (size_t) result;
+    return 0;
 }
 
-void editor_load_from_file(Editor *e, FILE *file)
+Errno editor_load_from_file(Editor *e, const char *file_path)
 {
+    Errno result = 0;
+    FILE *file = NULL;
+
     e->data.count = 0;
 
-    size_t data_size = file_size(file);
+    file = fopen(file_path, "rb");
+    if (file == NULL) return_defer(errno);
+
+    size_t data_size;
+    Errno err = file_size(file, &data_size);
+    if (err != 0) return_defer(err);
 
     if (e->data.capacity < data_size) {
         e->data.capacity = data_size;
@@ -74,10 +85,19 @@ void editor_load_from_file(Editor *e, FILE *file)
     }
 
     fread(e->data.items, data_size, 1, file);
-    assert(!ferror(file));
+    if (ferror(file)) return_defer(errno);
     e->data.count = data_size;
 
     editor_recompute_lines(e);
+
+defer:
+    if (result == 0) {
+        e->file_path.count = 0;
+        sb_append_cstr(&e->file_path, file_path);
+        sb_append_null(&e->file_path);
+    }
+    if (file) fclose(file);
+    return result;
 }
 
 size_t editor_cursor_row(const Editor *e)
