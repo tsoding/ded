@@ -39,6 +39,6 @@ typedef struct {
 
 void free_glyph_atlas_init(Free_Glyph_Atlas *atlas, FT_Face face);
 float free_glyph_atlas_cursor_pos(const Free_Glyph_Atlas *atlas, const char *text, size_t text_size, Vec2f pos, size_t col);
-void free_glyph_atlas_render_line_sized(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, const char *text, size_t text_size, Vec2f *pos);
+void free_glyph_atlas_render_line_sized(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, const char *text, size_t text_size, Vec2f *pos, bool render);
 
 #endif // FREE_GLYPH_H_

@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <errno.h>
+#include <string.h>
 
 #include <SDL2/SDL.h>
 #define GLEW_STATIC
@@ -18,6 +20,7 @@
 #include "./la.h"
 #include "./free_glyph.h"
 #include "./simple_renderer.h"
+#include "./common.h"
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
@@ -62,6 +65,76 @@ static Uint32 last_stroke = 0;
 #define FREE_GLYPH_FONT_SIZE 64
 #define ZOOM_OUT_GLYPH_THRESHOLD 30
 
+typedef struct {
+    Files files;
+    size_t cursor;
+} File_Browser;
+
+void render_file_browser(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr, const File_Browser *fb)
+{
+    Vec2f cursor_pos = vec2f(0, -(float)fb->cursor * FREE_GLYPH_FONT_SIZE);
+
+    int w, h;
+    SDL_GetWindowSize(window, &w, &h);
+
+    float max_line_len = 0.0f;
+
+    simple_renderer_use(sr);
+
+    sr->resolution = vec2f(w, h);
+    sr->time = (float) SDL_GetTicks() / 1000.0f;
+
+    simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
+    if (fb->cursor < fb->files.count) {
+        const Vec2f begin = vec2f(0, -(float)fb->cursor * FREE_GLYPH_FONT_SIZE);
+        Vec2f end = begin;
+        free_glyph_atlas_render_line_sized(
+            atlas, sr, fb->files.items[fb->cursor], strlen(fb->files.items[fb->cursor]),
+            &end,
+            false);
+        simple_renderer_solid_rect(sr, begin, vec2f(end.x - begin.x, FREE_GLYPH_FONT_SIZE), vec4f(.25, .25, .25, 1));
+    }
+    simple_renderer_flush(sr);
+
+    simple_renderer_set_shader(sr, SHADER_FOR_EPICNESS);
+    for (size_t row = 0; row < fb->files.count; ++row) {
+        const Vec2f begin = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
+        Vec2f end = begin;
+        free_glyph_atlas_render_line_sized(
+            atlas, sr, fb->files.items[row], strlen(fb->files.items[row]),
+            &end,
+            true);
+        // TODO: the max_line_len should be calculated based on what's visible on the screen right now
+        float line_len = fabsf(end.x - begin.x);
+        if (line_len > max_line_len) {
+            max_line_len = line_len;
+        }
+    }
+
+    simple_renderer_flush(sr);
+
+    // Update camera
+    {
+        float target_scale = 3.0f;
+        if (max_line_len > 0.0f) {
+            target_scale = SCREEN_WIDTH / max_line_len;
+        }
+
+        if (target_scale > 3.0f) {
+            target_scale = 3.0f;
+        }
+
+
+        sr->camera_vel = vec2f_mul(
+                             vec2f_sub(cursor_pos, sr->camera_pos),
+                             vec2fs(2.0f));
+        sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f;
+
+        sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME)));
+        sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME;
+    }
+}
+
 void render_editor(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor)
 {
     int w, h;
@@ -84,7 +157,8 @@ void render_editor(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             Vec2f end = begin;
             free_glyph_atlas_render_line_sized(
                 atlas, sr, editor->data.items + line.begin, line.end - line.begin,
-                &end);
+                &end,
+                true);
             // TODO: the max_line_len should be calculated based on what's visible on the screen right now
             float line_len = fabsf(end.x - begin.x);
             if (line_len > max_line_len) {
@@ -131,6 +205,9 @@ void render_editor(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     // Update camera
     {
         float target_scale = 3.0f;
+        if (max_line_len > 1000.0f) {
+            max_line_len = 1000.0f;
+        }
         if (max_line_len > 0.0f) {
             target_scale = SCREEN_WIDTH / max_line_len;
         }
@@ -147,6 +224,16 @@ void render_editor(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME)));
         sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME;
     }
+}
+
+// TODO: display errors reported via flush_error right in the text editor window somehow
+#define flush_error(fmt, ...) fprintf(stderr, fmt, __VA_ARGS__)
+
+int file_cmp(const void *ap, const void *bp)
+{
+    const char *a = *(const char**)ap;
+    const char *b = *(const char**)bp;
+    return strcmp(a, b);
 }
 
 int main(int argc, char **argv)
@@ -262,6 +349,8 @@ int main(int argc, char **argv)
     free_glyph_atlas_init(&atlas, face);
 
     bool quit = false;
+    bool file_browser = false;
+    File_Browser fb = {0};
     while (!quit) {
         const Uint32 start = SDL_GetTicks();
         SDL_Event event = {0};
@@ -273,66 +362,116 @@ int main(int argc, char **argv)
             break;
 
             case SDL_KEYDOWN: {
-                switch (event.key.keysym.sym) {
-                case SDLK_BACKSPACE: {
-                    editor_backspace(&editor);
-                    last_stroke = SDL_GetTicks();
-                }
-                break;
-
-                case SDLK_F2: {
-                    if (file_path) {
-                        editor_save_to_file(&editor, file_path);
+                if (file_browser) {
+                    switch (event.key.keysym.sym) {
+                    case SDLK_F3: {
+                        file_browser = false;
                     }
-                }
-                break;
+                    break;
 
-                case SDLK_RETURN: {
-                    editor_insert_char(&editor, '\n');
-                    last_stroke = SDL_GetTicks();
-                }
-                break;
+                    case SDLK_UP: {
+                        if (fb.cursor > 0) fb.cursor -= 1;
+                    }
+                    break;
 
-                case SDLK_DELETE: {
-                    editor_delete(&editor);
-                    last_stroke = SDL_GetTicks();
-                }
-                break;
+                    case SDLK_DOWN: {
+                        if (fb.cursor + 1 < fb.files.count) fb.cursor += 1;
+                    }
+                    break;
 
-                case SDLK_UP: {
-                    editor_move_line_up(&editor);
-                    last_stroke = SDL_GetTicks();
-                }
-                break;
+                    case SDLK_RETURN: {
+                        if (fb.cursor < fb.files.count) {
+                            file_path = fb.files.items[fb.cursor];
+                            FILE *file = fopen(file_path, "r");
+                            if (file != NULL) {
+                                editor_load_from_file(&editor, file);
+                                file_browser = false;
+                                fclose(file);
+                            }
+                        }
+                    }
+                    break;
+                    }
+                } else {
+                    switch (event.key.keysym.sym) {
+                    case SDLK_BACKSPACE: {
+                        editor_backspace(&editor);
+                        last_stroke = SDL_GetTicks();
+                    }
+                    break;
 
-                case SDLK_DOWN: {
-                    editor_move_line_down(&editor);
-                    last_stroke = SDL_GetTicks();
-                }
-                break;
+                    case SDLK_F2: {
+                        if (file_path) {
+                            editor_save_to_file(&editor, file_path);
+                        }
+                    }
+                    break;
 
-                case SDLK_LEFT: {
-                    editor_move_char_left(&editor);
-                    last_stroke = SDL_GetTicks();
-                }
-                break;
+                    case SDLK_F3: {
+                        fb.files.count = 0;
+                        fb.cursor = 0;
+                        const char *dir_path = ".";
+                        Errno err = read_entire_dir(dir_path, &fb.files);
+                        if (err != 0) {
+                            flush_error("Could not read directory %s: %s", dir_path, strerror(errno));
+                        } else {
+                            qsort(fb.files.items, fb.files.count, sizeof(*fb.files.items), file_cmp);
+                            file_browser = true;
+                        }
+                    }
+                    break;
 
-                case SDLK_RIGHT: {
-                    editor_move_char_right(&editor);
-                    last_stroke = SDL_GetTicks();
-                }
-                break;
+                    case SDLK_RETURN: {
+                        editor_insert_char(&editor, '\n');
+                        last_stroke = SDL_GetTicks();
+                    }
+                    break;
+
+                    case SDLK_DELETE: {
+                        editor_delete(&editor);
+                        last_stroke = SDL_GetTicks();
+                    }
+                    break;
+
+                    case SDLK_UP: {
+                        editor_move_line_up(&editor);
+                        last_stroke = SDL_GetTicks();
+                    }
+                    break;
+
+                    case SDLK_DOWN: {
+                        editor_move_line_down(&editor);
+                        last_stroke = SDL_GetTicks();
+                    }
+                    break;
+
+                    case SDLK_LEFT: {
+                        editor_move_char_left(&editor);
+                        last_stroke = SDL_GetTicks();
+                    }
+                    break;
+
+                    case SDLK_RIGHT: {
+                        editor_move_char_right(&editor);
+                        last_stroke = SDL_GetTicks();
+                    }
+                    break;
+                    }
                 }
             }
             break;
 
             case SDL_TEXTINPUT: {
-                const char *text = event.text.text;
-                size_t text_len = strlen(text);
-                for (size_t i = 0; i < text_len; ++i) {
-                    editor_insert_char(&editor, text[i]);
+                if (file_browser) {
+                    // TODO: file browser keys
+                } else {
+                    const char *text = event.text.text;
+                    size_t text_len = strlen(text);
+                    for (size_t i = 0; i < text_len; ++i) {
+                        editor_insert_char(&editor, text[i]);
+                    }
+                    last_stroke = SDL_GetTicks();
                 }
-                last_stroke = SDL_GetTicks();
             }
             break;
             }
@@ -348,7 +487,11 @@ int main(int argc, char **argv)
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        render_editor(window, &atlas, &sr, &editor);
+        if (file_browser) {
+            render_file_browser(window, &atlas, &sr, &fb);
+        } else {
+            render_editor(window, &atlas, &sr, &editor);
+        }
 
         SDL_GL_SwapWindow(window);
 

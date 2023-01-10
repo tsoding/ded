@@ -5,6 +5,7 @@
 #include <string.h>
 #include "./editor.h"
 #include "./sv.h"
+#include "common.h"
 
 void editor_backspace(Editor *e)
 {
