@@ -213,6 +213,7 @@ void simple_renderer_init(Simple_Renderer *sr,
 void simple_renderer_vertex(Simple_Renderer *sr,
                             Vec2f p, Vec4f c, Vec2f uv)
 {
+    // TODO: flush the renderer on vertex buffer overflow instead firing the assert
     assert(sr->verticies_count < SIMPLE_VERTICIES_CAP);
     Simple_Vertex *last = &sr->verticies[sr->verticies_count];
     last->position = p;

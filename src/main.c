@@ -362,8 +362,10 @@ int main(int argc, char **argv)
 
                     case SDLK_RETURN: {
                         if (fb.cursor < fb.files.count) {
-                            // TODO: go into folders
+                            // TODO: go inside folders
                             const char *file_path = fb.files.items[fb.cursor];
+                            // TODO: before opening a new file make sure you don't have unsaved changes
+                            // And if you do, annoy the user about it. (just like all the other editors do)
                             err = editor_load_from_file(&editor, file_path);
                             if (err != 0) {
                                 flash_error("Could not open file %s: %s", file_path, strerror(err));
