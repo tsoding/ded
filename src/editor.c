@@ -35,22 +35,21 @@ void editor_delete(Editor *e)
     editor_recompute_lines(e);
 }
 
-Errno editor_save_as(Editor *editor, const char *file_path)
+Errno editor_save_as(Editor *e, const char *file_path)
 {
-    Errno err = write_entire_file(file_path, editor->data.items, editor->data.count);
+    Errno err = write_entire_file(file_path, e->data.items, e->data.count);
     if (err != 0) return err;
-    editor->file_path.count = 0;
-    sb_append_cstr(&editor->file_path, file_path);
-    sb_append_null(&editor->file_path);
+    e->file_path.count = 0;
+    sb_append_cstr(&e->file_path, file_path);
+    sb_append_null(&e->file_path);
     return 0;
 }
 
-Errno editor_save(const Editor *editor)
+Errno editor_save(const Editor *e)
 {
-    assert(editor->file_path.count > 0);
-    return write_entire_file(editor->file_path.items, editor->data.items, editor->data.count);
+    assert(e->file_path.count > 0);
+    return write_entire_file(e->file_path.items, e->data.items, e->data.count);
 }
-
 
 Errno editor_load_from_file(Editor *e, const char *file_path)
 {

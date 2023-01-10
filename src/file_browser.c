@@ -1,7 +1,7 @@
 #include <string.h>
 #include "file_browser.h"
 
-int file_cmp(const void *ap, const void *bp)
+static int file_cmp(const void *ap, const void *bp)
 {
     const char *a = *(const char**)ap;
     const char *b = *(const char**)bp;

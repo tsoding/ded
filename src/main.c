@@ -25,11 +25,6 @@
 #define FPS 60
 #define DELTA_TIME (1.0f / FPS)
 
-void usage(FILE *stream)
-{
-    fprintf(stream, "Usage: te [FILE-PATH]\n");
-}
-
 // TODO: Save file dialog
 // Needed when ded is ran without any file so it does not know where to save.
 // TODO: File Manager
@@ -62,7 +57,6 @@ static File_Browser fb = {0};
 static Uint32 last_stroke = 0;
 
 #define FREE_GLYPH_FONT_SIZE 64
-#define ZOOM_OUT_GLYPH_THRESHOLD 30
 
 void render_file_browser(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr, const File_Browser *fb)
 {
@@ -277,7 +271,7 @@ int main(int argc, char **argv)
     }
 
     SDL_Window *window =
-        SDL_CreateWindow("Text Editor",
+        SDL_CreateWindow("ded",
                          0, 0,
                          SCREEN_WIDTH, SCREEN_HEIGHT,
                          SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
