@@ -222,8 +222,8 @@ void render_editor(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     }
 }
 
-// TODO: display errors reported via flush_error right in the text editor window somehow
-#define flush_error(fmt, ...) fprintf(stderr, fmt, __VA_ARGS__)
+// TODO: display errors reported via flash_error right in the text editor window somehow
+#define flash_error(fmt, ...) fprintf(stderr, fmt, __VA_ARGS__)
 
 int file_cmp(const void *ap, const void *bp)
 {
@@ -409,7 +409,7 @@ int main(int argc, char **argv)
                         const char *dir_path = ".";
                         Errno err = read_entire_dir(dir_path, &fb.files);
                         if (err != 0) {
-                            flush_error("Could not read directory %s: %s", dir_path, strerror(errno));
+                            flash_error("Could not read directory %s: %s", dir_path, strerror(errno));
                         } else {
                             qsort(fb.files.items, fb.files.count, sizeof(*fb.files.items), file_cmp);
                             file_browser = true;
