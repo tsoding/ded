@@ -79,8 +79,6 @@ void render_file_browser(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Ren
 
     float max_line_len = 0.0f;
 
-    simple_renderer_use(sr);
-
     sr->resolution = vec2f(w, h);
     sr->time = (float) SDL_GetTicks() / 1000.0f;
 
@@ -141,8 +139,6 @@ void render_editor(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     SDL_GetWindowSize(window, &w, &h);
 
     float max_line_len = 0.0f;
-
-    simple_renderer_use(sr);
 
     sr->resolution = vec2f(w, h);
     sr->time = (float) SDL_GetTicks() / 1000.0f;

@@ -198,12 +198,6 @@ void simple_renderer_init(Simple_Renderer *sr,
     }
 }
 
-void simple_renderer_use(const Simple_Renderer *sr)
-{
-    glBindVertexArray(sr->vao);
-    glBindBuffer(GL_ARRAY_BUFFER, sr->vbo);
-}
-
 void simple_renderer_vertex(Simple_Renderer *sr,
                             Vec2f p, Vec4f c, Vec2f uv)
 {
