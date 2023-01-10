@@ -72,33 +72,41 @@ defer:
     return result;
 }
 
-char *read_entire_file(const char *file_path)
+static Errno file_size(FILE *file, size_t *size)
 {
-#define SLURP_FILE_PANIC \
-    do { \
-        fprintf(stderr, "Could not read file `%s`: %s\n", file_path, strerror(errno)); \
-        exit(1); \
-    } while (0)
+    long saved = ftell(file);
+    if (saved < 0) return errno;
+    if (fseek(file, 0, SEEK_END) < 0) return errno;
+    long result = ftell(file);
+    if (result < 0) return errno;
+    if (fseek(file, saved, SEEK_SET) < 0) return errno;
+    *size = (size_t) result;
+    return 0;
+}
 
-    FILE *f = fopen(file_path, "r");
-    if (f == NULL) SLURP_FILE_PANIC;
-    if (fseek(f, 0, SEEK_END) < 0) SLURP_FILE_PANIC;
+Errno read_entire_file(const char *file_path, String_Builder *sb)
+{
+    Errno result = 0;
+    FILE *f = NULL;
 
-    long size = ftell(f);
-    if (size < 0) SLURP_FILE_PANIC;
+    f = fopen(file_path, "r");
+    if (f == NULL) return_defer(errno);
 
-    char *buffer = malloc(size + 1);
-    if (buffer == NULL) SLURP_FILE_PANIC;
+    size_t size;
+    Errno err = file_size(f, &size);
+    if (err != 0) return_defer(err);
 
-    if (fseek(f, 0, SEEK_SET) < 0) SLURP_FILE_PANIC;
+    if (sb->capacity < size) {
+        sb->capacity = size;
+        sb->items = realloc(sb->items, sb->capacity*sizeof(*sb->items));
+        assert(sb->items != NULL && "Buy more RAM lol");
+    }
 
-    fread(buffer, 1, size, f);
-    if (ferror(f) < 0) SLURP_FILE_PANIC;
+    fread(sb->items, size, 1, f);
+    if (ferror(f)) return_defer(errno);
+    sb->count = size;
 
-    buffer[size] = '\0';
-
-    if (fclose(f) < 0) SLURP_FILE_PANIC;
-
-    return buffer;
-#undef SLURP_FILE_PANIC
+defer:
+    if (f) fclose(f);
+    return result;
 }

@@ -42,13 +42,23 @@ static bool compile_shader_source(const GLchar *source, GLenum shader_type, GLui
 
 static bool compile_shader_file(const char *file_path, GLenum shader_type, GLuint *shader)
 {
-    char *source = read_entire_file(file_path);
-    bool ok = compile_shader_source(source, shader_type, shader);
-    if (!ok) {
-        fprintf(stderr, "ERROR: failed to compile `%s` shader file\n", file_path);
+    bool result = true;
+
+    String_Builder source = {0};
+    Errno err = read_entire_file(file_path, &source);
+    if (err != 0) {
+        fprintf(stderr, "ERROR: failed to load `%s` shader file: %s\n", file_path, strerror(errno));
+        return_defer(false);
     }
-    free(source);
-    return ok;
+    sb_append_null(&source);
+
+    if (!compile_shader_source(source.items, shader_type, shader)) {
+        fprintf(stderr, "ERROR: failed to compile `%s` shader file\n", file_path);
+        return_defer(false);
+    }
+defer:
+    free(source.items);
+    return result;
 }
 
 static void attach_shaders_to_program(GLuint *shaders, size_t shaders_count, GLuint program)
@@ -156,6 +166,8 @@ void simple_renderer_init(Simple_Renderer *sr,
     }
 
     GLuint shaders[2] = {0};
+
+    // TODO: dynamic shader reloading
 
     if (!compile_shader_file(vert_file_path, GL_VERTEX_SHADER, &shaders[0])) {
         exit(1);

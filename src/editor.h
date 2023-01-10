@@ -10,19 +10,13 @@ typedef struct {
 } Line;
 
 typedef struct {
-    char *items;
-    size_t count;
-    size_t capacity;
-} Data;
-
-typedef struct {
     Line *items;
     size_t count;
     size_t capacity;
 } Lines;
 
 typedef struct {
-    Data data;
+    String_Builder data;
     Lines lines;
     String_Builder file_path;
     size_t cursor;

@@ -52,52 +52,20 @@ Errno editor_save(const Editor *editor)
     return write_entire_file(editor->file_path.items, editor->data.items, editor->data.count);
 }
 
-static Errno file_size(FILE *file, size_t *size)
-{
-    long saved = ftell(file);
-    if (saved < 0) return errno;
-    if (fseek(file, 0, SEEK_END) < 0) return errno;
-    long result = ftell(file);
-    if (result < 0) return errno;
-    if (fseek(file, saved, SEEK_SET) < 0) return errno;
-    *size = (size_t) result;
-    return 0;
-}
 
 Errno editor_load_from_file(Editor *e, const char *file_path)
 {
-    Errno result = 0;
-    FILE *file = NULL;
-
     e->data.count = 0;
-
-    file = fopen(file_path, "rb");
-    if (file == NULL) return_defer(errno);
-
-    size_t data_size;
-    Errno err = file_size(file, &data_size);
-    if (err != 0) return_defer(err);
-
-    if (e->data.capacity < data_size) {
-        e->data.capacity = data_size;
-        e->data.items = realloc(e->data.items, e->data.capacity*sizeof(*e->data.items));
-        assert(e->data.items != NULL && "Buy more RAM lol");
-    }
-
-    fread(e->data.items, data_size, 1, file);
-    if (ferror(file)) return_defer(errno);
-    e->data.count = data_size;
+    Errno err = read_entire_file(file_path, &e->data);
+    if (err != 0) return err;
 
     editor_recompute_lines(e);
 
-defer:
-    if (result == 0) {
-        e->file_path.count = 0;
-        sb_append_cstr(&e->file_path, file_path);
-        sb_append_null(&e->file_path);
-    }
-    if (file) fclose(file);
-    return result;
+    e->file_path.count = 0;
+    sb_append_cstr(&e->file_path, file_path);
+    sb_append_null(&e->file_path);
+
+    return 0;
 }
 
 size_t editor_cursor_row(const Editor *e)

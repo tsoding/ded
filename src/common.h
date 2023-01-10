@@ -2,6 +2,7 @@
 #define COMMON_H_
 
 #include <stdlib.h>
+#include <stdio.h>
 
 typedef int Errno;
 
@@ -66,7 +67,7 @@ typedef struct {
     size_t capacity;
 } Files;
 
-char *read_entire_file(const char *file_path);
+Errno read_entire_file(const char *file_path, String_Builder *sb);
 Errno write_entire_file(const char *file_path, const char *buf, size_t buf_size);
 Errno read_entire_dir(const char *dir_path, Files *files);
 
