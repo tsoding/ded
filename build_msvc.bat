@@ -10,4 +10,4 @@ set LIBS=dependencies\SDL2\lib\x64\SDL2.lib ^
          "dependencies\freetype2\release dll\win64\freetype.lib" ^
          opengl32.lib User32.lib Gdi32.lib Shell32.lib
 
-cl.exe %CFLAGS% %INCLUDES% /Feded src\main.c src\la.c src\editor.c src\sdl_extra.c src\file.c src\gl_extra.c src\free_glyph.c src\simple_renderer.c src/uniforms.c /link %LIBS% -SUBSYSTEM:console
+cl.exe %CFLAGS% %INCLUDES% /Feded src\main.c src\la.c src\editor.c src\file_browser.c src\free_glyph.c src\simple_renderer.c src\common.c src\free_glyph.c src\simple_renderer.c src/uniforms.c /link %LIBS% -SUBSYSTEM:console

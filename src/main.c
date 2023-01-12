@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <errno.h>
+#include <string.h>
 
 #include <SDL2/SDL.h>
 #define GLEW_STATIC
@@ -11,32 +13,17 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#define SV_IMPLEMENTATION
-#include "./sv.h"
-
 #include "./editor.h"
+#include "./file_browser.h"
 #include "./la.h"
-#include "./sdl_extra.h"
-#include "./gl_extra.h"
 #include "./free_glyph.h"
 #include "./simple_renderer.h"
+#include "./common.h"
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 #define FPS 60
 #define DELTA_TIME (1.0f / FPS)
-
-Editor editor = {0};
-Uint32 last_stroke = 0;
-Vec2f camera_pos = {0};
-float camera_scale = 3.0f;
-float camera_scale_vel = 0.0f;
-Vec2f camera_vel = {0};
-
-void usage(FILE *stream)
-{
-    fprintf(stream, "Usage: te [FILE-PATH]\n");
-}
 
 // TODO: Save file dialog
 // Needed when ded is ran without any file so it does not know where to save.
@@ -45,9 +32,6 @@ void usage(FILE *stream)
 
 // TODO: Jump forward/backward by a word
 // TODO: Delete a word
-// TODO: Blinking cursor
-// TODO: Delete line
-// TODO: Split the line on Enter
 
 void MessageCallback(GLenum source,
                      GLenum type,
@@ -66,86 +50,56 @@ void MessageCallback(GLenum source,
             type, severity, message);
 }
 
-static Free_Glyph_Buffer fgb = {0};
+static Free_Glyph_Atlas atlas = {0};
 static Simple_Renderer sr = {0};
+static Editor editor = {0};
+static File_Browser fb = {0};
+static Uint32 last_stroke = 0;
 
 #define FREE_GLYPH_FONT_SIZE 64
-#define ZOOM_OUT_GLYPH_THRESHOLD 30
 
-void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Simple_Renderer *sr, Editor *editor)
+void render_file_browser(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr, const File_Browser *fb)
 {
+    Vec2f cursor_pos = vec2f(0, -(float)fb->cursor * FREE_GLYPH_FONT_SIZE);
+
     int w, h;
     SDL_GetWindowSize(window, &w, &h);
 
     float max_line_len = 0.0f;
 
-    free_glyph_buffer_use(fgb);
-    {
-        glUniform2f(fgb->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
-        glUniform1f(fgb->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
-        glUniform2f(fgb->uniforms[UNIFORM_SLOT_CAMERA_POS], camera_pos.x, camera_pos.y);
-        glUniform1f(fgb->uniforms[UNIFORM_SLOT_CAMERA_SCALE], camera_scale);
+    sr->resolution = vec2f(w, h);
+    sr->time = (float) SDL_GetTicks() / 1000.0f;
 
-        free_glyph_buffer_clear(fgb);
+    simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
+    if (fb->cursor < fb->files.count) {
+        const Vec2f begin = vec2f(0, -(float)fb->cursor * FREE_GLYPH_FONT_SIZE);
+        Vec2f end = begin;
+        free_glyph_atlas_render_line_sized(
+            atlas, sr, fb->files.items[fb->cursor], strlen(fb->files.items[fb->cursor]),
+            &end,
+            false);
+        simple_renderer_solid_rect(sr, begin, vec2f(end.x - begin.x, FREE_GLYPH_FONT_SIZE), vec4f(.25, .25, .25, 1));
+    }
+    simple_renderer_flush(sr);
 
-        {
-            for (size_t row = 0; row < editor->lines.count; ++row) {
-                Line line = editor->lines.items[row];
-
-                const Vec2f begin = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
-                Vec2f end = begin;
-                free_glyph_buffer_render_line_sized(
-                    fgb, editor->data.items + line.begin, line.end - line.begin,
-                    &end,
-                    vec4fs(1.0f), vec4fs(0.0f));
-                // TODO: the max_line_len should be calculated based on what's visible on the screen right now
-                float line_len = fabsf(end.x - begin.x);
-                if (line_len > max_line_len) {
-                    max_line_len = line_len;
-                }
-            }
+    simple_renderer_set_shader(sr, SHADER_FOR_EPICNESS);
+    for (size_t row = 0; row < fb->files.count; ++row) {
+        const Vec2f begin = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
+        Vec2f end = begin;
+        free_glyph_atlas_render_line_sized(
+            atlas, sr, fb->files.items[row], strlen(fb->files.items[row]),
+            &end,
+            true);
+        // TODO: the max_line_len should be calculated based on what's visible on the screen right now
+        float line_len = fabsf(end.x - begin.x);
+        if (line_len > max_line_len) {
+            max_line_len = line_len;
         }
-
-        free_glyph_buffer_sync(fgb);
-        free_glyph_buffer_draw(fgb);
     }
 
-    Vec2f cursor_pos = vec2fs(0.0f);
-    {
-        size_t cursor_row = editor_cursor_row(editor);
-        Line line = editor->lines.items[cursor_row];
-        size_t cursor_col = editor->cursor - line.begin;
-        cursor_pos.y = -(float) cursor_row * FREE_GLYPH_FONT_SIZE;
-        cursor_pos.x = free_glyph_buffer_cursor_pos(
-                           fgb,
-                           editor->data.items + line.begin, line.end - line.begin,
-                           vec2f(0.0, cursor_pos.y),
-                           cursor_col
-                       );
-    }
+    simple_renderer_flush(sr);
 
-    simple_renderer_use(sr);
-    {
-        glUniform2f(sr->uniforms[UNIFORM_SLOT_RESOLUTION], (float) w, (float) h);
-        glUniform1f(sr->uniforms[UNIFORM_SLOT_TIME], (float) SDL_GetTicks() / 1000.0f);
-        glUniform2f(sr->uniforms[UNIFORM_SLOT_CAMERA_POS], camera_pos.x, camera_pos.y);
-        glUniform1f(sr->uniforms[UNIFORM_SLOT_CAMERA_SCALE], camera_scale);
-
-        sr->verticies_count = 0;
-        float CURSOR_WIDTH = 5.0f;
-        Uint32 CURSOR_BLINK_THRESHOLD = 500;
-        Uint32 CURSOR_BLINK_PERIOD = 1000;
-        Uint32 t = SDL_GetTicks() - last_stroke;
-        if (t < CURSOR_BLINK_THRESHOLD || t/CURSOR_BLINK_PERIOD%2 != 0) {
-            simple_renderer_solid_rect(
-                sr,
-                cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE),
-                vec4fs(1));
-        }
-        simple_renderer_sync(sr);
-        simple_renderer_draw(sr);
-    }
-
+    // Update camera
     {
         float target_scale = 3.0f;
         if (max_line_len > 0.0f) {
@@ -156,18 +110,113 @@ void render_editor_into_fgb(SDL_Window *window, Free_Glyph_Buffer *fgb, Simple_R
             target_scale = 3.0f;
         }
 
-        camera_vel = vec2f_mul(
-                         vec2f_sub(cursor_pos, camera_pos),
-                         vec2fs(2.0f));
-        camera_scale_vel = (target_scale - camera_scale) * 2.0f;
 
-        camera_pos = vec2f_add(camera_pos, vec2f_mul(camera_vel, vec2fs(DELTA_TIME)));
-        camera_scale = camera_scale + camera_scale_vel * DELTA_TIME;
+        sr->camera_vel = vec2f_mul(
+                             vec2f_sub(cursor_pos, sr->camera_pos),
+                             vec2fs(2.0f));
+        sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f;
+
+        sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME)));
+        sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME;
     }
 }
 
+void render_editor(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor)
+{
+    int w, h;
+    SDL_GetWindowSize(window, &w, &h);
+
+    float max_line_len = 0.0f;
+
+    sr->resolution = vec2f(w, h);
+    sr->time = (float) SDL_GetTicks() / 1000.0f;
+
+    // Render text
+    simple_renderer_set_shader(sr, SHADER_FOR_EPICNESS);
+    {
+        for (size_t row = 0; row < editor->lines.count; ++row) {
+            Line line = editor->lines.items[row];
+
+            const Vec2f begin = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
+            Vec2f end = begin;
+            free_glyph_atlas_render_line_sized(
+                atlas, sr, editor->data.items + line.begin, line.end - line.begin,
+                &end,
+                true);
+            // TODO: the max_line_len should be calculated based on what's visible on the screen right now
+            float line_len = fabsf(end.x - begin.x);
+            if (line_len > max_line_len) {
+                max_line_len = line_len;
+            }
+        }
+
+        simple_renderer_flush(sr);
+    }
+
+    Vec2f cursor_pos = vec2fs(0.0f);
+    {
+        size_t cursor_row = editor_cursor_row(editor);
+        Line line = editor->lines.items[cursor_row];
+        size_t cursor_col = editor->cursor - line.begin;
+        cursor_pos.y = -(float) cursor_row * FREE_GLYPH_FONT_SIZE;
+        cursor_pos.x = free_glyph_atlas_cursor_pos(
+                           atlas,
+                           editor->data.items + line.begin, line.end - line.begin,
+                           vec2f(0.0, cursor_pos.y),
+                           cursor_col
+                       );
+    }
+
+    // Render cursor
+    simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
+    {
+        float CURSOR_WIDTH = 5.0f;
+        Uint32 CURSOR_BLINK_THRESHOLD = 500;
+        Uint32 CURSOR_BLINK_PERIOD = 1000;
+        Uint32 t = SDL_GetTicks() - last_stroke;
+
+        sr->verticies_count = 0;
+        if (t < CURSOR_BLINK_THRESHOLD || t/CURSOR_BLINK_PERIOD%2 != 0) {
+            simple_renderer_solid_rect(
+                sr,
+                cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE),
+                vec4fs(1));
+        }
+
+        simple_renderer_flush(sr);
+    }
+
+    // Update camera
+    {
+        float target_scale = 3.0f;
+        if (max_line_len > 1000.0f) {
+            max_line_len = 1000.0f;
+        }
+        if (max_line_len > 0.0f) {
+            target_scale = SCREEN_WIDTH / max_line_len;
+        }
+
+        if (target_scale > 3.0f) {
+            target_scale = 3.0f;
+        }
+
+        sr->camera_vel = vec2f_mul(
+                             vec2f_sub(cursor_pos, sr->camera_pos),
+                             vec2fs(2.0f));
+        sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f;
+
+        sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME)));
+        sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME;
+    }
+}
+
+// TODO: display errors reported via flash_error right in the text editor window somehow
+#define flash_error(...) fprintf(stderr, __VA_ARGS__)
+
 int main(int argc, char **argv)
 {
+    Errno err;
+
     editor_recompute_lines(&editor);
 
     FT_Library library = {0};
@@ -175,7 +224,7 @@ int main(int argc, char **argv)
     FT_Error error = FT_Init_FreeType(&library);
     if (error) {
         fprintf(stderr, "ERROR: could initialize FreeType2 library\n");
-        exit(1);
+        return 1;
     }
 
     const char *const font_file_path = "./VictorMono-Regular.ttf";
@@ -184,10 +233,10 @@ int main(int argc, char **argv)
     error = FT_New_Face(library, font_file_path, 0, &face);
     if (error == FT_Err_Unknown_File_Format) {
         fprintf(stderr, "ERROR: `%s` has an unknown format\n", font_file_path);
-        exit(1);
+        return 1;
     } else if (error) {
         fprintf(stderr, "ERROR: could not load file `%s`\n", font_file_path);
-        exit(1);
+        return 1;
     }
 
     FT_UInt pixel_size = FREE_GLYPH_FONT_SIZE;
@@ -196,30 +245,40 @@ int main(int argc, char **argv)
     error = FT_Set_Pixel_Sizes(face, 0, pixel_size);
     if (error) {
         fprintf(stderr, "ERROR: could not set pixel size to %u\n", pixel_size);
-        exit(1);
+        return 1;
     }
 
-    const char *file_path = NULL;
 
     if (argc > 1) {
-        file_path = argv[1];
-    }
-
-    if (file_path) {
-        FILE *file = fopen(file_path, "r");
-        if (file != NULL) {
-            editor_load_from_file(&editor, file);
-            fclose(file);
+        const char *file_path = argv[1];
+        err = editor_load_from_file(&editor, file_path);
+        if (err != 0) {
+            fprintf(stderr, "ERROR: Could ont read file %s: %s\n", file_path, strerror(err));
+            return 1;
         }
     }
 
-    scc(SDL_Init(SDL_INIT_VIDEO));
+    const char *dir_path = ".";
+    err = fb_open_dir(&fb, dir_path);
+    if (err != 0) {
+        fprintf(stderr, "ERROR: Could not read directory %s: %s\n", dir_path, strerror(err));
+        return 1;
+    }
+
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        fprintf(stderr, "ERROR: Could not initialize SDL: %s\n", SDL_GetError());
+        return 1;
+    }
 
     SDL_Window *window =
-        scp(SDL_CreateWindow("Text Editor",
-                             0, 0,
-                             SCREEN_WIDTH, SCREEN_HEIGHT,
-                             SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL));
+        SDL_CreateWindow("ded",
+                         0, 0,
+                         SCREEN_WIDTH, SCREEN_HEIGHT,
+                         SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
+    if (window == NULL) {
+        fprintf(stderr, "ERROR: Could not create SDL window: %s\n", SDL_GetError());
+        return 1;
+    }
 
     {
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -233,21 +292,24 @@ int main(int argc, char **argv)
         printf("GL version %d.%d\n", major, minor);
     }
 
-    scp(SDL_GL_CreateContext(window));
+    if (SDL_GL_CreateContext(window) == NULL) {
+        fprintf(stderr, "Could not create OpenGL context: %s\n", SDL_GetError());
+        return 1;
+    }
 
     if (GLEW_OK != glewInit()) {
         fprintf(stderr, "Could not initialize GLEW!");
-        exit(1);
+        return 1;
     }
 
     if (!GLEW_ARB_draw_instanced) {
         fprintf(stderr, "ARB_draw_instanced is not supported; game may not work properly!!\n");
-        exit(1);
+        return 1;
     }
 
     if (!GLEW_ARB_instanced_arrays) {
         fprintf(stderr, "ARB_instanced_arrays is not supported; game may not work properly!!\n");
-        exit(1);
+        return 1;
     }
 
     glEnable(GL_BLEND);
@@ -261,16 +323,15 @@ int main(int argc, char **argv)
     }
 
 
-    free_glyph_buffer_init(&fgb,
-                           face,
-                           "./shaders/free_glyph.vert",
-                           "./shaders/free_glyph.frag");
-
     simple_renderer_init(&sr,
                          "./shaders/simple.vert",
-                         "./shaders/simple.frag");
+                         "./shaders/simple_color.frag",
+                         "./shaders/simple_image.frag",
+                         "./shaders/simple_epic.frag");
+    free_glyph_atlas_init(&atlas, face);
 
     bool quit = false;
+    bool file_browser = false;
     while (!quit) {
         const Uint32 start = SDL_GetTicks();
         SDL_Event event = {0};
@@ -282,66 +343,116 @@ int main(int argc, char **argv)
             break;
 
             case SDL_KEYDOWN: {
-                switch (event.key.keysym.sym) {
-                case SDLK_BACKSPACE: {
-                    editor_backspace(&editor);
-                    last_stroke = SDL_GetTicks();
-                }
-                break;
-
-                case SDLK_F2: {
-                    if (file_path) {
-                        editor_save_to_file(&editor, file_path);
+                if (file_browser) {
+                    switch (event.key.keysym.sym) {
+                    case SDLK_F3: {
+                        file_browser = false;
                     }
-                }
-                break;
+                    break;
 
-                case SDLK_RETURN: {
-                    editor_insert_char(&editor, '\n');
-                    last_stroke = SDL_GetTicks();
-                }
-                break;
+                    case SDLK_UP: {
+                        if (fb.cursor > 0) fb.cursor -= 1;
+                    }
+                    break;
 
-                case SDLK_DELETE: {
-                    editor_delete(&editor);
-                    last_stroke = SDL_GetTicks();
-                }
-                break;
+                    case SDLK_DOWN: {
+                        if (fb.cursor + 1 < fb.files.count) fb.cursor += 1;
+                    }
+                    break;
 
-                case SDLK_UP: {
-                    editor_move_line_up(&editor);
-                    last_stroke = SDL_GetTicks();
-                }
-                break;
+                    case SDLK_RETURN: {
+                        if (fb.cursor < fb.files.count) {
+                            // TODO: go inside folders
+                            const char *file_path = fb.files.items[fb.cursor];
+                            // TODO: before opening a new file make sure you don't have unsaved changes
+                            // And if you do, annoy the user about it. (just like all the other editors do)
+                            err = editor_load_from_file(&editor, file_path);
+                            if (err != 0) {
+                                flash_error("Could not open file %s: %s", file_path, strerror(err));
+                            } else {
+                                file_browser = false;
+                            }
+                        }
+                    }
+                    break;
+                    }
+                } else {
+                    switch (event.key.keysym.sym) {
+                    case SDLK_BACKSPACE: {
+                        editor_backspace(&editor);
+                        last_stroke = SDL_GetTicks();
+                    }
+                    break;
 
-                case SDLK_DOWN: {
-                    editor_move_line_down(&editor);
-                    last_stroke = SDL_GetTicks();
-                }
-                break;
+                    case SDLK_F2: {
+                        if (editor.file_path.count > 0) {
+                            err = editor_save(&editor);
+                            if (err != 0) {
+                                flash_error("Could not save file currently edited file: %s", strerror(err));
+                            }
+                        } else {
+                            // TODO: as the user for the path to save to in this situation
+                            flash_error("No where to save the text");
+                        }
+                    }
+                    break;
 
-                case SDLK_LEFT: {
-                    editor_move_char_left(&editor);
-                    last_stroke = SDL_GetTicks();
-                }
-                break;
+                    case SDLK_F3: {
+                        file_browser = true;
+                    }
+                    break;
 
-                case SDLK_RIGHT: {
-                    editor_move_char_right(&editor);
-                    last_stroke = SDL_GetTicks();
-                }
-                break;
+                    case SDLK_RETURN: {
+                        editor_insert_char(&editor, '\n');
+                        last_stroke = SDL_GetTicks();
+                    }
+                    break;
+
+                    case SDLK_DELETE: {
+                        editor_delete(&editor);
+                        last_stroke = SDL_GetTicks();
+                    }
+                    break;
+
+                    case SDLK_UP: {
+                        editor_move_line_up(&editor);
+                        last_stroke = SDL_GetTicks();
+                    }
+                    break;
+
+                    case SDLK_DOWN: {
+                        editor_move_line_down(&editor);
+                        last_stroke = SDL_GetTicks();
+                    }
+                    break;
+
+                    case SDLK_LEFT: {
+                        editor_move_char_left(&editor);
+                        last_stroke = SDL_GetTicks();
+                    }
+                    break;
+
+                    case SDLK_RIGHT: {
+                        editor_move_char_right(&editor);
+                        last_stroke = SDL_GetTicks();
+                    }
+                    break;
+                    }
                 }
             }
             break;
 
             case SDL_TEXTINPUT: {
-                const char *text = event.text.text;
-                size_t text_len = strlen(text);
-                for (size_t i = 0; i < text_len; ++i) {
-                    editor_insert_char(&editor, text[i]);
+                if (file_browser) {
+                    // TODO: file browser keys
+                } else {
+                    const char *text = event.text.text;
+                    size_t text_len = strlen(text);
+                    for (size_t i = 0; i < text_len; ++i) {
+                        editor_insert_char(&editor, text[i]);
+                    }
+                    last_stroke = SDL_GetTicks();
                 }
-                last_stroke = SDL_GetTicks();
             }
             break;
             }
@@ -357,7 +468,11 @@ int main(int argc, char **argv)
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        render_editor_into_fgb(window, &fgb, &sr, &editor);
+        if (file_browser) {
+            render_file_browser(window, &atlas, &sr, &fb);
+        } else {
+            render_editor(window, &atlas, &sr, &editor);
+        }
 
         SDL_GL_SwapWindow(window);
 
