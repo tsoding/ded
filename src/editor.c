@@ -57,6 +57,8 @@ Errno editor_load_from_file(Editor *e, const char *file_path)
     Errno err = read_entire_file(file_path, &e->data);
     if (err != 0) return err;
 
+    e->cursor = 0;
+
     editor_recompute_lines(e);
 
     e->file_path.count = 0;
