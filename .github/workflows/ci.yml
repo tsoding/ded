@@ -59,8 +59,7 @@ jobs:
         shell: cmd
         run: |
           mkdir winbin
-          copy /B *.exe winbin
-          copy /B *.png winbin
+          copy /B ded.* winbin
       - name: Upload WindowsBinaries artifacts
         uses: actions/upload-artifact@v2
         with:
