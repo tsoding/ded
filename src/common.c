@@ -44,7 +44,7 @@ Errno read_entire_dir(const char *dir_path, Files *files)
     errno = 0;
     struct dirent *ent = readdir(dir);
     while (ent != NULL) {
-        da_append(files, temp_strdup(ent->d_name));
+        da_append(files, temp_strdup((const char*)ent->d_name));
         ent = readdir(dir);
     }
 
@@ -102,8 +102,9 @@ Errno read_entire_file(const char *file_path, String_Builder *sb)
         sb->items = realloc(sb->items, sb->capacity*sizeof(*sb->items));
         assert(sb->items != NULL && "Buy more RAM lol");
     }
+#ifdef _WIN32
     memset(sb->items,0,_msize(sb->items));
-
+#endif // _WIN32
     fread(sb->items, size, 1, f);
     if (ferror(f)) return_defer(errno);
     sb->count = size;
