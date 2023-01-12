@@ -102,9 +102,7 @@ Errno read_entire_file(const char *file_path, String_Builder *sb)
         sb->items = realloc(sb->items, sb->capacity*sizeof(*sb->items));
         assert(sb->items != NULL && "Buy more RAM lol");
     }
-#ifdef _WIN32
-    memset(sb->items,0,_msize(sb->items));
-#endif // _WIN32
+    memset(sb->items,0,sb->capacity);
     fread(sb->items, size, 1, f);
     if (ferror(f)) return_defer(errno);
     sb->count = size;
