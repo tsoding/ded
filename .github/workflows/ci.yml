@@ -60,6 +60,8 @@ jobs:
         run: |
           mkdir winbin
           copy /B ded.* winbin
+          copy /B dependencies\SDL2\lib\x64\SDL2.dll winbin
+          copy /B "dependencies\freetype2\release dll\win64\freetype.dll" winbin
       - name: Upload WindowsBinaries artifacts
         uses: actions/upload-artifact@v2
         with:
