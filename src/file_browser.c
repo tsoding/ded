@@ -16,6 +16,6 @@ Errno fb_open_dir(File_Browser *fb, const char *dir_path)
     if (err != 0) {
         return err;
     }
-    qsort((void* )fb->files.items, fb->files.count, sizeof(*fb->files.items), file_cmp);
+    qsort(fb->files.items, fb->files.count, sizeof(*fb->files.items), file_cmp);
     return 0;
 }
