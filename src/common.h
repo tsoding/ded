@@ -4,7 +4,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define SCREEN_WIDTH 800
+#define SCREEN_HEIGHT 600
+#define FPS 60
+#define DELTA_TIME (1.0f / FPS)
+
 typedef int Errno;
+
+#define SWAP(T, a, b) do { T t = a; a = b; b = t; } while (0)
 
 #define return_defer(value) do { result = (value); goto defer; } while (0)
 

@@ -150,3 +150,145 @@ void editor_recompute_lines(Editor *e)
     line.end = e->data.count;
     da_append(&e->lines, line);
 }
+
+void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor)
+{
+    int w, h;
+    SDL_GetWindowSize(window, &w, &h);
+
+    float max_line_len = 0.0f;
+
+    sr->resolution = vec2f(w, h);
+    sr->time = (float) SDL_GetTicks() / 1000.0f;
+
+    // Render text
+    {
+        simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
+        if (editor->selection) {
+            for (size_t row = 0; row < editor->lines.count; ++row) {
+                size_t select_begin_chr = editor->select_begin;
+                size_t select_end_chr = editor->cursor;
+                if (select_begin_chr > select_end_chr) {
+                    SWAP(size_t, select_begin_chr, select_end_chr);
+                }
+
+                Line line_chr = editor->lines.items[row];
+
+                if (select_begin_chr < line_chr.begin) {
+                    select_begin_chr = line_chr.begin;
+                }
+
+                if (select_end_chr > line_chr.end) {
+                    select_end_chr = line_chr.end;
+                }
+
+                if (select_begin_chr <= select_end_chr) {
+                    Vec2f select_begin_scr = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
+                    free_glyph_atlas_render_line_sized(
+                        atlas, sr, editor->data.items + line_chr.begin, select_begin_chr - line_chr.begin,
+                        &select_begin_scr,
+                        false);
+
+                    Vec2f select_end_scr = select_begin_scr;
+                    free_glyph_atlas_render_line_sized(
+                        atlas, sr, editor->data.items + select_begin_chr, select_end_chr - select_begin_chr,
+                        &select_end_scr,
+                        false);
+
+                    Vec4f selection_color = vec4f(.25, .25, .25, 1);
+                    simple_renderer_solid_rect(sr, select_begin_scr, vec2f(select_end_scr.x - select_begin_scr.x, FREE_GLYPH_FONT_SIZE), selection_color);
+                }
+            }
+        }
+        simple_renderer_flush(sr);
+
+        simple_renderer_set_shader(sr, SHADER_FOR_EPICNESS);
+        for (size_t row = 0; row < editor->lines.count; ++row) {
+            Line line = editor->lines.items[row];
+
+            const Vec2f begin = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
+            Vec2f end = begin;
+            free_glyph_atlas_render_line_sized(
+                atlas, sr, editor->data.items + line.begin, line.end - line.begin,
+                &end,
+                true);
+            // TODO: the max_line_len should be calculated based on what's visible on the screen right now
+            float line_len = fabsf(end.x - begin.x);
+            if (line_len > max_line_len) {
+                max_line_len = line_len;
+            }
+        }
+
+        simple_renderer_flush(sr);
+    }
+
+    Vec2f cursor_pos = vec2fs(0.0f);
+    {
+        size_t cursor_row = editor_cursor_row(editor);
+        Line line = editor->lines.items[cursor_row];
+        size_t cursor_col = editor->cursor - line.begin;
+        cursor_pos.y = -(float) cursor_row * FREE_GLYPH_FONT_SIZE;
+        cursor_pos.x = free_glyph_atlas_cursor_pos(
+                           atlas,
+                           editor->data.items + line.begin, line.end - line.begin,
+                           vec2f(0.0, cursor_pos.y),
+                           cursor_col
+                       );
+    }
+
+    // Render cursor
+    simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
+    {
+        float CURSOR_WIDTH = 5.0f;
+        Uint32 CURSOR_BLINK_THRESHOLD = 500;
+        Uint32 CURSOR_BLINK_PERIOD = 1000;
+        Uint32 t = SDL_GetTicks() - editor->last_stroke;
+
+        sr->verticies_count = 0;
+        if (t < CURSOR_BLINK_THRESHOLD || t/CURSOR_BLINK_PERIOD%2 != 0) {
+            simple_renderer_solid_rect(
+                sr,
+                cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE),
+                vec4fs(1));
+        }
+
+        simple_renderer_flush(sr);
+    }
+
+    // Update camera
+    {
+        float target_scale = 3.0f;
+        if (max_line_len > 1000.0f) {
+            max_line_len = 1000.0f;
+        }
+        if (max_line_len > 0.0f) {
+            target_scale = SCREEN_WIDTH / max_line_len;
+        }
+
+        if (target_scale > 3.0f) {
+            target_scale = 3.0f;
+        }
+
+        sr->camera_vel = vec2f_mul(
+                             vec2f_sub(cursor_pos, sr->camera_pos),
+                             vec2fs(2.0f));
+        sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f;
+
+        sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME)));
+        sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME;
+    }
+}
+
+void editor_update_selection(Editor *e, bool shift)
+{
+    if (shift) {
+        if (!e->selection) {
+            e->selection = true;
+            e->select_begin = e->cursor;
+        }
+    } else {
+        if (e->selection) {
+            e->selection = false;
+        }
+    }
+}

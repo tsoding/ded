@@ -15,6 +15,8 @@
 
 #include "simple_renderer.h"
 
+#define FREE_GLYPH_FONT_SIZE 64
+
 // https://en.wikibooks.org/wiki/OpenGL_Programming/Modern_OpenGL_Tutorial_Text_Rendering_02
 
 typedef struct {

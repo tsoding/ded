@@ -20,11 +20,6 @@
 #include "./simple_renderer.h"
 #include "./common.h"
 
-#define SCREEN_WIDTH 800
-#define SCREEN_HEIGHT 600
-#define FPS 60
-#define DELTA_TIME (1.0f / FPS)
-
 // TODO: Save file dialog
 // Needed when ded is ran without any file so it does not know where to save.
 // TODO: File Manager
@@ -54,9 +49,6 @@ static Free_Glyph_Atlas atlas = {0};
 static Simple_Renderer sr = {0};
 static Editor editor = {0};
 static File_Browser fb = {0};
-static Uint32 last_stroke = 0;
-
-#define FREE_GLYPH_FONT_SIZE 64
 
 void render_file_browser(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr, const File_Browser *fb)
 {
@@ -110,95 +102,6 @@ void render_file_browser(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Ren
             target_scale = 3.0f;
         }
 
-
-        sr->camera_vel = vec2f_mul(
-                             vec2f_sub(cursor_pos, sr->camera_pos),
-                             vec2fs(2.0f));
-        sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f;
-
-        sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME)));
-        sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME;
-    }
-}
-
-void render_editor(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor)
-{
-    int w, h;
-    SDL_GetWindowSize(window, &w, &h);
-
-    float max_line_len = 0.0f;
-
-    sr->resolution = vec2f(w, h);
-    sr->time = (float) SDL_GetTicks() / 1000.0f;
-
-    // Render text
-    simple_renderer_set_shader(sr, SHADER_FOR_EPICNESS);
-    {
-        for (size_t row = 0; row < editor->lines.count; ++row) {
-            Line line = editor->lines.items[row];
-
-            const Vec2f begin = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
-            Vec2f end = begin;
-            free_glyph_atlas_render_line_sized(
-                atlas, sr, editor->data.items + line.begin, line.end - line.begin,
-                &end,
-                true);
-            // TODO: the max_line_len should be calculated based on what's visible on the screen right now
-            float line_len = fabsf(end.x - begin.x);
-            if (line_len > max_line_len) {
-                max_line_len = line_len;
-            }
-        }
-
-        simple_renderer_flush(sr);
-    }
-
-    Vec2f cursor_pos = vec2fs(0.0f);
-    {
-        size_t cursor_row = editor_cursor_row(editor);
-        Line line = editor->lines.items[cursor_row];
-        size_t cursor_col = editor->cursor - line.begin;
-        cursor_pos.y = -(float) cursor_row * FREE_GLYPH_FONT_SIZE;
-        cursor_pos.x = free_glyph_atlas_cursor_pos(
-                           atlas,
-                           editor->data.items + line.begin, line.end - line.begin,
-                           vec2f(0.0, cursor_pos.y),
-                           cursor_col
-                       );
-    }
-
-    // Render cursor
-    simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
-    {
-        float CURSOR_WIDTH = 5.0f;
-        Uint32 CURSOR_BLINK_THRESHOLD = 500;
-        Uint32 CURSOR_BLINK_PERIOD = 1000;
-        Uint32 t = SDL_GetTicks() - last_stroke;
-
-        sr->verticies_count = 0;
-        if (t < CURSOR_BLINK_THRESHOLD || t/CURSOR_BLINK_PERIOD%2 != 0) {
-            simple_renderer_solid_rect(
-                sr,
-                cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE),
-                vec4fs(1));
-        }
-
-        simple_renderer_flush(sr);
-    }
-
-    // Update camera
-    {
-        float target_scale = 3.0f;
-        if (max_line_len > 1000.0f) {
-            max_line_len = 1000.0f;
-        }
-        if (max_line_len > 0.0f) {
-            target_scale = SCREEN_WIDTH / max_line_len;
-        }
-
-        if (target_scale > 3.0f) {
-            target_scale = 3.0f;
-        }
 
         sr->camera_vel = vec2f_mul(
                              vec2f_sub(cursor_pos, sr->camera_pos),
@@ -380,7 +283,7 @@ int main(int argc, char **argv)
                     switch (event.key.keysym.sym) {
                     case SDLK_BACKSPACE: {
                         editor_backspace(&editor);
-                        last_stroke = SDL_GetTicks();
+                        editor.last_stroke = SDL_GetTicks();
                     }
                     break;
 
@@ -404,37 +307,50 @@ int main(int argc, char **argv)
 
                     case SDLK_RETURN: {
                         editor_insert_char(&editor, '\n');
-                        last_stroke = SDL_GetTicks();
+                        editor.last_stroke = SDL_GetTicks();
                     }
                     break;
 
                     case SDLK_DELETE: {
                         editor_delete(&editor);
-                        last_stroke = SDL_GetTicks();
+                        editor.last_stroke = SDL_GetTicks();
+                    }
+                    break;
+
+                    case SDLK_a: {
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor.selection = true;
+                            editor.select_begin = 0;
+                            editor.cursor = editor.data.count;
+                        }
                     }
                     break;
 
                     case SDLK_UP: {
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                         editor_move_line_up(&editor);
-                        last_stroke = SDL_GetTicks();
+                        editor.last_stroke = SDL_GetTicks();
                     }
                     break;
 
                     case SDLK_DOWN: {
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                         editor_move_line_down(&editor);
-                        last_stroke = SDL_GetTicks();
+                        editor.last_stroke = SDL_GetTicks();
                     }
                     break;
 
                     case SDLK_LEFT: {
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                         editor_move_char_left(&editor);
-                        last_stroke = SDL_GetTicks();
+                        editor.last_stroke = SDL_GetTicks();
                     }
                     break;
 
                     case SDLK_RIGHT: {
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                         editor_move_char_right(&editor);
-                        last_stroke = SDL_GetTicks();
+                        editor.last_stroke = SDL_GetTicks();
                     }
                     break;
                     }
@@ -451,7 +367,7 @@ int main(int argc, char **argv)
                     for (size_t i = 0; i < text_len; ++i) {
                         editor_insert_char(&editor, text[i]);
                     }
-                    last_stroke = SDL_GetTicks();
+                    editor.last_stroke = SDL_GetTicks();
                 }
             }
             break;
@@ -471,7 +387,7 @@ int main(int argc, char **argv)
         if (file_browser) {
             render_file_browser(window, &atlas, &sr, &fb);
         } else {
-            render_editor(window, &atlas, &sr, &editor);
+            editor_render(window, &atlas, &sr, &editor);
         }
 
         SDL_GL_SwapWindow(window);
