@@ -32,7 +32,7 @@ jobs:
         env:
           CC: clang
   build-macos:
-    runs-on: macOS-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v1
       - name: install dependencies
@@ -44,27 +44,27 @@ jobs:
           CC: clang
   # TODO(#29): build-windows-msvc is broken
   # ---
-  # build-windows-msvc:
-  #   runs-on: windows-2019
-  #   steps:
-  #     - uses: actions/checkout@v1
-  #       # this runs vcvarsall for us, so we get the MSVC toolchain in PATH.
-  #     - uses: seanmiddleditch/gha-setup-vsdevenv@master
-  #     - name: Install dependencies
-  #       run: |
-  #         ./setup_dependencies.bat
-  #     - name: build ded
-  #       shell: cmd
-  #       run: |
-  #         ./build_msvc.bat
-  #     - name: Prepare WindowsBinaries artifacts
-  #       shell: cmd
-  #       run: |
-  #         mkdir winbin
-  #         copy /B *.exe winbin
-  #         copy /B *.png winbin
-  #     - name: Upload WindowsBinaries artifacts
-  #       uses: actions/upload-artifact@v2
-  #       with:
-  #         name: WindowsBinaries
-  #         path: ./winbin/
+  build-windows-msvc:
+    runs-on: windows-2019
+    steps:
+      - uses: actions/checkout@v1
+        # this runs vcvarsall for us, so we get the MSVC toolchain in PATH.
+      - uses: seanmiddleditch/gha-setup-vsdevenv@master
+      - name: Install dependencies
+        run: |
+          ./setup_dependencies.bat
+      - name: build ded
+        shell: cmd
+        run: |
+          ./build_msvc.bat
+      - name: Prepare WindowsBinaries artifacts
+        shell: cmd
+        run: |
+          mkdir winbin
+          copy /B *.exe winbin
+          copy /B *.png winbin
+      - name: Upload WindowsBinaries artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: WindowsBinaries
+          path: ./winbin/
