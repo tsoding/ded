@@ -5,7 +5,8 @@
 
 #ifdef _WIN32
 #    define MINIRENT_IMPLEMENTATION
-#    include <minirent.h>
+#    include <assert.h>
+#    include "minirent.h"
 #else
 #    include <dirent.h>
 #endif // _WIN32
@@ -101,6 +102,7 @@ Errno read_entire_file(const char *file_path, String_Builder *sb)
         sb->items = realloc(sb->items, sb->capacity*sizeof(*sb->items));
         assert(sb->items != NULL && "Buy more RAM lol");
     }
+    memset(sb->items,0,_msize(sb->items));
 
     fread(sb->items, size, 1, f);
     if (ferror(f)) return_defer(errno);
