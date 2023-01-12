@@ -1,7 +1,7 @@
 @echo off
 rem launch this from msvc-enabled console
 
-set CFLAGS=/W4 /WX /std:c11 /wd4996 /wd5105 /wd4459 /wd4267 /wd4244 /wd4200 /FC /TC /Zi /nologo
+set CFLAGS=/W4 /WX /std:c11 /wd4996 /wd5105 /wd4459 /wd4267 /wd4244 /wd4200 /wd4090 /FC /TC /Zi /nologo
 set INCLUDES=/I dependencies\SDL2\include /I dependencies\GLFW\include /I dependencies\GLEW\include /I dependencies\freetype2\include
 set LIBS=dependencies\SDL2\lib\x64\SDL2.lib ^
          dependencies\SDL2\lib\x64\SDL2main.lib ^

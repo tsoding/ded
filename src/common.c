@@ -44,7 +44,7 @@ Errno read_entire_dir(const char *dir_path, Files *files)
     errno = 0;
     struct dirent *ent = readdir(dir);
     while (ent != NULL) {
-        da_append(files, temp_strdup((const char*)ent->d_name));
+        da_append(files, temp_strdup(ent->d_name));
         ent = readdir(dir);
     }
 
