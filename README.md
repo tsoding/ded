@@ -11,13 +11,13 @@ $ ./build.sh
 $ ./ded src\main.c
 ```
 
-## Windows MSVC
+## Windows
+Not yet supported
 
-```console
-> .\setup_dependencies.bat
-> .\build_msvc.bat
-> .\ded.exe src\main.c
-```
+
+
+
+
 
 # Font
 
