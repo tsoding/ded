@@ -66,10 +66,9 @@ void render_file_browser(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Ren
     if (fb->cursor < fb->files.count) {
         const Vec2f begin = vec2f(0, -(float)fb->cursor * FREE_GLYPH_FONT_SIZE);
         Vec2f end = begin;
-        free_glyph_atlas_render_line_sized(
-            atlas, sr, fb->files.items[fb->cursor], strlen(fb->files.items[fb->cursor]),
-            &end,
-            false);
+        free_glyph_atlas_measure_line_sized(
+            atlas, fb->files.items[fb->cursor], strlen(fb->files.items[fb->cursor]),
+            &end);
         simple_renderer_solid_rect(sr, begin, vec2f(end.x - begin.x, FREE_GLYPH_FONT_SIZE), vec4f(.25, .25, .25, 1));
     }
     simple_renderer_flush(sr);
@@ -81,7 +80,7 @@ void render_file_browser(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Ren
         free_glyph_atlas_render_line_sized(
             atlas, sr, fb->files.items[row], strlen(fb->files.items[row]),
             &end,
-            true);
+            vec4fs(0));
         // TODO: the max_line_len should be calculated based on what's visible on the screen right now
         float line_len = fabsf(end.x - begin.x);
         if (line_len > max_line_len) {
@@ -226,11 +225,7 @@ int main(int argc, char **argv)
     }
 
 
-    simple_renderer_init(&sr,
-                         "./shaders/simple.vert",
-                         "./shaders/simple_color.frag",
-                         "./shaders/simple_image.frag",
-                         "./shaders/simple_epic.frag");
+    simple_renderer_init(&sr);
     free_glyph_atlas_init(&atlas, face);
 
     bool quit = false;

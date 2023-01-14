@@ -34,6 +34,7 @@ typedef struct {
 typedef enum {
     SHADER_FOR_COLOR = 0,
     SHADER_FOR_IMAGE,
+    SHADER_FOR_TEXT,
     SHADER_FOR_EPICNESS, // This is the one that does that cool rainbowish animation
     COUNT_SIMPLE_SHADERS,
 } Simple_Shader;
@@ -57,11 +58,7 @@ typedef struct {
     Vec2f camera_vel;
 } Simple_Renderer;
 
-void simple_renderer_init(Simple_Renderer *sr,
-                          const char *vert_file_path,
-                          const char *color_frag_file_path,
-                          const char *image_frag_file_path,
-                          const char *epic_frag_file_path);
+void simple_renderer_init(Simple_Renderer *sr);
 
 void simple_renderer_vertex(Simple_Renderer *sr,
                             Vec2f p, Vec4f c, Vec2f uv);
@@ -75,7 +72,7 @@ void simple_renderer_quad(Simple_Renderer *sr,
                           Vec4f c0, Vec4f c1, Vec4f c2, Vec4f c3,
                           Vec2f uv0, Vec2f uv1, Vec2f uv2, Vec2f uv3);
 void simple_renderer_solid_rect(Simple_Renderer *sr, Vec2f p, Vec2f s, Vec4f c);
-void simple_renderer_image_rect(Simple_Renderer *sr, Vec2f p, Vec2f s, Vec2f uvp, Vec2f uvs);
+void simple_renderer_image_rect(Simple_Renderer *sr, Vec2f p, Vec2f s, Vec2f uvp, Vec2f uvs, Vec4f c);
 void simple_renderer_flush(Simple_Renderer *sr);
 void simple_renderer_sync(Simple_Renderer *sr);
 void simple_renderer_draw(Simple_Renderer *sr);

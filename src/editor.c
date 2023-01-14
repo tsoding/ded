@@ -184,16 +184,14 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
                 if (select_begin_chr <= select_end_chr) {
                     Vec2f select_begin_scr = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
-                    free_glyph_atlas_render_line_sized(
-                        atlas, sr, editor->data.items + line_chr.begin, select_begin_chr - line_chr.begin,
-                        &select_begin_scr,
-                        false);
+                    free_glyph_atlas_measure_line_sized(
+                        atlas, editor->data.items + line_chr.begin, select_begin_chr - line_chr.begin,
+                        &select_begin_scr);
 
                     Vec2f select_end_scr = select_begin_scr;
-                    free_glyph_atlas_render_line_sized(
-                        atlas, sr, editor->data.items + select_begin_chr, select_end_chr - select_begin_chr,
-                        &select_end_scr,
-                        false);
+                    free_glyph_atlas_measure_line_sized(
+                        atlas, editor->data.items + select_begin_chr, select_end_chr - select_begin_chr,
+                        &select_end_scr);
 
                     Vec4f selection_color = vec4f(.25, .25, .25, 1);
                     simple_renderer_solid_rect(sr, select_begin_scr, vec2f(select_end_scr.x - select_begin_scr.x, FREE_GLYPH_FONT_SIZE), selection_color);
@@ -202,7 +200,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         }
         simple_renderer_flush(sr);
 
-        simple_renderer_set_shader(sr, SHADER_FOR_EPICNESS);
+        simple_renderer_set_shader(sr, SHADER_FOR_TEXT);
         for (size_t row = 0; row < editor->lines.count; ++row) {
             Line line = editor->lines.items[row];
 
@@ -211,7 +209,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             free_glyph_atlas_render_line_sized(
                 atlas, sr, editor->data.items + line.begin, line.end - line.begin,
                 &end,
-                true);
+                vec4fs(1));
             // TODO: the max_line_len should be calculated based on what's visible on the screen right now
             float line_len = fabsf(end.x - begin.x);
             if (line_len > max_line_len) {
