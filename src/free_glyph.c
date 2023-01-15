@@ -92,7 +92,22 @@ float free_glyph_atlas_cursor_pos(const Free_Glyph_Atlas *atlas, const char *tex
     return pos.x;
 }
 
-void free_glyph_atlas_render_line_sized(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, const char *text, size_t text_size, Vec2f *pos, bool render)
+void free_glyph_atlas_measure_line_sized(Free_Glyph_Atlas *atlas, const char *text, size_t text_size, Vec2f *pos)
+{
+    for (size_t i = 0; i < text_size; ++i) {
+        size_t glyph_index = text[i];
+        // TODO: support for glyphs outside of ASCII range
+        if (glyph_index >= GLYPH_METRICS_CAPACITY) {
+            glyph_index = '?';
+        }
+        Glyph_Metric metric = atlas->metrics[glyph_index];
+
+        pos->x += metric.ax;
+        pos->y += metric.ay;
+    }
+}
+
+void free_glyph_atlas_render_line_sized(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, const char *text, size_t text_size, Vec2f *pos, Vec4f color)
 {
     for (size_t i = 0; i < text_size; ++i) {
         size_t glyph_index = text[i];
@@ -109,13 +124,12 @@ void free_glyph_atlas_render_line_sized(Free_Glyph_Atlas *atlas, Simple_Renderer
         pos->x += metric.ax;
         pos->y += metric.ay;
 
-        if (render) {
-            simple_renderer_image_rect(
-                sr,
-                vec2f(x2, -y2),
-                vec2f(w, -h),
-                vec2f(metric.tx, 0.0f),
-                vec2f(metric.bw / (float) atlas->atlas_width, metric.bh / (float) atlas->atlas_height));
-        }
+        simple_renderer_image_rect(
+            sr,
+            vec2f(x2, -y2),
+            vec2f(w, -h),
+            vec2f(metric.tx, 0.0f),
+            vec2f(metric.bw / (float) atlas->atlas_width, metric.bh / (float) atlas->atlas_height),
+            color);
     }
 }

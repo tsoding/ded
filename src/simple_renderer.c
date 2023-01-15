@@ -7,6 +7,16 @@
 #include "./simple_renderer.h"
 #include "./common.h"
 
+#define vert_shader_file_path "./shaders/simple.vert"
+
+static_assert(COUNT_SIMPLE_SHADERS == 4, "The amount of fragment shaders has changed");
+const char *frag_shader_file_paths[COUNT_SIMPLE_SHADERS] = {
+    [SHADER_FOR_COLOR] = "./shaders/simple_color.frag",
+    [SHADER_FOR_IMAGE] = "./shaders/simple_image.frag",
+    [SHADER_FOR_TEXT] = "./shaders/simple_text.frag",
+    [SHADER_FOR_EPICNESS] = "./shaders/simple_epic.frag",
+};
+
 static const char *shader_type_as_cstr(GLuint shader)
 {
     switch (shader) {
@@ -118,11 +128,7 @@ static void get_uniform_location(GLuint program, GLint locations[COUNT_UNIFORM_S
     }
 }
 
-void simple_renderer_init(Simple_Renderer *sr,
-                          const char *vert_file_path,
-                          const char *color_frag_file_path,
-                          const char *image_frag_file_path,
-                          const char *epic_frag_file_path)
+void simple_renderer_init(Simple_Renderer *sr)
 {
     sr->camera_scale = 3.0f;
 
@@ -169,42 +175,17 @@ void simple_renderer_init(Simple_Renderer *sr,
 
     // TODO: dynamic shader reloading
 
-    if (!compile_shader_file(vert_file_path, GL_VERTEX_SHADER, &shaders[0])) {
+    if (!compile_shader_file(vert_shader_file_path, GL_VERTEX_SHADER, &shaders[0])) {
         exit(1);
     }
 
-    // Shader for color
-    {
-        if (!compile_shader_file(color_frag_file_path, GL_FRAGMENT_SHADER, &shaders[1])) {
+    for (int i = 0; i < COUNT_SIMPLE_SHADERS; ++i) {
+        if (!compile_shader_file(frag_shader_file_paths[i], GL_FRAGMENT_SHADER, &shaders[1])) {
             exit(1);
         }
-        sr->programs[SHADER_FOR_COLOR] = glCreateProgram();
-        attach_shaders_to_program(shaders, sizeof(shaders) / sizeof(shaders[0]), sr->programs[SHADER_FOR_COLOR]);
-        if (!link_program(sr->programs[SHADER_FOR_COLOR], __FILE__, __LINE__)) {
-            exit(1);
-        }
-    }
-
-    // Shader for image
-    {
-        if (!compile_shader_file(image_frag_file_path, GL_FRAGMENT_SHADER, &shaders[1])) {
-            exit(1);
-        }
-        sr->programs[SHADER_FOR_IMAGE] = glCreateProgram();
-        attach_shaders_to_program(shaders, sizeof(shaders) / sizeof(shaders[0]), sr->programs[SHADER_FOR_IMAGE]);
-        if (!link_program(sr->programs[SHADER_FOR_IMAGE], __FILE__, __LINE__)) {
-            exit(1);
-        }
-    }
-
-    // Shader for epicness
-    {
-        if (!compile_shader_file(epic_frag_file_path, GL_FRAGMENT_SHADER, &shaders[1])) {
-            exit(1);
-        }
-        sr->programs[SHADER_FOR_EPICNESS] = glCreateProgram();
-        attach_shaders_to_program(shaders, sizeof(shaders) / sizeof(shaders[0]), sr->programs[SHADER_FOR_EPICNESS]);
-        if (!link_program(sr->programs[SHADER_FOR_EPICNESS], __FILE__, __LINE__)) {
+        sr->programs[i] = glCreateProgram();
+        attach_shaders_to_program(shaders, sizeof(shaders) / sizeof(shaders[0]), sr->programs[i]);
+        if (!link_program(sr->programs[i], __FILE__, __LINE__)) {
             exit(1);
         }
     }
@@ -244,9 +225,8 @@ void simple_renderer_quad(Simple_Renderer *sr,
     simple_renderer_triangle(sr, p1, p2, p3, c1, c2, c3, uv1, uv2, uv3);
 }
 
-void simple_renderer_image_rect(Simple_Renderer *sr, Vec2f p, Vec2f s, Vec2f uvp, Vec2f uvs)
+void simple_renderer_image_rect(Simple_Renderer *sr, Vec2f p, Vec2f s, Vec2f uvp, Vec2f uvs, Vec4f c)
 {
-    Vec4f c = vec4fs(0);
     simple_renderer_quad(
         sr,
         p, vec2f_add(p, vec2f(s.x, 0)), vec2f_add(p, vec2f(0, s.y)), vec2f_add(p, s),

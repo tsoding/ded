@@ -151,6 +151,53 @@ void editor_recompute_lines(Editor *e)
     da_append(&e->lines, line);
 }
 
+bool editor_line_starts_with(Editor *e, size_t row, size_t col, const char *prefix)
+{
+    size_t prefix_len = strlen(prefix);
+    if (prefix_len == 0) {
+        return true;
+    }
+    Line line = e->lines.items[row];
+    if (col + prefix_len - 1 >= line.end) {
+        return false;
+    }
+    for (size_t i = 0; i < prefix_len; ++i) {
+        if (prefix[i] != e->data.items[line.begin + col + i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+const char *editor_line_starts_with_one_of(Editor *e, size_t row, size_t col, const char **prefixes, size_t prefixes_count)
+{
+    for (size_t i = 0; i < prefixes_count; ++i) {
+        if (editor_line_starts_with(e, row, col, prefixes[i])) {
+            return prefixes[i];
+        }
+    }
+    return NULL;
+}
+
+
+
+const char *keywords[] = {
+    "auto", "break", "case", "char", "const", "continue", "default", "do", "double",
+    "else", "enum", "extern", "float", "for", "goto", "if", "int", "long", "register",
+    "return", "short", "signed", "sizeof", "static", "struct", "switch", "typedef",
+    "union", "unsigned", "void", "volatile", "while", "alignas", "alignof", "and",
+    "and_eq", "asm", "atomic_cancel", "atomic_commit", "atomic_noexcept", "bitand",
+    "bitor", "bool", "catch", "char16_t", "char32_t", "char8_t", "class", "co_await",
+    "co_return", "co_yield", "compl", "concept", "const_cast", "consteval", "constexpr",
+    "constinit", "decltype", "delete", "dynamic_cast", "explicit", "export", "false",
+    "friend", "inline", "mutable", "namespace", "new", "noexcept", "not", "not_eq",
+    "nullptr", "operator", "or", "or_eq", "private", "protected", "public", "reflexpr",
+    "reinterpret_cast", "requires", "static_assert", "static_cast", "synchronized",
+    "template", "this", "thread_local", "throw", "true", "try", "typeid", "typename",
+    "using", "virtual", "wchar_t", "xor", "xor_eq",
+};
+#define keywords_count (sizeof(keywords)/sizeof(keywords[0]))
+
 void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor)
 {
     int w, h;
@@ -184,16 +231,14 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
                 if (select_begin_chr <= select_end_chr) {
                     Vec2f select_begin_scr = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
-                    free_glyph_atlas_render_line_sized(
-                        atlas, sr, editor->data.items + line_chr.begin, select_begin_chr - line_chr.begin,
-                        &select_begin_scr,
-                        false);
+                    free_glyph_atlas_measure_line_sized(
+                        atlas, editor->data.items + line_chr.begin, select_begin_chr - line_chr.begin,
+                        &select_begin_scr);
 
                     Vec2f select_end_scr = select_begin_scr;
-                    free_glyph_atlas_render_line_sized(
-                        atlas, sr, editor->data.items + select_begin_chr, select_end_chr - select_begin_chr,
-                        &select_end_scr,
-                        false);
+                    free_glyph_atlas_measure_line_sized(
+                        atlas, editor->data.items + select_begin_chr, select_end_chr - select_begin_chr,
+                        &select_end_scr);
 
                     Vec4f selection_color = vec4f(.25, .25, .25, 1);
                     simple_renderer_solid_rect(sr, select_begin_scr, vec2f(select_end_scr.x - select_begin_scr.x, FREE_GLYPH_FONT_SIZE), selection_color);
@@ -202,16 +247,32 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         }
         simple_renderer_flush(sr);
 
-        simple_renderer_set_shader(sr, SHADER_FOR_EPICNESS);
+        simple_renderer_set_shader(sr, SHADER_FOR_TEXT);
         for (size_t row = 0; row < editor->lines.count; ++row) {
             Line line = editor->lines.items[row];
 
             const Vec2f begin = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
             Vec2f end = begin;
-            free_glyph_atlas_render_line_sized(
-                atlas, sr, editor->data.items + line.begin, line.end - line.begin,
-                &end,
-                true);
+
+            size_t col = 0;
+            while (line.begin + col < line.end) {
+                const char *keyword = editor_line_starts_with_one_of(editor, row, col, keywords, keywords_count);
+                if (keyword != NULL) {
+                    size_t keyword_len = strlen(keyword);
+                    free_glyph_atlas_render_line_sized(
+                        atlas, sr, editor->data.items + line.begin + col, keyword_len,
+                        &end,
+                        vec4f(1, 1, 0, 1));
+                    col += keyword_len;
+                } else {
+                    free_glyph_atlas_render_line_sized(
+                        atlas, sr, editor->data.items + line.begin + col, 1,
+                        &end,
+                        vec4fs(1));
+                    col += 1;
+                }
+            }
+
             // TODO: the max_line_len should be calculated based on what's visible on the screen right now
             float line_len = fabsf(end.x - begin.x);
             if (line_len > max_line_len) {
