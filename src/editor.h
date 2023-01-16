@@ -5,6 +5,7 @@
 #include "common.h"
 #include "free_glyph.h"
 #include "simple_renderer.h"
+#include "lexer.h"
 
 #include <SDL2/SDL.h>
 
@@ -20,8 +21,17 @@ typedef struct {
 } Lines;
 
 typedef struct {
+    Token *items;
+    size_t count;
+    size_t capacity;
+} Tokens;
+
+typedef struct {
+    Free_Glyph_Atlas *atlas;
+
     String_Builder data;
     Lines lines;
+    Tokens tokens;
     String_Builder file_path;
 
     bool selection;

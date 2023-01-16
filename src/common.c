@@ -110,3 +110,17 @@ defer:
     if (f) fclose(f);
     return result;
 }
+
+Vec4f hex_to_vec4f(uint32_t color)
+{
+    Vec4f result;
+    uint32_t r = (color>>(3*8))&0xFF;
+    uint32_t g = (color>>(2*8))&0xFF;
+    uint32_t b = (color>>(1*8))&0xFF;
+    uint32_t a = (color>>(0*8))&0xFF;
+    result.x = r/255.0f;
+    result.y = g/255.0f;
+    result.z = b/255.0f;
+    result.w = a/255.0f;
+    return result;
+}
