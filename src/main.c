@@ -164,7 +164,7 @@ int main(int argc, char **argv)
     free_glyph_atlas_init(&atlas, face);
 
     editor.atlas = &atlas;
-    editor_recompute_lines(&editor);
+    editor_retokenize(&editor);
 
     bool quit = false;
     bool file_browser = false;

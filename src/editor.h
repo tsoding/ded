@@ -53,7 +53,7 @@ void editor_move_line_down(Editor *e);
 void editor_move_char_left(Editor *e);
 void editor_move_char_right(Editor *e);
 void editor_insert_char(Editor *e, char x);
-void editor_recompute_lines(Editor *e);
+void editor_retokenize(Editor *e);
 void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor);
 void editor_update_selection(Editor *e, bool shift);
 

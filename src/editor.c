@@ -20,7 +20,7 @@ void editor_backspace(Editor *e)
     );
     e->cursor -= 1;
     e->data.count -= 1;
-    editor_recompute_lines(e);
+    editor_retokenize(e);
 }
 
 void editor_delete(Editor *e)
@@ -32,7 +32,7 @@ void editor_delete(Editor *e)
         e->data.count - e->cursor - 1
     );
     e->data.count -= 1;
-    editor_recompute_lines(e);
+    editor_retokenize(e);
 }
 
 Errno editor_save_as(Editor *e, const char *file_path)
@@ -59,7 +59,7 @@ Errno editor_load_from_file(Editor *e, const char *file_path)
 
     e->cursor = 0;
 
-    editor_recompute_lines(e);
+    editor_retokenize(e);
 
     e->file_path.count = 0;
     sb_append_cstr(&e->file_path, file_path);
@@ -129,35 +129,39 @@ void editor_insert_char(Editor *e, char x)
     e->data.items[e->cursor] = x;
     e->cursor += 1;
 
-    editor_recompute_lines(e);
+    editor_retokenize(e);
 }
 
-void editor_recompute_lines(Editor *e)
+void editor_retokenize(Editor *e)
 {
-    e->lines.count = 0;
+    // Lines
+    {
+        e->lines.count = 0;
 
-    Line line;
-    line.begin = 0;
+        Line line;
+        line.begin = 0;
 
-    for (size_t i = 0; i < e->data.count; ++i) {
-        if (e->data.items[i] == '\n') {
-            line.end = i;
-            da_append(&e->lines, line);
-            line.begin = i + 1;
+        for (size_t i = 0; i < e->data.count; ++i) {
+            if (e->data.items[i] == '\n') {
+                line.end = i;
+                da_append(&e->lines, line);
+                line.begin = i + 1;
+            }
         }
+
+        line.end = e->data.count;
+        da_append(&e->lines, line);
     }
 
-    line.end = e->data.count;
-    da_append(&e->lines, line);
-
-    //////////////////////////////
-
-    e->tokens.count = 0;
-    Lexer l = lexer_new(e->atlas, e->data.items, e->data.count);
-    Token t = lexer_next(&l);
-    while (t.kind != TOKEN_END) {
-        da_append(&e->tokens, t);
-        t = lexer_next(&l);
+    // Syntax Highlighting
+    {
+        e->tokens.count = 0;
+        Lexer l = lexer_new(e->atlas, e->data.items, e->data.count);
+        Token t = lexer_next(&l);
+        while (t.kind != TOKEN_END) {
+            da_append(&e->tokens, t);
+            t = lexer_next(&l);
+        }
     }
 }
 
