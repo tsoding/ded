@@ -64,6 +64,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    // TODO: users should be able to customize the font
     // const char *const font_file_path = "./VictorMono-Regular.ttf";
     const char *const font_file_path = "./iosevka-regular.ttf";
 
@@ -159,7 +160,6 @@ int main(int argc, char **argv)
         fprintf(stderr, "WARNING! GLEW_ARB_debug_output is not available");
     }
 
-
     simple_renderer_init(&sr);
     free_glyph_atlas_init(&atlas, face);
 
@@ -227,7 +227,7 @@ int main(int argc, char **argv)
                                 flash_error("Could not save file currently edited file: %s", strerror(err));
                             }
                         } else {
-                            // TODO: as the user for the path to save to in this situation
+                            // TODO: ask the user for the path to save to in this situation
                             flash_error("No where to save the text");
                         }
                     }
