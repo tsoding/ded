@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <string.h>
 #include "./editor.h"
-#include "common.h"
+#include "./common.h"
 
 void editor_backspace(Editor *e)
 {
@@ -149,6 +149,16 @@ void editor_recompute_lines(Editor *e)
 
     line.end = e->data.count;
     da_append(&e->lines, line);
+
+    //////////////////////////////
+
+    e->tokens.count = 0;
+    Lexer l = lexer_new(e->atlas, e->data.items, e->data.count);
+    Token t = lexer_next(&l);
+    while (t.kind != TOKEN_END) {
+        da_append(&e->tokens, t);
+        t = lexer_next(&l);
+    }
 }
 
 bool editor_line_starts_with(Editor *e, size_t row, size_t col, const char *prefix)
@@ -181,22 +191,6 @@ const char *editor_line_starts_with_one_of(Editor *e, size_t row, size_t col, co
 
 
 
-const char *keywords[] = {
-    "auto", "break", "case", "char", "const", "continue", "default", "do", "double",
-    "else", "enum", "extern", "float", "for", "goto", "if", "int", "long", "register",
-    "return", "short", "signed", "sizeof", "static", "struct", "switch", "typedef",
-    "union", "unsigned", "void", "volatile", "while", "alignas", "alignof", "and",
-    "and_eq", "asm", "atomic_cancel", "atomic_commit", "atomic_noexcept", "bitand",
-    "bitor", "bool", "catch", "char16_t", "char32_t", "char8_t", "class", "co_await",
-    "co_return", "co_yield", "compl", "concept", "const_cast", "consteval", "constexpr",
-    "constinit", "decltype", "delete", "dynamic_cast", "explicit", "export", "false",
-    "friend", "inline", "mutable", "namespace", "new", "noexcept", "not", "not_eq",
-    "nullptr", "operator", "or", "or_eq", "private", "protected", "public", "reflexpr",
-    "reinterpret_cast", "requires", "static_assert", "static_cast", "synchronized",
-    "template", "this", "thread_local", "throw", "true", "try", "typeid", "typename",
-    "using", "virtual", "wchar_t", "xor", "xor_eq",
-};
-#define keywords_count (sizeof(keywords)/sizeof(keywords[0]))
 
 void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor)
 {
@@ -209,6 +203,62 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     sr->time = (float) SDL_GetTicks() / 1000.0f;
 
     // Render text
+#if 1
+    {
+        simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
+        if (editor->selection) {
+            for (size_t row = 0; row < editor->lines.count; ++row) {
+                size_t select_begin_chr = editor->select_begin;
+                size_t select_end_chr = editor->cursor;
+                if (select_begin_chr > select_end_chr) {
+                    SWAP(size_t, select_begin_chr, select_end_chr);
+                }
+
+                Line line_chr = editor->lines.items[row];
+
+                if (select_begin_chr < line_chr.begin) {
+                    select_begin_chr = line_chr.begin;
+                }
+
+                if (select_end_chr > line_chr.end) {
+                    select_end_chr = line_chr.end;
+                }
+
+                if (select_begin_chr <= select_end_chr) {
+                    Vec2f select_begin_scr = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
+                    free_glyph_atlas_measure_line_sized(
+                        atlas, editor->data.items + line_chr.begin, select_begin_chr - line_chr.begin,
+                        &select_begin_scr);
+
+                    Vec2f select_end_scr = select_begin_scr;
+                    free_glyph_atlas_measure_line_sized(
+                        atlas, editor->data.items + select_begin_chr, select_end_chr - select_begin_chr,
+                        &select_end_scr);
+
+                    Vec4f selection_color = vec4f(.25, .25, .25, 1);
+                    simple_renderer_solid_rect(sr, select_begin_scr, vec2f(select_end_scr.x - select_begin_scr.x, FREE_GLYPH_FONT_SIZE), selection_color);
+                }
+            }
+        }
+        simple_renderer_flush(sr);
+
+        simple_renderer_set_shader(sr, SHADER_FOR_TEXT);
+        for (size_t i = 0; i < editor->tokens.count; ++i) {
+            Token token = editor->tokens.items[i];
+            Vec2f pos = token.position;
+            Vec4f color = vec4fs(1);
+            switch (token.kind) {
+            case TOKEN_PREPROC: color = hex_to_vec4f(0x95A99FFF); break;
+            case TOKEN_KEYWORD: color = hex_to_vec4f(0xFFDD33FF); break;
+            case TOKEN_COMMENT: color = hex_to_vec4f(0xCC8C3CFF); break;
+            case TOKEN_STRING:  color = hex_to_vec4f(0x73c936ff); break;
+            default: {}
+            }
+            free_glyph_atlas_render_line_sized(atlas, sr, token.text, token.text_len, &pos, color);
+        }
+        simple_renderer_flush(sr);
+    }
+#else
     {
         simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
         if (editor->selection) {
@@ -282,6 +332,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
         simple_renderer_flush(sr);
     }
+#endif
 
     Vec2f cursor_pos = vec2fs(0.0f);
     {
@@ -319,6 +370,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     // Update camera
     {
         float target_scale = 3.0f;
+        max_line_len = 1000.0f; // TODO: fix temporary epic zoom camera action
         if (max_line_len > 1000.0f) {
             max_line_len = 1000.0f;
         }

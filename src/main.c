@@ -19,6 +19,7 @@
 #include "./free_glyph.h"
 #include "./simple_renderer.h"
 #include "./common.h"
+#include "./lexer.h"
 
 // TODO: Save file dialog
 // Needed when ded is ran without any file so it does not know where to save.
@@ -119,8 +120,6 @@ int main(int argc, char **argv)
 {
     Errno err;
 
-    editor_recompute_lines(&editor);
-
     FT_Library library = {0};
 
     FT_Error error = FT_Init_FreeType(&library);
@@ -129,7 +128,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    const char *const font_file_path = "./VictorMono-Regular.ttf";
+    // const char *const font_file_path = "./VictorMono-Regular.ttf";
+    const char *const font_file_path = "./iosevka-regular.ttf";
 
     FT_Face face;
     error = FT_New_Face(library, font_file_path, 0, &face);
@@ -149,7 +149,6 @@ int main(int argc, char **argv)
         fprintf(stderr, "ERROR: could not set pixel size to %u\n", pixel_size);
         return 1;
     }
-
 
     if (argc > 1) {
         const char *file_path = argv[1];
@@ -227,6 +226,9 @@ int main(int argc, char **argv)
 
     simple_renderer_init(&sr);
     free_glyph_atlas_init(&atlas, face);
+
+    editor.atlas = &atlas;
+    editor_recompute_lines(&editor);
 
     bool quit = false;
     bool file_browser = false;
@@ -375,8 +377,9 @@ int main(int argc, char **argv)
             // TODO(#19): update the viewport and the resolution only on actual window change
             glViewport(0, 0, w, h);
         }
-
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        
+        Vec4f bg = hex_to_vec4f(0x181818FF);
+        glClearColor(bg.x, bg.y, bg.z, bg.w);
         glClear(GL_COLOR_BUFFER_BIT);
 
         if (file_browser) {
