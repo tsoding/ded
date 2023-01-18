@@ -23,8 +23,6 @@
 
 // TODO: Save file dialog
 // Needed when ded is ran without any file so it does not know where to save.
-// TODO: File Manager
-// Any modern Text Editor should also be a File Manager
 
 // TODO: Jump forward/backward by a word
 // TODO: Delete a word
@@ -51,68 +49,6 @@ static Simple_Renderer sr = {0};
 static Editor editor = {0};
 static File_Browser fb = {0};
 
-void render_file_browser(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr, const File_Browser *fb)
-{
-    Vec2f cursor_pos = vec2f(0, -(float)fb->cursor * FREE_GLYPH_FONT_SIZE);
-
-    int w, h;
-    SDL_GetWindowSize(window, &w, &h);
-
-    float max_line_len = 0.0f;
-
-    sr->resolution = vec2f(w, h);
-    sr->time = (float) SDL_GetTicks() / 1000.0f;
-
-    simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
-    if (fb->cursor < fb->files.count) {
-        const Vec2f begin = vec2f(0, -(float)fb->cursor * FREE_GLYPH_FONT_SIZE);
-        Vec2f end = begin;
-        free_glyph_atlas_measure_line_sized(
-            atlas, fb->files.items[fb->cursor], strlen(fb->files.items[fb->cursor]),
-            &end);
-        simple_renderer_solid_rect(sr, begin, vec2f(end.x - begin.x, FREE_GLYPH_FONT_SIZE), vec4f(.25, .25, .25, 1));
-    }
-    simple_renderer_flush(sr);
-
-    simple_renderer_set_shader(sr, SHADER_FOR_EPICNESS);
-    for (size_t row = 0; row < fb->files.count; ++row) {
-        const Vec2f begin = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
-        Vec2f end = begin;
-        free_glyph_atlas_render_line_sized(
-            atlas, sr, fb->files.items[row], strlen(fb->files.items[row]),
-            &end,
-            vec4fs(0));
-        // TODO: the max_line_len should be calculated based on what's visible on the screen right now
-        float line_len = fabsf(end.x - begin.x);
-        if (line_len > max_line_len) {
-            max_line_len = line_len;
-        }
-    }
-
-    simple_renderer_flush(sr);
-
-    // Update camera
-    {
-        float target_scale = 3.0f;
-        if (max_line_len > 0.0f) {
-            target_scale = SCREEN_WIDTH / max_line_len;
-        }
-
-        if (target_scale > 3.0f) {
-            target_scale = 3.0f;
-        }
-
-
-        sr->camera_vel = vec2f_mul(
-                             vec2f_sub(cursor_pos, sr->camera_pos),
-                             vec2fs(2.0f));
-        sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f;
-
-        sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME)));
-        sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME;
-    }
-}
-
 // TODO: display errors reported via flash_error right in the text editor window somehow
 #define flash_error(...) fprintf(stderr, __VA_ARGS__)
 
@@ -128,6 +64,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    // TODO: users should be able to customize the font
     // const char *const font_file_path = "./VictorMono-Regular.ttf";
     const char *const font_file_path = "./iosevka-regular.ttf";
 
@@ -223,12 +160,11 @@ int main(int argc, char **argv)
         fprintf(stderr, "WARNING! GLEW_ARB_debug_output is not available");
     }
 
-
     simple_renderer_init(&sr);
     free_glyph_atlas_init(&atlas, face);
 
     editor.atlas = &atlas;
-    editor_recompute_lines(&editor);
+    editor_retokenize(&editor);
 
     bool quit = false;
     bool file_browser = false;
@@ -291,7 +227,7 @@ int main(int argc, char **argv)
                                 flash_error("Could not save file currently edited file: %s", strerror(err));
                             }
                         } else {
-                            // TODO: as the user for the path to save to in this situation
+                            // TODO: ask the user for the path to save to in this situation
                             flash_error("No where to save the text");
                         }
                     }
@@ -377,13 +313,13 @@ int main(int argc, char **argv)
             // TODO(#19): update the viewport and the resolution only on actual window change
             glViewport(0, 0, w, h);
         }
-        
+
         Vec4f bg = hex_to_vec4f(0x181818FF);
         glClearColor(bg.x, bg.y, bg.z, bg.w);
         glClear(GL_COLOR_BUFFER_BIT);
 
         if (file_browser) {
-            render_file_browser(window, &atlas, &sr, &fb);
+            fb_render(&fb, window, &atlas, &sr);
         } else {
             editor_render(window, &atlas, &sr, &editor);
         }
