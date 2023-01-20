@@ -191,8 +191,22 @@ void simple_renderer_init(Simple_Renderer *sr)
     }
 }
 
-void simple_renderer_vertex(Simple_Renderer *sr,
-                            Vec2f p, Vec4f c, Vec2f uv)
+// TODO: Don't render triples of verticies that form a triangle that is completely outside of the screen
+//
+// Ideas on how to check if a triangle is outside of the screen:
+// 1. Apply camera transformations to the triangle.
+// 2. Form an axis-aligned boundary box (AABB) of the triangle.
+// 3. Check if the Triangle AABB does not intersect the Screen AABB.
+//
+// This might not be what we want at the end of the day, though. Because in case of a lot of triangles we
+// end up iterating each of them at least once and doing camera trasformations on the CPU (which is
+// something we do on GPU already).
+//
+// It would be probably better if such culling occurred on a higher level of abstractions. For example
+// in the Editor. For instance, if the Editor noticed that the line it is currently rendering is
+// below the screen, it should stop rendering the rest of the text, thus never calling
+// simple_renderer_vertex() for a potentially large amount of verticies in the first place.
+void simple_renderer_vertex(Simple_Renderer *sr, Vec2f p, Vec4f c, Vec2f uv)
 {
     // TODO: flush the renderer on vertex buffer overflow instead firing the assert
     assert(sr->verticies_count < SIMPLE_VERTICIES_CAP);
