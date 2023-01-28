@@ -91,7 +91,7 @@ int main(int argc, char **argv)
         const char *file_path = argv[1];
         err = editor_load_from_file(&editor, file_path);
         if (err != 0) {
-            fprintf(stderr, "ERROR: Could ont read file %s: %s\n", file_path, strerror(err));
+            fprintf(stderr, "ERROR: Could not read file %s: %s\n", file_path, strerror(err));
             return 1;
         }
     }
