@@ -11,6 +11,14 @@ $ ./build.sh
 $ ./ded src\main.c
 ```
 
+### Debian / Ubuntu / Linux Mint dependencies
+
+```console
+$ sudo apt install libsdl2-dev libglew-dev libfreetype-dev
+```
+
+If you get an error like "Package 'opengl', required by 'glu', not found", install `libopengl-dev`.
+
 ## Windows MSVC
 
 ```console
