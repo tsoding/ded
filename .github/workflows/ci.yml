@@ -60,7 +60,7 @@ jobs:
         run: |
           mkdir winbin
           copy /B *.exe winbin
-          copy /B *.png winbin
+          copy /B *.dll winbin
       - name: Upload WindowsBinaries artifacts
         uses: actions/upload-artifact@v2
         with:
