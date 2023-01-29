@@ -5,7 +5,7 @@
 
 #ifdef _WIN32
 #    define MINIRENT_IMPLEMENTATION
-#    include <minirent.h>
+#    include "./minirent.h"
 #else
 #    include <dirent.h>
 #endif // _WIN32
