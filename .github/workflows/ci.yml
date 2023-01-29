@@ -6,9 +6,9 @@ on:
 
 jobs:
   build-linux-gcc:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: install dependencies
         run: |
           sudo apt-get update
@@ -19,9 +19,9 @@ jobs:
         env:
           CC: gcc
   build-linux-clang:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: install dependencies
         run: |
           sudo apt-get update
@@ -34,7 +34,7 @@ jobs:
   build-macos:
     runs-on: macOS-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: install dependencies
         run: brew install sdl2 pkg-config glew
       - name: build ded
@@ -43,11 +43,10 @@ jobs:
         env:
           CC: clang
   build-windows-msvc:
-    runs-on: windows-2019
+    runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v1
-        # this runs vcvarsall for us, so we get the MSVC toolchain in PATH.
-      - uses: seanmiddleditch/gha-setup-vsdevenv@master
+      - uses: actions/checkout@v3
+      - uses: ilammy/msvc-dev-cmd@v1
       - name: Install dependencies
         run: |
           ./setup_dependencies.bat
@@ -64,7 +63,7 @@ jobs:
           copy /B *.ttf winbin
           xcopy shaders winbin\shaders\
       - name: Upload WindowsBinaries artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: WindowsBinaries
           path: ./winbin/
