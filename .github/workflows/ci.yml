@@ -61,6 +61,7 @@ jobs:
           mkdir winbin
           copy /B *.exe winbin
           copy /B *.dll winbin
+          copy /B *.ttf winbin
       - name: Upload WindowsBinaries artifacts
         uses: actions/upload-artifact@v2
         with:
