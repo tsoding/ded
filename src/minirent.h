@@ -34,6 +34,8 @@
 #ifndef MINIRENT_H_
 #define MINIRENT_H_
 
+#include "assert.h"
+
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"
 

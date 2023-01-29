@@ -5,3 +5,6 @@ SDL2
 *.obj
 *.pdb
 *.ilk
+*.dll
+
+dependencies/
