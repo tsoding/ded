@@ -62,7 +62,7 @@ jobs:
           copy /B *.exe winbin
           copy /B *.dll winbin
           copy /B *.ttf winbin
-          copy /B shaders winbin\
+          copy /B shaders winbin\shaders
       - name: Upload WindowsBinaries artifacts
         uses: actions/upload-artifact@v2
         with:
