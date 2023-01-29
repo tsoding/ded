@@ -29,3 +29,12 @@ if not exist dependencies\GLEW\include\GL\ mkdir dependencies\GLEW\include\GL\
 move glew-2.1.0\include\GL\glew.h dependencies\GLEW\include\GL\glew.h
 del glew-2.1.0-win32.zip
 rmdir /s /q glew-2.1.0
+
+curl -fsSL -o freetype-windows-binaries-2.12.1.zip https://github.com/ubawurinna/freetype-windows-binaries/archive/refs/tags/v2.12.1.zip
+tar -xf freetype-windows-binaries-2.12.1.zip
+if not exist dependencies\freetype mkdir dependencies\freetype
+move freetype-windows-binaries-2.12.1\include dependencies\freetype\
+if not exist dependencies\freetype\lib mkdir dependencies\freetype\lib
+move "freetype-windows-binaries-2.12.1\release static\vs2015-2022\win64\freetype.lib" dependencies\freetype\lib\
+del freetype-windows-binaries-2.12.1.zip
+rmdir /s /q freetype-windows-binaries-2.12.1
