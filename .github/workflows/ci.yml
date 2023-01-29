@@ -8,7 +8,7 @@ jobs:
   build-linux-gcc:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: install dependencies
         run: |
           sudo apt-get update
@@ -21,7 +21,7 @@ jobs:
   build-linux-clang:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: install dependencies
         run: |
           sudo apt-get update
@@ -34,7 +34,7 @@ jobs:
   build-macos:
     runs-on: macOS-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: install dependencies
         run: brew install sdl2 pkg-config glew
       - name: build ded
@@ -45,7 +45,8 @@ jobs:
   build-windows-msvc:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
+      - uses: ilammy/msvc-dev-cmd@v1
       - name: Install dependencies
         run: |
           ./setup_dependencies.bat
