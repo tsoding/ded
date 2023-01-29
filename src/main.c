@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 
     SDL_Window *window =
         SDL_CreateWindow("ded",
-                         0, 0,
+                         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                          SCREEN_WIDTH, SCREEN_HEIGHT,
                          SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
     if (window == NULL) {
