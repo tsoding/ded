@@ -64,6 +64,8 @@ typedef struct {
 
 void simple_renderer_init(Simple_Renderer *sr);
 
+void simple_renderer_reload_shaders(Simple_Renderer *sr);
+
 void simple_renderer_vertex(Simple_Renderer *sr,
                             Vec2f p, Vec4f c, Vec2f uv);
 void simple_renderer_set_shader(Simple_Renderer *sr, Simple_Shader shader);

@@ -264,6 +264,11 @@ int main(int argc, char **argv)
                     }
                     break;
 
+                    case SDLK_F5: {
+                        simple_renderer_reload_shaders(&sr);
+                    }
+                    break;
+
                     case SDLK_RETURN: {
                         editor_insert_char(&editor, '\n');
                         editor.last_stroke = SDL_GetTicks();
@@ -284,6 +289,18 @@ int main(int argc, char **argv)
                         }
                     }
                     break;
+
+                    case SDLK_c: {
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor_clipboard_copy(&editor);
+                        }
+                    } break;
+
+                    case SDLK_v: {
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor_clipboard_paste(&editor);
+                        }
+                    } break;
 
                     case SDLK_UP: {
                         editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);

@@ -39,6 +39,8 @@ typedef struct {
     size_t cursor;
 
     Uint32 last_stroke;
+
+    String_Builder clipboard;
 } Editor;
 
 Errno editor_save_as(Editor *editor, const char *file_path);
@@ -53,8 +55,11 @@ void editor_move_line_down(Editor *e);
 void editor_move_char_left(Editor *e);
 void editor_move_char_right(Editor *e);
 void editor_insert_char(Editor *e, char x);
+void editor_insert_buf(Editor *e, char *buf, size_t buf_len);
 void editor_retokenize(Editor *e);
 void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor);
 void editor_update_selection(Editor *e, bool shift);
+void editor_clipboard_copy(Editor *e);
+void editor_clipboard_paste(Editor *e);
 
 #endif // EDITOR_H_
