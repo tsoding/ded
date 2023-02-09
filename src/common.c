@@ -8,6 +8,9 @@
 #    include <minirent.h>
 #else
 #    include <dirent.h>
+#    include <sys/types.h>
+#    include <sys/stat.h>
+#    include <unistd.h>
 #endif // _WIN32
 
 #include "common.h"
@@ -123,4 +126,22 @@ Vec4f hex_to_vec4f(uint32_t color)
     result.z = b/255.0f;
     result.w = a/255.0f;
     return result;
+}
+
+Errno type_of_file(const char *file_path, File_Type *ft)
+{
+#ifdef _WIN32
+#error "TODO: type_of_file() is not implemented for Windows"
+#else
+    struct stat sb = {0};
+    if (stat(file_path, &sb) < 0) return errno;
+    if (S_ISREG(sb.st_mode)) {
+        *ft = FT_REGULAR;
+    } else if (S_ISDIR(sb.st_mode)) {
+        *ft = FT_DIRECTORY;
+    } else {
+        *ft = FT_OTHER;
+    }
+#endif
+    return 0;
 }

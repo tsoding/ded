@@ -53,6 +53,8 @@ Errno editor_save(const Editor *e)
 
 Errno editor_load_from_file(Editor *e, const char *file_path)
 {
+    printf("Loading %s\n", file_path);
+
     e->data.count = 0;
     Errno err = read_entire_file(file_path, &e->data);
     if (err != 0) return err;
@@ -308,20 +310,26 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
     // Update camera
     {
-        float target_scale = 3.0f;
         if (max_line_len > 1000.0f) {
             max_line_len = 1000.0f;
         }
-        if (max_line_len > 0.0f) {
-            target_scale = SCREEN_WIDTH / max_line_len;
-        }
+
+        // TODO: SCREEN_WIDTH has to be variable cause window my resize
+        float target_scale = SCREEN_WIDTH / max_line_len;
+
+        Vec2f target = cursor_pos;
+        float offset = 0.0f;
 
         if (target_scale > 3.0f) {
             target_scale = 3.0f;
+        } else {
+            offset = cursor_pos.x - SCREEN_WIDTH/sr->camera_scale;
+            if (offset < 0.0f) offset = 0.0f;
+            target = vec2f(SCREEN_WIDTH/sr->camera_scale + offset, cursor_pos.y);
         }
 
         sr->camera_vel = vec2f_mul(
-                             vec2f_sub(cursor_pos, sr->camera_pos),
+                             vec2f_sub(target, sr->camera_pos),
                              vec2fs(2.0f));
         sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f;
 
