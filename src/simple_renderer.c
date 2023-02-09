@@ -193,28 +193,39 @@ void simple_renderer_init(Simple_Renderer *sr)
 
 void simple_renderer_reload_shaders(Simple_Renderer *sr)
 {
-    for (int i = 0; i < COUNT_SIMPLE_SHADERS; ++i) {
-        glDeleteProgram(sr->programs[i]);
-    }
-
+    GLuint programs[COUNT_SIMPLE_SHADERS];
     GLuint shaders[2] = {0};
 
+    bool ok = true;
+
     if (!compile_shader_file(vert_shader_file_path, GL_VERTEX_SHADER, &shaders[0])) {
-        exit(1);
+        ok = false;
     }
 
     for (int i = 0; i < COUNT_SIMPLE_SHADERS; ++i) {
         if (!compile_shader_file(frag_shader_file_paths[i], GL_FRAGMENT_SHADER, &shaders[1])) {
-            exit(1);
+            ok = false;
         }
-        sr->programs[i] = glCreateProgram();
-        attach_shaders_to_program(shaders, sizeof(shaders) / sizeof(shaders[0]), sr->programs[i]);
-        if (!link_program(sr->programs[i], __FILE__, __LINE__)) {
-            exit(1);
+        programs[i] = glCreateProgram();
+        attach_shaders_to_program(shaders, sizeof(shaders) / sizeof(shaders[0]), programs[i]);
+        if (!link_program(programs[i], __FILE__, __LINE__)) {
+            ok = false;
         }
         glDeleteShader(shaders[1]);
     }
     glDeleteShader(shaders[0]);
+
+    if (ok) {
+        for (int i = 0; i < COUNT_SIMPLE_SHADERS; ++i) {
+            glDeleteProgram(sr->programs[i]);
+            sr->programs[i] = programs[i];
+        }
+        printf("Reloaded shaders successfully!\n");
+    } else {
+        for (int i = 0; i < COUNT_SIMPLE_SHADERS; ++i) {
+            glDeleteProgram(programs[i]);
+        }
+    }
 }
 
 // TODO: Don't render triples of verticies that form a triangle that is completely outside of the screen
