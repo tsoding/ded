@@ -264,6 +264,11 @@ int main(int argc, char **argv)
                     }
                     break;
 
+                    case SDLK_F5: {
+                        simple_renderer_reload_shaders(&sr);
+                    }
+                    break;
+
                     case SDLK_RETURN: {
                         editor_insert_char(&editor, '\n');
                         editor.last_stroke = SDL_GetTicks();

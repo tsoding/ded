@@ -173,7 +173,31 @@ void simple_renderer_init(Simple_Renderer *sr)
 
     GLuint shaders[2] = {0};
 
-    // TODO: dynamic shader reloading
+    if (!compile_shader_file(vert_shader_file_path, GL_VERTEX_SHADER, &shaders[0])) {
+        exit(1);
+    }
+
+    for (int i = 0; i < COUNT_SIMPLE_SHADERS; ++i) {
+        if (!compile_shader_file(frag_shader_file_paths[i], GL_FRAGMENT_SHADER, &shaders[1])) {
+            exit(1);
+        }
+        sr->programs[i] = glCreateProgram();
+        attach_shaders_to_program(shaders, sizeof(shaders) / sizeof(shaders[0]), sr->programs[i]);
+        if (!link_program(sr->programs[i], __FILE__, __LINE__)) {
+            exit(1);
+        }
+        glDeleteShader(shaders[1]);
+    }
+    glDeleteShader(shaders[0]);
+}
+
+void simple_renderer_reload_shaders(Simple_Renderer *sr)
+{
+    for (int i = 0; i < COUNT_SIMPLE_SHADERS; ++i) {
+        glDeleteProgram(sr->programs[i]);
+    }
+
+    GLuint shaders[2] = {0};
 
     if (!compile_shader_file(vert_shader_file_path, GL_VERTEX_SHADER, &shaders[0])) {
         exit(1);
@@ -188,7 +212,9 @@ void simple_renderer_init(Simple_Renderer *sr)
         if (!link_program(sr->programs[i], __FILE__, __LINE__)) {
             exit(1);
         }
+        glDeleteShader(shaders[1]);
     }
+    glDeleteShader(shaders[0]);
 }
 
 // TODO: Don't render triples of verticies that form a triangle that is completely outside of the screen
