@@ -314,8 +314,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             max_line_len = 1000.0f;
         }
 
-        // TODO: SCREEN_WIDTH has to be variable cause window my resize
-        float target_scale = SCREEN_WIDTH / max_line_len;
+        float target_scale = w/3/(max_line_len*0.75); // TODO: division by 0
 
         Vec2f target = cursor_pos;
         float offset = 0.0f;
@@ -323,9 +322,9 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         if (target_scale > 3.0f) {
             target_scale = 3.0f;
         } else {
-            offset = cursor_pos.x - SCREEN_WIDTH/sr->camera_scale;
+            offset = cursor_pos.x - w/3/sr->camera_scale;
             if (offset < 0.0f) offset = 0.0f;
-            target = vec2f(SCREEN_WIDTH/sr->camera_scale + offset, cursor_pos.y);
+            target = vec2f(w/3/sr->camera_scale + offset, cursor_pos.y);
         }
 
         sr->camera_vel = vec2f_mul(

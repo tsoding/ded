@@ -95,18 +95,25 @@ void fb_render(const File_Browser *fb, SDL_Window *window, Free_Glyph_Atlas *atl
 
     // Update camera
     {
-        float target_scale = 3.0f;
-        if (max_line_len > 0.0f) {
-            target_scale = SCREEN_WIDTH / max_line_len;
+        if (max_line_len > 1000.0f) {
+            max_line_len = 1000.0f;
         }
+
+        float target_scale = w/3/(max_line_len*0.75); // TODO: division by 0
+
+        Vec2f target = cursor_pos;
+        float offset = 0.0f;
 
         if (target_scale > 3.0f) {
             target_scale = 3.0f;
+        } else {
+            offset = cursor_pos.x - w/3/sr->camera_scale;
+            if (offset < 0.0f) offset = 0.0f;
+            target = vec2f(w/3/sr->camera_scale + offset, cursor_pos.y);
         }
 
-
         sr->camera_vel = vec2f_mul(
-                             vec2f_sub(cursor_pos, sr->camera_pos),
+                             vec2f_sub(target, sr->camera_pos),
                              vec2fs(2.0f));
         sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f;
 
