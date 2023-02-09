@@ -17,6 +17,39 @@ Errno fb_open_dir(File_Browser *fb, const char *dir_path)
         return err;
     }
     qsort(fb->files.items, fb->files.count, sizeof(*fb->files.items), file_cmp);
+
+    fb->dir_path.count = 0;
+    sb_append_cstr(&fb->dir_path, dir_path);
+    sb_append_null(&fb->dir_path);
+
+    return 0;
+}
+
+Errno fb_change_dir(File_Browser *fb)
+{
+    assert(fb->dir_path.count > 0 && "You need to call fb_open_dir() before fb_change_dir()");
+    assert(fb->dir_path.items[fb->dir_path.count - 1] == '\0');
+
+    if (fb->cursor >= fb->files.count) return 0;
+
+    const char *dir_name = fb->files.items[fb->cursor];
+
+    fb->dir_path.count -= 1;
+
+    // TODO: fb_change_dir() does not support .. and . properly
+    sb_append_cstr(&fb->dir_path, "/");
+    sb_append_cstr(&fb->dir_path, dir_name);
+    sb_append_null(&fb->dir_path);
+
+    fb->files.count = 0;
+    fb->cursor = 0;
+    Errno err = read_entire_dir(fb->dir_path.items, &fb->files);
+
+    if (err != 0) {
+        return err;
+    }
+    qsort(fb->files.items, fb->files.count, sizeof(*fb->files.items), file_cmp);
+
     return 0;
 }
 
@@ -62,22 +95,45 @@ void fb_render(const File_Browser *fb, SDL_Window *window, Free_Glyph_Atlas *atl
 
     // Update camera
     {
-        float target_scale = 3.0f;
-        if (max_line_len > 0.0f) {
-            target_scale = SCREEN_WIDTH / max_line_len;
+        if (max_line_len > 1000.0f) {
+            max_line_len = 1000.0f;
         }
+
+        float target_scale = w/3/(max_line_len*0.75); // TODO: division by 0
+
+        Vec2f target = cursor_pos;
+        float offset = 0.0f;
 
         if (target_scale > 3.0f) {
             target_scale = 3.0f;
+        } else {
+            offset = cursor_pos.x - w/3/sr->camera_scale;
+            if (offset < 0.0f) offset = 0.0f;
+            target = vec2f(w/3/sr->camera_scale + offset, cursor_pos.y);
         }
 
-
         sr->camera_vel = vec2f_mul(
-                             vec2f_sub(cursor_pos, sr->camera_pos),
+                             vec2f_sub(target, sr->camera_pos),
                              vec2fs(2.0f));
         sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f;
 
         sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME)));
         sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME;
     }
+}
+
+const char *fb_file_path(File_Browser *fb)
+{
+    assert(fb->dir_path.count > 0 && "You need to call fb_open_dir() before fb_file_path()");
+    assert(fb->dir_path.items[fb->dir_path.count - 1] == '\0');
+
+    if (fb->cursor >= fb->files.count) return NULL;
+
+    fb->file_path.count = 0;
+    sb_append_buf(&fb->file_path, fb->dir_path.items, fb->dir_path.count - 1);
+    sb_append_buf(&fb->file_path, "/", 1);
+    sb_append_cstr(&fb->file_path, fb->files.items[fb->cursor]);
+    sb_append_null(&fb->file_path);
+
+    return fb->file_path.items;
 }

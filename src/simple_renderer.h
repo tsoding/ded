@@ -1,6 +1,8 @@
 #ifndef SIMPLE_RENDERER_H_
 #define SIMPLE_RENDERER_H_
 
+#include <assert.h>
+
 #define GLEW_STATIC
 #include <GL/glew.h>
 
@@ -30,6 +32,8 @@ typedef struct {
 } Simple_Vertex;
 
 #define SIMPLE_VERTICIES_CAP (3*640*1000)
+
+static_assert(SIMPLE_VERTICIES_CAP%3 == 0, "Simple renderer vertex capacity must be divisible by 3. We are rendring triangles after all.");
 
 typedef enum {
     SHADER_FOR_COLOR = 0,

@@ -68,10 +68,11 @@ typedef struct {
 } String_Builder;
 
 #define sb_append_buf da_append_many
-#define sb_append_cstr(sb, cstr)     \
-    do {                             \
-        size_t n = strlen(cstr);     \
-        da_append_many(sb, cstr, n); \
+#define sb_append_cstr(sb, cstr)  \
+    do {                          \
+        const char *s = (cstr);   \
+        size_t n = strlen(s);     \
+        da_append_many(sb, s, n); \
     } while (0)
 #define sb_append_null(sb) da_append_many(sb, "", 1)
 
@@ -81,6 +82,13 @@ typedef struct {
     size_t capacity;
 } Files;
 
+typedef enum {
+    FT_REGULAR,
+    FT_DIRECTORY,
+    FT_OTHER,
+} File_Type;
+
+Errno type_of_file(const char *file_path, File_Type *ft);
 Errno read_entire_file(const char *file_path, String_Builder *sb);
 Errno write_entire_file(const char *file_path, const char *buf, size_t buf_size);
 Errno read_entire_dir(const char *dir_path, Files *files);
