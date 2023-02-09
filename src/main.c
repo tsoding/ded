@@ -285,6 +285,18 @@ int main(int argc, char **argv)
                     }
                     break;
 
+                    case SDLK_c: {
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor_clipboard_copy(&editor);
+                        }
+                    } break;
+
+                    case SDLK_v: {
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor_clipboard_paste(&editor);
+                        }
+                    } break;
+
                     case SDLK_UP: {
                         editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                         editor_move_line_up(&editor);

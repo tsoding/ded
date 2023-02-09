@@ -37,6 +37,7 @@ void editor_delete(Editor *e)
 
 Errno editor_save_as(Editor *e, const char *file_path)
 {
+    printf("Saving as %s...\n", file_path);
     Errno err = write_entire_file(file_path, e->data.items, e->data.count);
     if (err != 0) return err;
     e->file_path.count = 0;
@@ -48,6 +49,7 @@ Errno editor_save_as(Editor *e, const char *file_path)
 Errno editor_save(const Editor *e)
 {
     assert(e->file_path.count > 0);
+    printf("Saving as %s...\n", e->file_path.items);
     return write_entire_file(e->file_path.items, e->data.items, e->data.count);
 }
 
@@ -118,19 +120,25 @@ void editor_move_char_right(Editor *e)
 
 void editor_insert_char(Editor *e, char x)
 {
+    editor_insert_buf(e, &x, 1);
+}
+
+void editor_insert_buf(Editor *e, char *buf, size_t buf_len)
+{
     if (e->cursor > e->data.count) {
         e->cursor = e->data.count;
     }
 
-    da_append(&e->data, '\0');
+    for (size_t i = 0; i < buf_len; ++i) {
+        da_append(&e->data, '\0');
+    }
     memmove(
-        &e->data.items[e->cursor + 1],
+        &e->data.items[e->cursor + buf_len],
         &e->data.items[e->cursor],
-        e->data.count - e->cursor - 1
+        e->data.count - e->cursor - buf_len
     );
-    e->data.items[e->cursor] = x;
-    e->cursor += 1;
-
+    memcpy(&e->data.items[e->cursor], buf, buf_len);
+    e->cursor += buf_len;
     editor_retokenize(e);
 }
 
@@ -349,4 +357,33 @@ void editor_update_selection(Editor *e, bool shift)
             e->selection = false;
         }
     }
+}
+
+void editor_clipboard_copy(Editor *e)
+{
+    if (e->selection) {
+        size_t begin = e->select_begin;
+        size_t end = e->cursor;
+        if (begin > end) SWAP(size_t, begin, end);
+
+        e->clipboard.count = 0;
+        sb_append_buf(&e->clipboard, &e->data.items[begin], end - begin + 1);
+        sb_append_null(&e->clipboard);
+
+        if (SDL_SetClipboardText(e->clipboard.items) < 0) {
+            fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
+        }
+    }
+}
+
+void editor_clipboard_paste(Editor *e)
+{
+    char *text = SDL_GetClipboardText();
+    size_t text_len = strlen(text);
+    if (text_len > 0) {
+        editor_insert_buf(e, text, text_len);
+    } else {
+        fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
+    }
+    SDL_free(text);
 }
