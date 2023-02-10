@@ -4,12 +4,15 @@
 
 # Quick Start
 
+
 ## POSIX
 
 ```console
 $ ./build.sh
 $ ./ded src\main.c
 ```
+**Linux** requires packages install with:
+```sudo apt update && sudo apt install gcc libftgl-dev libsdl2-dev libglew-dev```
 
 ## Windows MSVC
 
