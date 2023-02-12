@@ -77,9 +77,8 @@ Lexer lexer_new(Free_Glyph_Atlas *atlas, const char *content, size_t content_len
 bool lexer_starts_with(Lexer *l, const char *prefix)
 {
     size_t prefix_len = strlen(prefix);
-    return prefix_len == 0 || (
-            l->cursor + prefix_len - 1 < l->content_len &&
-            !strncmp(prefix, l->content + l->cursor, prefix_len));
+    return l->cursor + prefix_len - 1 < l->content_len &&
+            !strncmp(prefix, l->content + l->cursor, prefix_len);
 }
 
 void lexer_chop_char(Lexer *l, size_t len)
