@@ -45,6 +45,10 @@ const char *token_kind_name(Token_Kind kind)
         return "invalid token";
     case TOKEN_PREPROC:
         return "preprocessor directive";
+    case TOKEN_COMMENT:
+        return "comment";
+    case TOKEN_STRING:
+        return "string";
     case TOKEN_SYMBOL:
         return "symbol";
     case TOKEN_OPEN_PAREN:
@@ -153,7 +157,7 @@ Token lexer_next(Lexer *l)
         while (l->cursor < l->content_len && l->content[l->cursor] != '"' && l->content[l->cursor] != '\n') {
             lexer_chop_char(l, 1);
         }
-        if (l->cursor < l->content_len) {
+        if (l->cursor < l->content_len && l->content[l->cursor] == '"') {
             lexer_chop_char(l, 1);
         }
         token.text_len = &l->content[l->cursor] - token.text;
@@ -166,9 +170,6 @@ Token lexer_next(Lexer *l)
         while (l->cursor < l->content_len && l->content[l->cursor] != '\n') {
             lexer_chop_char(l, 1);
         }
-        if (l->cursor < l->content_len) {
-            lexer_chop_char(l, 1);
-        }
         token.text_len = &l->content[l->cursor] - token.text;
         return token;
     }
@@ -178,13 +179,10 @@ Token lexer_next(Lexer *l)
         while (l->cursor < l->content_len && l->content[l->cursor] != '\n') {
             lexer_chop_char(l, 1);
         }
-        if (l->cursor < l->content_len) {
-            lexer_chop_char(l, 1);
-        }
         token.text_len = &l->content[l->cursor] - token.text;
         return token;
     }
-    
+
     for (size_t i = 0; i < literal_tokens_count; ++i) {
         if (lexer_starts_with(l, literal_tokens[i].text)) {
             // NOTE: this code assumes that there is no newlines in literal_tokens[i].text
