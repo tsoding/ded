@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include "./la.h"
 #include "./free_glyph.h"
+#include "./common.h"
 
 typedef enum {
     TOKEN_END = 0,
@@ -37,9 +38,10 @@ typedef struct {
     size_t line;
     size_t bol;
     float x;
+    String_Builder file_path;
 } Lexer;
 
-Lexer lexer_new(Free_Glyph_Atlas *atlas, const char *content, size_t content_len);
+Lexer lexer_new(Free_Glyph_Atlas *atlas, const char *content, size_t content_len, String_Builder file_path);
 Token lexer_next(Lexer *l);
 
 #endif // LEXER_H_
