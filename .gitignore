@@ -5,3 +5,4 @@ SDL2
 *.obj
 *.pdb
 *.ilk
+compile_commands.json
