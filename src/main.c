@@ -50,7 +50,7 @@ static Editor editor = {0};
 static File_Browser fb = {0};
 
 // TODO: display errors reported via flash_error right in the text editor window somehow
-#define flash_error(...) fprintf(stderr, __VA_ARGS__)
+#define flash_error(...) do { fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); } while(0)
 
 int main(int argc, char **argv)
 {
@@ -197,16 +197,42 @@ int main(int argc, char **argv)
                     break;
 
                     case SDLK_RETURN: {
-                        if (fb.cursor < fb.files.count) {
-                            // TODO: go inside folders
-                            const char *file_path = fb.files.items[fb.cursor];
-                            // TODO: before opening a new file make sure you don't have unsaved changes
-                            // And if you do, annoy the user about it. (just like all the other editors do)
-                            err = editor_load_from_file(&editor, file_path);
+                        const char *file_path = fb_file_path(&fb);
+                        if (file_path) {
+                            File_Type ft;
+                            err = type_of_file(file_path, &ft);
                             if (err != 0) {
-                                flash_error("Could not open file %s: %s", file_path, strerror(err));
+                                flash_error("Could not determine type of file %s: %s", file_path, strerror(err));
                             } else {
-                                file_browser = false;
+                                switch (ft) {
+                                case FT_DIRECTORY: {
+                                    err = fb_change_dir(&fb);
+                                    if (err != 0) {
+                                        flash_error("Could not change directory to %s: %s", file_path, strerror(err));
+                                    }
+                                }
+                                break;
+
+                                case FT_REGULAR: {
+                                    // TODO: before opening a new file make sure you don't have unsaved changes
+                                    // And if you do, annoy the user about it. (just like all the other editors do)
+                                    err = editor_load_from_file(&editor, file_path);
+                                    if (err != 0) {
+                                        flash_error("Could not open file %s: %s", file_path, strerror(err));
+                                    } else {
+                                        file_browser = false;
+                                    }
+                                }
+                                break;
+
+                                case FT_OTHER: {
+                                    flash_error("%s is neither a regular file nor a directory. We can't open it.", file_path);
+                                }
+                                break;
+
+                                default:
+                                    UNREACHABLE("unknown File_Type");
+                                }
                             }
                         }
                     }
@@ -238,6 +264,11 @@ int main(int argc, char **argv)
                     }
                     break;
 
+                    case SDLK_F5: {
+                        simple_renderer_reload_shaders(&sr);
+                    }
+                    break;
+
                     case SDLK_RETURN: {
                         editor_insert_char(&editor, '\n');
                         editor.last_stroke = SDL_GetTicks();
@@ -258,6 +289,18 @@ int main(int argc, char **argv)
                         }
                     }
                     break;
+
+                    case SDLK_c: {
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor_clipboard_copy(&editor);
+                        }
+                    } break;
+
+                    case SDLK_v: {
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor_clipboard_paste(&editor);
+                        }
+                    } break;
 
                     case SDLK_UP: {
                         editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
@@ -335,3 +378,7 @@ int main(int argc, char **argv)
 
     return 0;
 }
+
+// TODO: ability to search within file browser
+// Very useful when you have a lot of files
+// TODO: ability to search with the text editor

@@ -37,6 +37,7 @@ void editor_delete(Editor *e)
 
 Errno editor_save_as(Editor *e, const char *file_path)
 {
+    printf("Saving as %s...\n", file_path);
     Errno err = write_entire_file(file_path, e->data.items, e->data.count);
     if (err != 0) return err;
     e->file_path.count = 0;
@@ -48,11 +49,14 @@ Errno editor_save_as(Editor *e, const char *file_path)
 Errno editor_save(const Editor *e)
 {
     assert(e->file_path.count > 0);
+    printf("Saving as %s...\n", e->file_path.items);
     return write_entire_file(e->file_path.items, e->data.items, e->data.count);
 }
 
 Errno editor_load_from_file(Editor *e, const char *file_path)
 {
+    printf("Loading %s\n", file_path);
+
     e->data.count = 0;
     Errno err = read_entire_file(file_path, &e->data);
     if (err != 0) return err;
@@ -116,19 +120,25 @@ void editor_move_char_right(Editor *e)
 
 void editor_insert_char(Editor *e, char x)
 {
+    editor_insert_buf(e, &x, 1);
+}
+
+void editor_insert_buf(Editor *e, char *buf, size_t buf_len)
+{
     if (e->cursor > e->data.count) {
         e->cursor = e->data.count;
     }
 
-    da_append(&e->data, '\0');
+    for (size_t i = 0; i < buf_len; ++i) {
+        da_append(&e->data, '\0');
+    }
     memmove(
-        &e->data.items[e->cursor + 1],
+        &e->data.items[e->cursor + buf_len],
         &e->data.items[e->cursor],
-        e->data.count - e->cursor - 1
+        e->data.count - e->cursor - buf_len
     );
-    e->data.items[e->cursor] = x;
-    e->cursor += 1;
-
+    memcpy(&e->data.items[e->cursor], buf, buf_len);
+    e->cursor += buf_len;
     editor_retokenize(e);
 }
 
@@ -308,20 +318,25 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
     // Update camera
     {
-        float target_scale = 3.0f;
         if (max_line_len > 1000.0f) {
             max_line_len = 1000.0f;
         }
-        if (max_line_len > 0.0f) {
-            target_scale = SCREEN_WIDTH / max_line_len;
-        }
+
+        float target_scale = w/3/(max_line_len*0.75); // TODO: division by 0
+
+        Vec2f target = cursor_pos;
+        float offset = 0.0f;
 
         if (target_scale > 3.0f) {
             target_scale = 3.0f;
+        } else {
+            offset = cursor_pos.x - w/3/sr->camera_scale;
+            if (offset < 0.0f) offset = 0.0f;
+            target = vec2f(w/3/sr->camera_scale + offset, cursor_pos.y);
         }
 
         sr->camera_vel = vec2f_mul(
-                             vec2f_sub(cursor_pos, sr->camera_pos),
+                             vec2f_sub(target, sr->camera_pos),
                              vec2fs(2.0f));
         sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f;
 
@@ -342,4 +357,33 @@ void editor_update_selection(Editor *e, bool shift)
             e->selection = false;
         }
     }
+}
+
+void editor_clipboard_copy(Editor *e)
+{
+    if (e->selection) {
+        size_t begin = e->select_begin;
+        size_t end = e->cursor;
+        if (begin > end) SWAP(size_t, begin, end);
+
+        e->clipboard.count = 0;
+        sb_append_buf(&e->clipboard, &e->data.items[begin], end - begin + 1);
+        sb_append_null(&e->clipboard);
+
+        if (SDL_SetClipboardText(e->clipboard.items) < 0) {
+            fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
+        }
+    }
+}
+
+void editor_clipboard_paste(Editor *e)
+{
+    char *text = SDL_GetClipboardText();
+    size_t text_len = strlen(text);
+    if (text_len > 0) {
+        editor_insert_buf(e, text, text_len);
+    } else {
+        fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
+    }
+    SDL_free(text);
 }
