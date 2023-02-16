@@ -67,7 +67,7 @@ void fb_render(const File_Browser *fb, SDL_Window *window, Free_Glyph_Atlas *atl
 
     simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
     if (fb->cursor < fb->files.count) {
-        const Vec2f begin = vec2f(0, -(float)fb->cursor * FREE_GLYPH_FONT_SIZE);
+        const Vec2f begin = vec2f(0, -((float)fb->cursor + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE);
         Vec2f end = begin;
         free_glyph_atlas_measure_line_sized(
             atlas, fb->files.items[fb->cursor], strlen(fb->files.items[fb->cursor]),

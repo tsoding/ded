@@ -235,7 +235,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 }
 
                 if (select_begin_chr <= select_end_chr) {
-                    Vec2f select_begin_scr = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
+                    Vec2f select_begin_scr = vec2f(0, -((float)row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE);
                     free_glyph_atlas_measure_line_sized(
                         atlas, editor->data.items + line_chr.begin, select_begin_chr - line_chr.begin,
                         &select_begin_scr);
@@ -288,7 +288,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         size_t cursor_row = editor_cursor_row(editor);
         Line line = editor->lines.items[cursor_row];
         size_t cursor_col = editor->cursor - line.begin;
-        cursor_pos.y = -(float) cursor_row * FREE_GLYPH_FONT_SIZE;
+        cursor_pos.y = -((float)cursor_row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE;
         cursor_pos.x = free_glyph_atlas_cursor_pos(
                            atlas,
                            editor->data.items + line.begin, line.end - line.begin,
