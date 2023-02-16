@@ -1,6 +1,6 @@
 # Dramatic EDitor
 
-**THIS SOFTWARE IS UNFINISHED!!!**
+**THIS SOFTWARE IS UNFINISHED!!! Don't have any high expectations.**
 
 # Quick Start
 
