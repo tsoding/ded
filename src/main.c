@@ -24,8 +24,9 @@
 // TODO: Save file dialog
 // Needed when ded is ran without any file so it does not know where to save.
 
-// TODO: Jump forward/backward by a word
+// TODO: Jump up/down by paragraph
 // TODO: Delete a word
+// TODO: Delete selection
 
 void MessageCallback(GLenum source,
                      GLenum type,
@@ -318,14 +319,22 @@ int main(int argc, char **argv)
 
                     case SDLK_LEFT: {
                         editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                        editor_move_char_left(&editor);
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor_move_word_left(&editor);
+                        } else {
+                            editor_move_char_left(&editor);
+                        }
                         editor.last_stroke = SDL_GetTicks();
                     }
                     break;
 
                     case SDLK_RIGHT: {
                         editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                        editor_move_char_right(&editor);
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor_move_word_right(&editor);
+                        } else {
+                            editor_move_char_right(&editor);
+                        }
                         editor.last_stroke = SDL_GetTicks();
                     }
                     break;

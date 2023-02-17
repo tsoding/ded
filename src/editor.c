@@ -118,6 +118,26 @@ void editor_move_char_right(Editor *e)
     if (e->cursor < e->data.count) e->cursor += 1;
 }
 
+void editor_move_word_left(Editor *e)
+{
+    while (e->cursor > 0 && !isalnum(e->data.items[e->cursor - 1])) {
+        e->cursor -= 1;
+    }
+    while (e->cursor > 0 && isalnum(e->data.items[e->cursor - 1])) {
+        e->cursor -= 1;
+    }
+}
+
+void editor_move_word_right(Editor *e)
+{
+    while (e->cursor < e->data.count && !isalnum(e->data.items[e->cursor])) {
+        e->cursor += 1;
+    }
+    while (e->cursor < e->data.count && isalnum(e->data.items[e->cursor])) {
+        e->cursor += 1;
+    }
+}
+
 void editor_insert_char(Editor *e, char x)
 {
     editor_insert_buf(e, &x, 1);
