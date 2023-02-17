@@ -20,6 +20,7 @@
 #include "./simple_renderer.h"
 #include "./common.h"
 #include "./lexer.h"
+#include "./sv.h"
 
 // TODO: Save file dialog
 // Needed when ded is ran without any file so it does not know where to save.
@@ -54,6 +55,7 @@ static File_Browser fb = {0};
 
 // TODO: display errors reported via flash_error right in the text editor window somehow
 #define flash_error(...) do { fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); } while(0)
+
 
 int main(int argc, char **argv)
 {
@@ -294,19 +296,22 @@ int main(int argc, char **argv)
                         for (size_t i = 0; i < 4; ++i) {
                             editor_insert_char(&editor, ' ');
                         }
-                    } break;
+                    }
+                    break;
 
                     case SDLK_c: {
                         if (event.key.keysym.mod & KMOD_CTRL) {
                             editor_clipboard_copy(&editor);
                         }
-                    } break;
+                    }
+                    break;
 
                     case SDLK_v: {
                         if (event.key.keysym.mod & KMOD_CTRL) {
                             editor_clipboard_paste(&editor);
                         }
-                    } break;
+                    }
+                    break;
 
                     case SDLK_UP: {
                         editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);

@@ -32,6 +32,16 @@ typedef int Errno;
 
 #define DA_INIT_CAP 256
 
+#define da_last(da) (assert((da)->count > 0), (da)->items[(da)->count - 1])
+
+#define da_move(dst, src)                \
+    do {                                 \
+       free((dst)->items);               \
+       (dst)->items = (src).items;       \
+       (dst)->count = (src).count;       \
+       (dst)->capacity = (src).capacity; \
+    } while (0)
+
 #define da_append(da, item)                                                          \
     do {                                                                             \
         if ((da)->count >= (da)->capacity) {                                         \
@@ -68,6 +78,9 @@ typedef struct {
     size_t capacity;
 } String_Builder;
 
+#define SB_Fmt "%.*s"
+#define SB_Arg(sb) (int) (sb).count, (sb).items
+
 #define sb_append_buf da_append_many
 #define sb_append_cstr(sb, cstr)  \
     do {                          \
@@ -76,6 +89,8 @@ typedef struct {
         da_append_many(sb, s, n); \
     } while (0)
 #define sb_append_null(sb) da_append_many(sb, "", 1)
+
+#define sb_to_sv(sb) sv_from_parts((sb).items, (sb).count)
 
 typedef struct {
     const char **items;

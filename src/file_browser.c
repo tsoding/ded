@@ -1,5 +1,6 @@
 #include <string.h>
 #include "file_browser.h"
+#include "sv.h"
 
 static int file_cmp(const void *ap, const void *bp)
 {
@@ -25,6 +26,76 @@ Errno fb_open_dir(File_Browser *fb, const char *dir_path)
     return 0;
 }
 
+#define PATH_SEP "/"
+#define PATH_EMPTY ""
+#define PATH_DOT "."
+#define PATH_DOTDOT ".."
+
+typedef struct {
+    String_View *items;
+    size_t count;
+    size_t capacity;
+} Comps;
+
+void normpath(String_View path, String_Builder *result)
+{
+    size_t original_sb_size = result->count;
+
+    if (path.count == 0) {
+        sb_append_cstr(result, PATH_DOT);
+        return;
+    }
+
+    int initial_slashes = 0;
+    while (path.count > 0 && *path.data == *PATH_SEP) {
+        initial_slashes += 1;
+        sv_chop_left(&path, 1);
+    }
+    if (initial_slashes > 2) {
+        initial_slashes = 1;
+    }
+
+    Comps new_comps = {0};
+
+    while (path.count > 0) {
+        String_View comp = sv_chop_by_delim(&path, '/');
+        if (comp.count == 0 || sv_eq(comp, SV(PATH_DOT))) {
+            continue;
+        }
+        if (!sv_eq(comp, SV(PATH_DOTDOT))) {
+            da_append(&new_comps, comp);
+            continue;
+        }
+        if (initial_slashes == 0 && new_comps.count == 0) {
+            da_append(&new_comps, comp);
+            continue;
+        }
+        if (new_comps.count > 0 && sv_eq(da_last(&new_comps), SV(PATH_DOTDOT))) {
+            da_append(&new_comps, comp);
+            continue;
+        }
+        if (new_comps.count > 0) {
+            new_comps.count -= 1;
+            continue;
+        }
+    }
+
+    for (int i = 0; i < initial_slashes; ++i) {
+        sb_append_cstr(result, PATH_SEP);
+    }
+
+    for (size_t i = 0; i < new_comps.count; ++i) {
+        if (i > 0) sb_append_cstr(result, PATH_SEP);
+        sb_append_buf(result, new_comps.items[i].data, new_comps.items[i].count);
+    }
+
+    if (original_sb_size == result->count) {
+        sb_append_cstr(result, PATH_DOT);
+    }
+
+    free(new_comps.items);
+}
+
 Errno fb_change_dir(File_Browser *fb)
 {
     assert(fb->dir_path.count > 0 && "You need to call fb_open_dir() before fb_change_dir()");
@@ -36,10 +107,16 @@ Errno fb_change_dir(File_Browser *fb)
 
     fb->dir_path.count -= 1;
 
-    // TODO: fb_change_dir() does not support .. and . properly
+    // TODO: fb->dir_path grows indefinitely if we hit the root
     sb_append_cstr(&fb->dir_path, "/");
     sb_append_cstr(&fb->dir_path, dir_name);
+
+    String_Builder result = {0};
+    normpath(sb_to_sv(fb->dir_path), &result);
+    da_move(&fb->dir_path, result);
     sb_append_null(&fb->dir_path);
+
+    printf("Changed dir to %s\n", fb->dir_path.items);
 
     fb->files.count = 0;
     fb->cursor = 0;
