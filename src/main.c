@@ -25,6 +25,7 @@
 // Needed when ded is ran without any file so it does not know where to save.
 
 // TODO: Jump up/down by paragraph
+// TODO: An ability to create a new file
 // TODO: Delete a word
 // TODO: Delete selection
 
