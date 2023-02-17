@@ -245,7 +245,7 @@ void simple_renderer_reload_shaders(Simple_Renderer *sr)
 // simple_renderer_vertex() for a potentially large amount of verticies in the first place.
 void simple_renderer_vertex(Simple_Renderer *sr, Vec2f p, Vec4f c, Vec2f uv)
 {
-#if 1
+#if 0
     // TODO: flush the renderer on vertex buffer overflow instead firing the assert
     if (sr->verticies_count >= SIMPLE_VERTICIES_CAP) simple_renderer_flush(sr);
 #else
