@@ -35,6 +35,26 @@ void editor_delete(Editor *e)
     editor_retokenize(e);
 }
 
+void editor_backspace_word(Editor *e)
+{
+    while (e->cursor > 0 && !isalnum(e->data.items[e->cursor - 1])) {
+	editor_backspace(e);
+    }
+    while (e->cursor > 0 && isalnum(e->data.items[e->cursor - 1])) {
+	editor_backspace(e);
+    }
+}
+
+void editor_delete_word(Editor *e)
+{
+    while (e->cursor < e->data.count && !isalnum(e->data.items[e->cursor])) {
+	editor_delete(e);
+    }
+    while (e->cursor < e->data.count && isalnum(e->data.items[e->cursor])) {
+	editor_delete(e);
+    }
+}
+
 // TODO: make sure that you always have new line at the end of the file while saving
 // https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_206
 

@@ -49,6 +49,8 @@ Errno editor_load_from_file(Editor *editor, const char *file_path);
 
 void editor_backspace(Editor *editor);
 void editor_delete(Editor *editor);
+void editor_backspace_word(Editor *editor);
+void editor_delete_word(Editor *editor);
 size_t editor_cursor_row(const Editor *e);
 void editor_move_line_up(Editor *e);
 void editor_move_line_down(Editor *e);

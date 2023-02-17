@@ -234,9 +234,14 @@ int main(int argc, char **argv)
                 } else {
                     switch (event.key.keysym.sym) {
                     case SDLK_BACKSPACE: {
-                        editor_backspace(&editor);
-                        editor.last_stroke = SDL_GetTicks();
-                    }
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor_backspace_word(&editor);
+                            editor.last_stroke = SDL_GetTicks();
+                        }
+                        else {
+                            editor_backspace(&editor);
+                            editor.last_stroke = SDL_GetTicks();
+                        }
                     break;
 
                     case SDLK_F2: {
@@ -269,8 +274,14 @@ int main(int argc, char **argv)
                     break;
 
                     case SDLK_DELETE: {
-                        editor_delete(&editor);
-                        editor.last_stroke = SDL_GetTicks();
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor_delete_word(&editor);
+                            editor.last_stroke = SDL_GetTicks();
+                        }
+                        else {
+                            editor_delete(&editor);
+                            editor.last_stroke = SDL_GetTicks();
+                        }
                     }
                     break;
 
