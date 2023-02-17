@@ -35,6 +35,9 @@ void editor_delete(Editor *e)
     editor_retokenize(e);
 }
 
+// TODO: make sure that you always have new line at the end of the file while saving
+// https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_206
+
 Errno editor_save_as(Editor *e, const char *file_path)
 {
     printf("Saving as %s...\n", file_path);
