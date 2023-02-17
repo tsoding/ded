@@ -142,16 +142,6 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (!GLEW_ARB_draw_instanced) {
-        fprintf(stderr, "ARB_draw_instanced is not supported; game may not work properly!!\n");
-        return 1;
-    }
-
-    if (!GLEW_ARB_instanced_arrays) {
-        fprintf(stderr, "ARB_instanced_arrays is not supported; game may not work properly!!\n");
-        return 1;
-    }
-
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
