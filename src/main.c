@@ -242,6 +242,7 @@ int main(int argc, char **argv)
                             editor_backspace(&editor);
                             editor.last_stroke = SDL_GetTicks();
                         }
+		    }
                     break;
 
                     case SDLK_F2: {
