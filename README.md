@@ -1,6 +1,6 @@
 # Dramatic EDitor
 
-**THIS SOFTWARE IS UNFINISHED!!!**
+**THIS SOFTWARE IS UNFINISHED!!! Don't have any high expectations.**
 
 # Quick Start
 
@@ -14,7 +14,7 @@
 
 ```console
 $ ./build.sh
-$ ./ded src\main.c
+$ ./ded src/main.c
 ```
 
 ## Windows MSVC
@@ -25,6 +25,7 @@ $ ./ded src\main.c
 > .\ded.exe src\main.c
 ```
 
-# Font
+# Fonts
 
-Victor Mono: https://rubjo.github.io/victor-mono/
+- Victor Mono: https://rubjo.github.io/victor-mono/
+- Iosevka: https://github.com/be5invis/Iosevka

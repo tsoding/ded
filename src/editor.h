@@ -54,6 +54,8 @@ void editor_move_line_up(Editor *e);
 void editor_move_line_down(Editor *e);
 void editor_move_char_left(Editor *e);
 void editor_move_char_right(Editor *e);
+void editor_move_word_left(Editor *e);
+void editor_move_word_right(Editor *e);
 void editor_insert_char(Editor *e, char x);
 void editor_insert_buf(Editor *e, char *buf, size_t buf_len);
 void editor_retokenize(Editor *e);

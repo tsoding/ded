@@ -35,6 +35,9 @@ void editor_delete(Editor *e)
     editor_retokenize(e);
 }
 
+// TODO: make sure that you always have new line at the end of the file while saving
+// https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_206
+
 Errno editor_save_as(Editor *e, const char *file_path)
 {
     printf("Saving as %s...\n", file_path);
@@ -116,6 +119,26 @@ void editor_move_char_left(Editor *e)
 void editor_move_char_right(Editor *e)
 {
     if (e->cursor < e->data.count) e->cursor += 1;
+}
+
+void editor_move_word_left(Editor *e)
+{
+    while (e->cursor > 0 && !isalnum(e->data.items[e->cursor - 1])) {
+        e->cursor -= 1;
+    }
+    while (e->cursor > 0 && isalnum(e->data.items[e->cursor - 1])) {
+        e->cursor -= 1;
+    }
+}
+
+void editor_move_word_right(Editor *e)
+{
+    while (e->cursor < e->data.count && !isalnum(e->data.items[e->cursor])) {
+        e->cursor += 1;
+    }
+    while (e->cursor < e->data.count && isalnum(e->data.items[e->cursor])) {
+        e->cursor += 1;
+    }
 }
 
 void editor_insert_char(Editor *e, char x)
@@ -235,7 +258,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 }
 
                 if (select_begin_chr <= select_end_chr) {
-                    Vec2f select_begin_scr = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
+                    Vec2f select_begin_scr = vec2f(0, -((float)row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE);
                     free_glyph_atlas_measure_line_sized(
                         atlas, editor->data.items + line_chr.begin, select_begin_chr - line_chr.begin,
                         &select_begin_scr);
@@ -288,7 +311,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         size_t cursor_row = editor_cursor_row(editor);
         Line line = editor->lines.items[cursor_row];
         size_t cursor_col = editor->cursor - line.begin;
-        cursor_pos.y = -(float) cursor_row * FREE_GLYPH_FONT_SIZE;
+        cursor_pos.y = -((float)cursor_row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE;
         cursor_pos.x = free_glyph_atlas_cursor_pos(
                            atlas,
                            editor->data.items + line.begin, line.end - line.begin,
