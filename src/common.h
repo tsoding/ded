@@ -7,7 +7,7 @@
 #include "./la.h"
 
 #ifdef _WIN32
-   int isalnum(int c);
+#     include <ctype.h> //currently for isalnum only
 #endif // _WIN32
 
 #define SCREEN_WIDTH 800
