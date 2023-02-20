@@ -342,7 +342,7 @@ int main(int argc, char **argv)
                     }
                     break;
                     }
-					editor.last_stroke = SDL_GetTicks();
+                    editor.last_stroke = SDL_GetTicks();
                 }
             }
             break;
