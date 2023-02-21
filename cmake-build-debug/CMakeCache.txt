@@ -575,7 +575,6 @@ SDL_RPI:BOOL=OFF
 //Enable the Sensor subsystem
 SDL_SENSOR:BOOL=ON
 
-//Build a shared version of the library
 SDL_SHARED:BOOL=OFF
 
 //Support the sndio audio API
@@ -593,7 +592,6 @@ SDL_SSE3:BOOL=ON
 //Allow GCC to use SSE floating point math
 SDL_SSEMATH:BOOL=ON
 
-//Build a static version of the library
 SDL_STATIC:BOOL=ON
 
 //Static version of the library should be built with Position Independent
