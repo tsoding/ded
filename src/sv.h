@@ -27,6 +27,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
 
 #ifndef SVDEF
 #define SVDEF
@@ -205,7 +206,7 @@ SVDEF String_View sv_chop_by_sv(String_View *sv, String_View thicc_delim)
     String_View window = sv_from_parts(sv->data, thicc_delim.count);
     size_t i = 0;
     while (i + thicc_delim.count < sv->count
-        && !(sv_eq(window, thicc_delim)))
+           && !(sv_eq(window, thicc_delim)))
     {
         i++;
         window.data++;
@@ -264,12 +265,12 @@ SVDEF bool sv_eq_ignorecase(String_View a, String_View b)
     char x, y;
     for (size_t i = 0; i < a.count; i++) {
         x = 'A' <= a.data[i] && a.data[i] <= 'Z'
-              ? a.data[i] + 32
-              : a.data[i];
+            ? a.data[i] + 32
+            : a.data[i];
 
         y = 'A' <= b.data[i] && b.data[i] <= 'Z'
-              ? b.data[i] + 32
-              : b.data[i];
+            ? b.data[i] + 32
+            : b.data[i];
 
         if (x != y) return false;
     }

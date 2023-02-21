@@ -86,7 +86,7 @@ void normpath(String_View path, String_Builder *result)
 
     for (size_t i = 0; i < new_comps.count; ++i) {
         if (i > 0) sb_append_cstr(result, PATH_SEP);
-        sb_append_buf(result, new_comps.items[i].data, new_comps.items[i].count);
+                sb_append_buf(result, new_comps.items[i].data, new_comps.items[i].count);
     }
 
     if (original_sb_size == result->count) {
@@ -147,8 +147,8 @@ void fb_render(const File_Browser *fb, SDL_Window *window, Free_Glyph_Atlas *atl
         const Vec2f begin = vec2f(0, -((float)fb->cursor + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE);
         Vec2f end = begin;
         free_glyph_atlas_measure_line_sized(
-            atlas, fb->files.items[fb->cursor], strlen(fb->files.items[fb->cursor]),
-            &end);
+                atlas, fb->files.items[fb->cursor], strlen(fb->files.items[fb->cursor]),
+                &end);
         simple_renderer_solid_rect(sr, begin, vec2f(end.x - begin.x, FREE_GLYPH_FONT_SIZE), vec4f(.25, .25, .25, 1));
     }
     simple_renderer_flush(sr);
@@ -158,9 +158,9 @@ void fb_render(const File_Browser *fb, SDL_Window *window, Free_Glyph_Atlas *atl
         const Vec2f begin = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
         Vec2f end = begin;
         free_glyph_atlas_render_line_sized(
-            atlas, sr, fb->files.items[row], strlen(fb->files.items[row]),
-            &end,
-            vec4fs(0));
+                atlas, sr, fb->files.items[row], strlen(fb->files.items[row]),
+                &end,
+                vec4fs(0));
         // TODO: the max_line_len should be calculated based on what's visible on the screen right now
         float line_len = fabsf(end.x - begin.x);
         if (line_len > max_line_len) {
@@ -190,8 +190,8 @@ void fb_render(const File_Browser *fb, SDL_Window *window, Free_Glyph_Atlas *atl
         }
 
         sr->camera_vel = vec2f_mul(
-                             vec2f_sub(target, sr->camera_pos),
-                             vec2fs(2.0f));
+                vec2f_sub(target, sr->camera_pos),
+                vec2fs(2.0f));
         sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f;
 
         sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME)));
@@ -207,8 +207,8 @@ const char *fb_file_path(File_Browser *fb)
     if (fb->cursor >= fb->files.count) return NULL;
 
     fb->file_path.count = 0;
-    sb_append_buf(&fb->file_path, fb->dir_path.items, fb->dir_path.count - 1);
-    sb_append_buf(&fb->file_path, "/", 1);
+            sb_append_buf(&fb->file_path, fb->dir_path.items, fb->dir_path.count - 1);
+            sb_append_buf(&fb->file_path, "/", 1);
     sb_append_cstr(&fb->file_path, fb->files.items[fb->cursor]);
     sb_append_null(&fb->file_path);
 

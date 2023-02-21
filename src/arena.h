@@ -81,7 +81,7 @@ Region *new_region(size_t capacity)
     size_t size_bytes = sizeof(Region) + sizeof(uintptr_t)*capacity;
     // TODO: it would be nice if we could guarantee that the regions are allocated by ARENA_BACKEND_LIBC_MALLOC are page aligned
     Region *r = malloc(size_bytes);
-    ARENA_ASSERT(r);
+            ARENA_ASSERT(r);
     r->next = NULL;
     r->count = 0;
     r->capacity = capacity;
@@ -113,7 +113,7 @@ void *arena_alloc(Arena *a, size_t size_bytes)
     size_t size = (size_bytes + sizeof(uintptr_t) - 1)/sizeof(uintptr_t);
 
     if (a->end == NULL) {
-        ARENA_ASSERT(a->begin == NULL);
+                ARENA_ASSERT(a->begin == NULL);
         size_t capacity = REGION_DEFAULT_CAPACITY;
         if (capacity < size) capacity = size;
         a->end = new_region(capacity);
@@ -125,7 +125,7 @@ void *arena_alloc(Arena *a, size_t size_bytes)
     }
 
     if (a->end->count + size > a->end->capacity) {
-        ARENA_ASSERT(a->end->next == NULL);
+                ARENA_ASSERT(a->end->next == NULL);
         size_t capacity = REGION_DEFAULT_CAPACITY;
         if (capacity < size) capacity = size;
         a->end->next = new_region(capacity);

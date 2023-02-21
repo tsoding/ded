@@ -5,7 +5,8 @@
 
 #ifdef _WIN32
 #    define MINIRENT_IMPLEMENTATION
-#    include <minirent.h>
+#    include <assert.h>
+#    include "minirent.h"
 #else
 #    include <dirent.h>
 #    include <sys/types.h>
@@ -72,7 +73,7 @@ Errno write_entire_file(const char *file_path, const char *buf, size_t buf_size)
     fwrite(buf, 1, buf_size, f);
     if (ferror(f)) return_defer(errno);
 
-defer:
+    defer:
     if (f) fclose(f);
     return result;
 }
@@ -106,7 +107,7 @@ Errno read_entire_file(const char *file_path, String_Builder *sb)
         sb->items = realloc(sb->items, sb->capacity*sizeof(*sb->items));
         assert(sb->items != NULL && "Buy more RAM lol");
     }
-
+    memset(sb->items,0,sb->capacity);
     fread(sb->items, size, 1, f);
     if (ferror(f)) return_defer(errno);
     sb->count = size;
@@ -133,7 +134,14 @@ Vec4f hex_to_vec4f(uint32_t color)
 Errno type_of_file(const char *file_path, File_Type *ft)
 {
 #ifdef _WIN32
-#error "TODO: type_of_file() is not implemented for Windows"
+   wchar_t* wString[4096];
+   MultiByteToWideChar(CP_ACP, 0, file_path, -1, (LPWSTR)wString, 4096);
+   DWORD attr = GetFileAttributesW((LPWSTR)wString);
+   if (attr & FILE_ATTRIBUTE_DIRECTORY) {
+      *ft = FT_DIRECTORY;
+   } else {
+      *ft = FT_REGULAR;
+   }
 #else
     struct stat sb = {0};
     if (stat(file_path, &sb) < 0) return errno;
