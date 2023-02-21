@@ -4,6 +4,14 @@
 
 # Quick Start
 
+## CMake
+
+```console
+$ cmake -B bld
+$ cmake --build bld
+$ ./ded.exe
+```
+
 ## Dependencies
 
 - [SDL2 2.0.9+](https://www.libsdl.org/)
