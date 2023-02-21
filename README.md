@@ -9,7 +9,6 @@
 ```console
 $ cmake -B bld
 $ cmake --build bld
-$ ./ded.exe
 ```
 
 ## Dependencies
