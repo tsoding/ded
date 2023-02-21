@@ -1,0 +1,1912 @@
+Determining if the __GLIBC__ exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_4db8e && [1/2] Building C object CMakeFiles/cmTC_4db8e.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_4db8e.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -fdiagnostics-color=always -o CMakeFiles/cmTC_4db8e.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: error: '__GLIBC__' undeclared (first use in this function); did you mean '__LINE__'?
+    8 |   return ((int*)(&__GLIBC__))[argc];
+      |                   ^~~~~~~~~
+      |                   __LINE__
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdlib.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef __GLIBC__
+  return ((int*)(&__GLIBC__))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Performing C SOURCE FILE Test HAVE_GCC_PREFERRED_STACK_BOUNDARY failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_17b0e && [1/2] Building C object CMakeFiles/cmTC_17b0e.dir/src.c.obj
+FAILED: CMakeFiles/cmTC_17b0e.dir/src.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -DHAVE_GCC_PREFERRED_STACK_BOUNDARY  -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos" -mpreferred-stack-boundary=2 -fdiagnostics-color=always -o CMakeFiles/cmTC_17b0e.dir/src.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+cc1.exe: error: '-mpreferred-stack-boundary=2' is not between 3 and 4
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+int x = 0; int main(int argc, char **argv) { return 0; }
+Performing C SOURCE FILE Test HAVE_ALTIVEC_H_HDR failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_2a9b7 && [1/2] Building C object CMakeFiles/cmTC_2a9b7.dir/src.c.obj
+FAILED: CMakeFiles/cmTC_2a9b7.dir/src.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -DHAVE_ALTIVEC_H_HDR  -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos" -maltivec -fdiagnostics-color=always -o CMakeFiles/cmTC_2a9b7.dir/src.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+gcc.exe: error: unrecognized command-line option '-maltivec'
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+
+          #include <altivec.h>
+          vector unsigned int vzero() {
+              return vec_splat_u32(0);
+          }
+          int main(int argc, char **argv) { return 0; }
+Performing C SOURCE FILE Test HAVE_ALTIVEC failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_5281d && [1/2] Building C object CMakeFiles/cmTC_5281d.dir/src.c.obj
+FAILED: CMakeFiles/cmTC_5281d.dir/src.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -DHAVE_ALTIVEC  -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos" -maltivec -fdiagnostics-color=always -o CMakeFiles/cmTC_5281d.dir/src.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+gcc.exe: error: unrecognized command-line option '-maltivec'
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+
+          vector unsigned int vzero() {
+              return vec_splat_u32(0);
+          }
+          int main(int argc, char **argv) { return 0; }
+Determining if the include file iconv.h exists failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_77a84 && [1/2] Building C object CMakeFiles/cmTC_77a84.dir/CheckIncludeFile.c.obj
+FAILED: CMakeFiles/cmTC_77a84.dir/CheckIncludeFile.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_77a84.dir/CheckIncludeFile.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:10: fatal error: iconv.h: No such file or directory
+    1 | #include <iconv.h>
+      |          ^~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the __GLIBC__ exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_e1f4b && [1/2] Building C object CMakeFiles/cmTC_e1f4b.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_e1f4b.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -fdiagnostics-color=always -o CMakeFiles/cmTC_e1f4b.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: error: '__GLIBC__' undeclared (first use in this function); did you mean '__LINE__'?
+    8 |   return ((int*)(&__GLIBC__))[argc];
+      |                   ^~~~~~~~~
+      |                   __LINE__
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdlib.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef __GLIBC__
+  return ((int*)(&__GLIBC__))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Performing C SOURCE FILE Test HAVE_GCC_PREFERRED_STACK_BOUNDARY failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_7da8a && [1/2] Building C object CMakeFiles/cmTC_7da8a.dir/src.c.obj
+FAILED: CMakeFiles/cmTC_7da8a.dir/src.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -DHAVE_GCC_PREFERRED_STACK_BOUNDARY  -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos" -mpreferred-stack-boundary=2 -fdiagnostics-color=always -o CMakeFiles/cmTC_7da8a.dir/src.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+cc1.exe: error: '-mpreferred-stack-boundary=2' is not between 3 and 4
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+int x = 0; int main(int argc, char **argv) { return 0; }
+Determining if the __GLIBC__ exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_c68ce && [1/2] Building C object CMakeFiles/cmTC_c68ce.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_c68ce.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -fdiagnostics-color=always -o CMakeFiles/cmTC_c68ce.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: error: '__GLIBC__' undeclared (first use in this function); did you mean '__LINE__'?
+    8 |   return ((int*)(&__GLIBC__))[argc];
+      |                   ^~~~~~~~~
+      |                   __LINE__
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdlib.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef __GLIBC__
+  return ((int*)(&__GLIBC__))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Performing C SOURCE FILE Test HAVE_GCC_PREFERRED_STACK_BOUNDARY failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_460d5 && [1/2] Building C object CMakeFiles/cmTC_460d5.dir/src.c.obj
+FAILED: CMakeFiles/cmTC_460d5.dir/src.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -DHAVE_GCC_PREFERRED_STACK_BOUNDARY  -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos" -mpreferred-stack-boundary=2 -fdiagnostics-color=always -o CMakeFiles/cmTC_460d5.dir/src.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+cc1.exe: error: '-mpreferred-stack-boundary=2' is not between 3 and 4
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+int x = 0; int main(int argc, char **argv) { return 0; }
+Performing C SOURCE FILE Test HAVE_ALTIVEC_H_HDR failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_ce9a4 && [1/2] Building C object CMakeFiles/cmTC_ce9a4.dir/src.c.obj
+FAILED: CMakeFiles/cmTC_ce9a4.dir/src.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -DHAVE_ALTIVEC_H_HDR  -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos" -maltivec -fdiagnostics-color=always -o CMakeFiles/cmTC_ce9a4.dir/src.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+gcc.exe: error: unrecognized command-line option '-maltivec'
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+
+          #include <altivec.h>
+          vector unsigned int vzero() {
+              return vec_splat_u32(0);
+          }
+          int main(int argc, char **argv) { return 0; }
+Performing C SOURCE FILE Test HAVE_ALTIVEC failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_b3ee7 && [1/2] Building C object CMakeFiles/cmTC_b3ee7.dir/src.c.obj
+FAILED: CMakeFiles/cmTC_b3ee7.dir/src.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -DHAVE_ALTIVEC  -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos" -maltivec -fdiagnostics-color=always -o CMakeFiles/cmTC_b3ee7.dir/src.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+gcc.exe: error: unrecognized command-line option '-maltivec'
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+
+          vector unsigned int vzero() {
+              return vec_splat_u32(0);
+          }
+          int main(int argc, char **argv) { return 0; }
+Determining if the include file iconv.h exists failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_362b0 && [1/2] Building C object CMakeFiles/cmTC_362b0.dir/CheckIncludeFile.c.obj
+FAILED: CMakeFiles/cmTC_362b0.dir/CheckIncludeFile.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_362b0.dir/CheckIncludeFile.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:10: fatal error: iconv.h: No such file or directory
+    1 | #include <iconv.h>
+      |          ^~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the include file libunwind.h exists failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_db39f && [1/2] Building C object CMakeFiles/cmTC_db39f.dir/CheckIncludeFile.c.obj
+FAILED: CMakeFiles/cmTC_db39f.dir/CheckIncludeFile.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_db39f.dir/CheckIncludeFile.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:10: fatal error: libunwind.h: No such file or directory
+    1 | #include <libunwind.h>
+      |          ^~~~~~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the include file linux/input.h exists failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_cd745 && [1/2] Building C object CMakeFiles/cmTC_cd745.dir/CheckIncludeFile.c.obj
+FAILED: CMakeFiles/cmTC_cd745.dir/CheckIncludeFile.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_cd745.dir/CheckIncludeFile.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:10: fatal error: linux/input.h: No such file or directory
+    1 | #include <linux/input.h>
+      |          ^~~~~~~~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+
+Performing C SOURCE FILE Test HAVE_MPROTECT failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_8ef79 && [1/2] Building C object CMakeFiles/cmTC_8ef79.dir/src.c.obj
+FAILED: CMakeFiles/cmTC_8ef79.dir/src.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -DHAVE_MPROTECT  -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_8ef79.dir/src.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c:2:39: fatal error: sys/mman.h: No such file or directory
+    2 |                              #include <sys/mman.h>
+      |                                       ^~~~~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+#include <sys/types.h>
+                             #include <sys/mman.h>
+                             int main(void) { return 0; }
+Determining if the setenv exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_7f5c9 && [1/2] Building C object CMakeFiles/cmTC_7f5c9.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_7f5c9.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_7f5c9.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'setenv' undeclared (first use in this function); did you mean 'getenv'?
+   14 |   return ((int*)(&setenv))[argc];
+      |                   ^~~~~~
+      |                   getenv
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef setenv
+  return ((int*)(&setenv))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the unsetenv exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_9c47d && [1/2] Building C object CMakeFiles/cmTC_9c47d.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_9c47d.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_9c47d.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'unsetenv' undeclared (first use in this function)
+   14 |   return ((int*)(&unsetenv))[argc];
+      |                   ^~~~~~~~
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef unsetenv
+  return ((int*)(&unsetenv))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the bcopy exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_83550 && [1/2] Building C object CMakeFiles/cmTC_83550.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_83550.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_83550.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'bcopy' undeclared (first use in this function)
+   14 |   return ((int*)(&bcopy))[argc];
+      |                   ^~~~~
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef bcopy
+  return ((int*)(&bcopy))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the strlcpy exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_211bd && [1/2] Building C object CMakeFiles/cmTC_211bd.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_211bd.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_211bd.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'strlcpy' undeclared (first use in this function); did you mean 'strncpy'?
+   14 |   return ((int*)(&strlcpy))[argc];
+      |                   ^~~~~~~
+      |                   strncpy
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef strlcpy
+  return ((int*)(&strlcpy))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the strlcat exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_c9923 && [1/2] Building C object CMakeFiles/cmTC_c9923.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_c9923.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_c9923.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'strlcat' undeclared (first use in this function); did you mean 'strncat'?
+   14 |   return ((int*)(&strlcat))[argc];
+      |                   ^~~~~~~
+      |                   strncat
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef strlcat
+  return ((int*)(&strlcat))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the index exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_9da24 && [1/2] Building C object CMakeFiles/cmTC_9da24.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_9da24.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_9da24.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'index' undeclared (first use in this function)
+   14 |   return ((int*)(&index))[argc];
+      |                   ^~~~~
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef index
+  return ((int*)(&index))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the rindex exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_eaf65 && [1/2] Building C object CMakeFiles/cmTC_eaf65.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_eaf65.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_eaf65.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'rindex' undeclared (first use in this function)
+   14 |   return ((int*)(&rindex))[argc];
+      |                   ^~~~~~
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef rindex
+  return ((int*)(&rindex))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the _uitoa exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_72698 && [1/2] Building C object CMakeFiles/cmTC_72698.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_72698.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_72698.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: '_uitoa' undeclared (first use in this function); did you mean '_ultoa'?
+   14 |   return ((int*)(&_uitoa))[argc];
+      |                   ^~~~~~
+      |                   _ultoa
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef _uitoa
+  return ((int*)(&_uitoa))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the strcasestr exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_242dd && [1/2] Building C object CMakeFiles/cmTC_242dd.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_242dd.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_242dd.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'strcasestr' undeclared (first use in this function); did you mean 'strcasecmp'?
+   14 |   return ((int*)(&strcasestr))[argc];
+      |                   ^~~~~~~~~~
+      |                   strcasecmp
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef strcasestr
+  return ((int*)(&strcasestr))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the wcslcat exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_d6f53 && [1/2] Building C object CMakeFiles/cmTC_d6f53.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_d6f53.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_d6f53.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'wcslcat' undeclared (first use in this function); did you mean 'wcsncat'?
+   14 |   return ((int*)(&wcslcat))[argc];
+      |                   ^~~~~~~
+      |                   wcsncat
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef wcslcat
+  return ((int*)(&wcslcat))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the wcslcpy exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_45d21 && [1/2] Building C object CMakeFiles/cmTC_45d21.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_45d21.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_45d21.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'wcslcpy' undeclared (first use in this function); did you mean 'wcsncpy'?
+   14 |   return ((int*)(&wcslcpy))[argc];
+      |                   ^~~~~~~
+      |                   wcsncpy
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef wcslcpy
+  return ((int*)(&wcslcpy))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the wcscasecmp exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_471e6 && [1/2] Building C object CMakeFiles/cmTC_471e6.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_471e6.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_471e6.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'wcscasecmp' undeclared (first use in this function); did you mean 'strcasecmp'?
+   14 |   return ((int*)(&wcscasecmp))[argc];
+      |                   ^~~~~~~~~~
+      |                   strcasecmp
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef wcscasecmp
+  return ((int*)(&wcscasecmp))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the wcsncasecmp exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_86919 && [1/2] Building C object CMakeFiles/cmTC_86919.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_86919.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_86919.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'wcsncasecmp' undeclared (first use in this function); did you mean 'strncasecmp'?
+   14 |   return ((int*)(&wcsncasecmp))[argc];
+      |                   ^~~~~~~~~~~
+      |                   strncasecmp
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef wcsncasecmp
+  return ((int*)(&wcsncasecmp))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the sigaction exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_cf6c7 && [1/2] Building C object CMakeFiles/cmTC_cf6c7.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_cf6c7.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_cf6c7.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: error: 'sigaction' undeclared (first use in this function)
+    8 |   return ((int*)(&sigaction))[argc];
+      |                   ^~~~~~~~~
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <signal.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef sigaction
+  return ((int*)(&sigaction))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the sysconf exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_3fb0d && [1/2] Building C object CMakeFiles/cmTC_3fb0d.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_3fb0d.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_3fb0d.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: error: 'sysconf' undeclared (first use in this function)
+    8 |   return ((int*)(&sysconf))[argc];
+      |                   ^~~~~~~
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef sysconf
+  return ((int*)(&sysconf))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the sysctlbyname exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_ed1af && [1/2] Building C object CMakeFiles/cmTC_ed1af.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_ed1af.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_ed1af.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:3:10: fatal error: sys/sysctl.h: No such file or directory
+    3 | #include <sys/sysctl.h>
+      |          ^~~~~~~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <sys/types.h>
+#include <sys/sysctl.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef sysctlbyname
+  return ((int*)(&sysctlbyname))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the getauxval exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_f85a0 && [1/2] Building C object CMakeFiles/cmTC_f85a0.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_f85a0.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_f85a0.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:2:10: fatal error: sys/auxv.h: No such file or directory
+    2 | #include <sys/auxv.h>
+      |          ^~~~~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <sys/auxv.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef getauxval
+  return ((int*)(&getauxval))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the elf_aux_info exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_86a18 && [1/2] Building C object CMakeFiles/cmTC_86a18.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_86a18.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_86a18.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:2:10: fatal error: sys/auxv.h: No such file or directory
+    2 | #include <sys/auxv.h>
+      |          ^~~~~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <sys/auxv.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef elf_aux_info
+  return ((int*)(&elf_aux_info))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the poll exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_98431 && [1/2] Building C object CMakeFiles/cmTC_98431.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_98431.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_98431.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:2:10: fatal error: poll.h: No such file or directory
+    2 | #include <poll.h>
+      |          ^~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <poll.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef poll
+  return ((int*)(&poll))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the function iconv_open exists in the iconv failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_f2a97 && [1/2] Building C object CMakeFiles/cmTC_f2a97.dir/CheckFunctionExists.c.obj
+[2/2] Linking C executable cmTC_f2a97.exe
+FAILED: cmTC_f2a97.exe 
+cmd.exe /C "cd . && C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos" -DCHECK_FUNCTION_EXISTS=iconv_open  -D_GNU_SOURCE=1  CMakeFiles/cmTC_f2a97.dir/CheckFunctionExists.c.obj -o cmTC_f2a97.exe -Wl,--out-implib,libcmTC_f2a97.dll.a -Wl,--major-image-version,0,--minor-image-version,0  -liconv  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 && cd ."
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin/ld.exe: CMakeFiles/cmTC_f2a97.dir/CheckFunctionExists.c.obj:CheckFunctionExists.c:(.text+0x15): undefined reference to `iconv_open'
+collect2.exe: error: ld returned 1 exit status
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the function iconv_open exists in the c failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_a0995 && [1/2] Building C object CMakeFiles/cmTC_a0995.dir/CheckFunctionExists.c.obj
+[2/2] Linking C executable cmTC_a0995.exe
+FAILED: cmTC_a0995.exe 
+cmd.exe /C "cd . && C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos" -DCHECK_FUNCTION_EXISTS=iconv_open  -D_GNU_SOURCE=1  CMakeFiles/cmTC_a0995.dir/CheckFunctionExists.c.obj -o cmTC_a0995.exe -Wl,--out-implib,libcmTC_a0995.dll.a -Wl,--major-image-version,0,--minor-image-version,0  -lc  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 && cd ."
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin/ld.exe: cannot find -lc
+collect2.exe: error: ld returned 1 exit status
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the include file alloca.h exists failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_29293 && [1/2] Building C object CMakeFiles/cmTC_29293.dir/CheckIncludeFile.c.obj
+FAILED: CMakeFiles/cmTC_29293.dir/CheckIncludeFile.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_29293.dir/CheckIncludeFile.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:10: fatal error: alloca.h: No such file or directory
+    1 | #include <alloca.h>
+      |          ^~~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the alloca exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_3c95f && [1/2] Building C object CMakeFiles/cmTC_3c95f.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_3c95f.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_3c95f.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:2:10: fatal error: alloca.h: No such file or directory
+    2 | #include <alloca.h>
+      |          ^~~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <alloca.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef alloca
+  return ((int*)(&alloca))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Performing C SOURCE FILE Test HAVE_SA_SIGACTION failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_541ca && [1/2] Building C object CMakeFiles/cmTC_541ca.dir/src.c.obj
+FAILED: CMakeFiles/cmTC_541ca.dir/src.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -DHAVE_SA_SIGACTION  -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_541ca.dir/src.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c:6:39: error: invalid use of undefined type 'struct sigaction'
+    6 |   (void)sizeof(((struct sigaction *)0)->sa_sigaction);
+      |                                       ^~
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+
+#include <signal.h>
+
+int main()
+{
+  (void)sizeof(((struct sigaction *)0)->sa_sigaction);
+  return 0;
+}
+
+Performing C SOURCE FILE Test HAVE_XINPUT_GAMEPAD_EX failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_f6867 && [1/2] Building C object CMakeFiles/cmTC_f6867.dir/src.c.obj
+FAILED: CMakeFiles/cmTC_f6867.dir/src.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -DHAVE_XINPUT_GAMEPAD_EX  -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_f6867.dir/src.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c:4:7: error: unknown type name 'XINPUT_GAMEPAD_EX'; did you mean 'XINPUT_GAMEPAD_X'?
+    4 |       XINPUT_GAMEPAD_EX x1;
+      |       ^~~~~~~~~~~~~~~~~
+      |       XINPUT_GAMEPAD_X
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+
+      #include <windows.h>
+      #include <xinput.h>
+      XINPUT_GAMEPAD_EX x1;
+      int main(int argc, char **argv) { return 0; }
+Determining if the __GLIBC__ exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_f1821 && [1/2] Building C object CMakeFiles/cmTC_f1821.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_f1821.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -fdiagnostics-color=always -o CMakeFiles/cmTC_f1821.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: error: '__GLIBC__' undeclared (first use in this function); did you mean '__LINE__'?
+    8 |   return ((int*)(&__GLIBC__))[argc];
+      |                   ^~~~~~~~~
+      |                   __LINE__
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdlib.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef __GLIBC__
+  return ((int*)(&__GLIBC__))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the __GLIBC__ exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_f2f20 && [1/2] Building C object CMakeFiles/cmTC_f2f20.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_f2f20.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -fdiagnostics-color=always -o CMakeFiles/cmTC_f2f20.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: error: '__GLIBC__' undeclared (first use in this function); did you mean '__LINE__'?
+    8 |   return ((int*)(&__GLIBC__))[argc];
+      |                   ^~~~~~~~~
+      |                   __LINE__
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdlib.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef __GLIBC__
+  return ((int*)(&__GLIBC__))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Performing C SOURCE FILE Test HAVE_GCC_PREFERRED_STACK_BOUNDARY failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_c1e4e && [1/2] Building C object CMakeFiles/cmTC_c1e4e.dir/src.c.obj
+FAILED: CMakeFiles/cmTC_c1e4e.dir/src.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -DHAVE_GCC_PREFERRED_STACK_BOUNDARY  -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos" -mpreferred-stack-boundary=2 -fdiagnostics-color=always -o CMakeFiles/cmTC_c1e4e.dir/src.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+cc1.exe: error: '-mpreferred-stack-boundary=2' is not between 3 and 4
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+int x = 0; int main(int argc, char **argv) { return 0; }
+Performing C SOURCE FILE Test HAVE_ALTIVEC_H_HDR failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_3417d && [1/2] Building C object CMakeFiles/cmTC_3417d.dir/src.c.obj
+FAILED: CMakeFiles/cmTC_3417d.dir/src.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -DHAVE_ALTIVEC_H_HDR  -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos" -maltivec -fdiagnostics-color=always -o CMakeFiles/cmTC_3417d.dir/src.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+gcc.exe: error: unrecognized command-line option '-maltivec'
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+
+          #include <altivec.h>
+          vector unsigned int vzero() {
+              return vec_splat_u32(0);
+          }
+          int main(int argc, char **argv) { return 0; }
+Performing C SOURCE FILE Test HAVE_ALTIVEC failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_b3129 && [1/2] Building C object CMakeFiles/cmTC_b3129.dir/src.c.obj
+FAILED: CMakeFiles/cmTC_b3129.dir/src.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -DHAVE_ALTIVEC  -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos" -maltivec -fdiagnostics-color=always -o CMakeFiles/cmTC_b3129.dir/src.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+gcc.exe: error: unrecognized command-line option '-maltivec'
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+
+          vector unsigned int vzero() {
+              return vec_splat_u32(0);
+          }
+          int main(int argc, char **argv) { return 0; }
+Determining if the include file iconv.h exists failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_b71f1 && [1/2] Building C object CMakeFiles/cmTC_b71f1.dir/CheckIncludeFile.c.obj
+FAILED: CMakeFiles/cmTC_b71f1.dir/CheckIncludeFile.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_b71f1.dir/CheckIncludeFile.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:10: fatal error: iconv.h: No such file or directory
+    1 | #include <iconv.h>
+      |          ^~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the include file libunwind.h exists failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_c7730 && [1/2] Building C object CMakeFiles/cmTC_c7730.dir/CheckIncludeFile.c.obj
+FAILED: CMakeFiles/cmTC_c7730.dir/CheckIncludeFile.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_c7730.dir/CheckIncludeFile.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:10: fatal error: libunwind.h: No such file or directory
+    1 | #include <libunwind.h>
+      |          ^~~~~~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the include file linux/input.h exists failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_f47cf && [1/2] Building C object CMakeFiles/cmTC_f47cf.dir/CheckIncludeFile.c.obj
+FAILED: CMakeFiles/cmTC_f47cf.dir/CheckIncludeFile.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_f47cf.dir/CheckIncludeFile.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:10: fatal error: linux/input.h: No such file or directory
+    1 | #include <linux/input.h>
+      |          ^~~~~~~~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+
+Performing C SOURCE FILE Test HAVE_MPROTECT failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_aeb07 && [1/2] Building C object CMakeFiles/cmTC_aeb07.dir/src.c.obj
+FAILED: CMakeFiles/cmTC_aeb07.dir/src.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -DHAVE_MPROTECT  -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_aeb07.dir/src.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c:2:39: fatal error: sys/mman.h: No such file or directory
+    2 |                              #include <sys/mman.h>
+      |                                       ^~~~~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+#include <sys/types.h>
+                             #include <sys/mman.h>
+                             int main(void) { return 0; }
+Determining if the setenv exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_e9760 && [1/2] Building C object CMakeFiles/cmTC_e9760.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_e9760.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_e9760.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'setenv' undeclared (first use in this function); did you mean 'getenv'?
+   14 |   return ((int*)(&setenv))[argc];
+      |                   ^~~~~~
+      |                   getenv
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef setenv
+  return ((int*)(&setenv))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the unsetenv exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_41dad && [1/2] Building C object CMakeFiles/cmTC_41dad.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_41dad.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_41dad.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'unsetenv' undeclared (first use in this function)
+   14 |   return ((int*)(&unsetenv))[argc];
+      |                   ^~~~~~~~
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef unsetenv
+  return ((int*)(&unsetenv))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the bcopy exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_99044 && [1/2] Building C object CMakeFiles/cmTC_99044.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_99044.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_99044.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'bcopy' undeclared (first use in this function)
+   14 |   return ((int*)(&bcopy))[argc];
+      |                   ^~~~~
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef bcopy
+  return ((int*)(&bcopy))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the strlcpy exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_d772c && [1/2] Building C object CMakeFiles/cmTC_d772c.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_d772c.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_d772c.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'strlcpy' undeclared (first use in this function); did you mean 'strncpy'?
+   14 |   return ((int*)(&strlcpy))[argc];
+      |                   ^~~~~~~
+      |                   strncpy
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef strlcpy
+  return ((int*)(&strlcpy))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the strlcat exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_5f633 && [1/2] Building C object CMakeFiles/cmTC_5f633.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_5f633.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_5f633.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'strlcat' undeclared (first use in this function); did you mean 'strncat'?
+   14 |   return ((int*)(&strlcat))[argc];
+      |                   ^~~~~~~
+      |                   strncat
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef strlcat
+  return ((int*)(&strlcat))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the index exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_1e6a7 && [1/2] Building C object CMakeFiles/cmTC_1e6a7.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_1e6a7.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_1e6a7.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'index' undeclared (first use in this function)
+   14 |   return ((int*)(&index))[argc];
+      |                   ^~~~~
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef index
+  return ((int*)(&index))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the rindex exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_4378e && [1/2] Building C object CMakeFiles/cmTC_4378e.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_4378e.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_4378e.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'rindex' undeclared (first use in this function)
+   14 |   return ((int*)(&rindex))[argc];
+      |                   ^~~~~~
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef rindex
+  return ((int*)(&rindex))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the _uitoa exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_c8256 && [1/2] Building C object CMakeFiles/cmTC_c8256.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_c8256.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_c8256.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: '_uitoa' undeclared (first use in this function); did you mean '_ultoa'?
+   14 |   return ((int*)(&_uitoa))[argc];
+      |                   ^~~~~~
+      |                   _ultoa
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef _uitoa
+  return ((int*)(&_uitoa))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the strcasestr exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_93b20 && [1/2] Building C object CMakeFiles/cmTC_93b20.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_93b20.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_93b20.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'strcasestr' undeclared (first use in this function); did you mean 'strcasecmp'?
+   14 |   return ((int*)(&strcasestr))[argc];
+      |                   ^~~~~~~~~~
+      |                   strcasecmp
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef strcasestr
+  return ((int*)(&strcasestr))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the wcslcat exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_6e05c && [1/2] Building C object CMakeFiles/cmTC_6e05c.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_6e05c.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_6e05c.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'wcslcat' undeclared (first use in this function); did you mean 'wcsncat'?
+   14 |   return ((int*)(&wcslcat))[argc];
+      |                   ^~~~~~~
+      |                   wcsncat
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef wcslcat
+  return ((int*)(&wcslcat))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the wcslcpy exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_76dd3 && [1/2] Building C object CMakeFiles/cmTC_76dd3.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_76dd3.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_76dd3.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'wcslcpy' undeclared (first use in this function); did you mean 'wcsncpy'?
+   14 |   return ((int*)(&wcslcpy))[argc];
+      |                   ^~~~~~~
+      |                   wcsncpy
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef wcslcpy
+  return ((int*)(&wcslcpy))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the wcscasecmp exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_9a855 && [1/2] Building C object CMakeFiles/cmTC_9a855.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_9a855.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_9a855.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'wcscasecmp' undeclared (first use in this function); did you mean 'strcasecmp'?
+   14 |   return ((int*)(&wcscasecmp))[argc];
+      |                   ^~~~~~~~~~
+      |                   strcasecmp
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef wcscasecmp
+  return ((int*)(&wcscasecmp))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the wcsncasecmp exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_8d13a && [1/2] Building C object CMakeFiles/cmTC_8d13a.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_8d13a.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_8d13a.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: error: 'wcsncasecmp' undeclared (first use in this function); did you mean 'strncasecmp'?
+   14 |   return ((int*)(&wcsncasecmp))[argc];
+      |                   ^~~~~~~~~~~
+      |                   strncasecmp
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:14:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <wchar.h>
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef wcsncasecmp
+  return ((int*)(&wcsncasecmp))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the sigaction exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_faac7 && [1/2] Building C object CMakeFiles/cmTC_faac7.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_faac7.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_faac7.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: error: 'sigaction' undeclared (first use in this function)
+    8 |   return ((int*)(&sigaction))[argc];
+      |                   ^~~~~~~~~
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <signal.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef sigaction
+  return ((int*)(&sigaction))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the sysconf exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_aa487 && [1/2] Building C object CMakeFiles/cmTC_aa487.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_aa487.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_aa487.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: error: 'sysconf' undeclared (first use in this function)
+    8 |   return ((int*)(&sysconf))[argc];
+      |                   ^~~~~~~
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: note: each undeclared identifier is reported only once for each function it appears in
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef sysconf
+  return ((int*)(&sysconf))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the sysctlbyname exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_f543e && [1/2] Building C object CMakeFiles/cmTC_f543e.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_f543e.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_f543e.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:3:10: fatal error: sys/sysctl.h: No such file or directory
+    3 | #include <sys/sysctl.h>
+      |          ^~~~~~~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <sys/types.h>
+#include <sys/sysctl.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef sysctlbyname
+  return ((int*)(&sysctlbyname))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the getauxval exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_eb0f3 && [1/2] Building C object CMakeFiles/cmTC_eb0f3.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_eb0f3.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_eb0f3.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:2:10: fatal error: sys/auxv.h: No such file or directory
+    2 | #include <sys/auxv.h>
+      |          ^~~~~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <sys/auxv.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef getauxval
+  return ((int*)(&getauxval))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the elf_aux_info exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_93696 && [1/2] Building C object CMakeFiles/cmTC_93696.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_93696.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_93696.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:2:10: fatal error: sys/auxv.h: No such file or directory
+    2 | #include <sys/auxv.h>
+      |          ^~~~~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <sys/auxv.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef elf_aux_info
+  return ((int*)(&elf_aux_info))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the poll exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_4a2e5 && [1/2] Building C object CMakeFiles/cmTC_4a2e5.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_4a2e5.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_4a2e5.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:2:10: fatal error: poll.h: No such file or directory
+    2 | #include <poll.h>
+      |          ^~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <poll.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef poll
+  return ((int*)(&poll))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the function iconv_open exists in the iconv failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_11714 && [1/2] Building C object CMakeFiles/cmTC_11714.dir/CheckFunctionExists.c.obj
+[2/2] Linking C executable cmTC_11714.exe
+FAILED: cmTC_11714.exe 
+cmd.exe /C "cd . && C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos" -DCHECK_FUNCTION_EXISTS=iconv_open  -D_GNU_SOURCE=1  CMakeFiles/cmTC_11714.dir/CheckFunctionExists.c.obj -o cmTC_11714.exe -Wl,--out-implib,libcmTC_11714.dll.a -Wl,--major-image-version,0,--minor-image-version,0  -liconv  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 && cd ."
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin/ld.exe: CMakeFiles/cmTC_11714.dir/CheckFunctionExists.c.obj:CheckFunctionExists.c:(.text+0x15): undefined reference to `iconv_open'
+collect2.exe: error: ld returned 1 exit status
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the function iconv_open exists in the c failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_6d0d6 && [1/2] Building C object CMakeFiles/cmTC_6d0d6.dir/CheckFunctionExists.c.obj
+[2/2] Linking C executable cmTC_6d0d6.exe
+FAILED: cmTC_6d0d6.exe 
+cmd.exe /C "cd . && C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos" -DCHECK_FUNCTION_EXISTS=iconv_open  -D_GNU_SOURCE=1  CMakeFiles/cmTC_6d0d6.dir/CheckFunctionExists.c.obj -o cmTC_6d0d6.exe -Wl,--out-implib,libcmTC_6d0d6.dll.a -Wl,--major-image-version,0,--minor-image-version,0  -lc  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 && cd ."
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin/ld.exe: cannot find -lc
+collect2.exe: error: ld returned 1 exit status
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the include file alloca.h exists failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_d403a && [1/2] Building C object CMakeFiles/cmTC_d403a.dir/CheckIncludeFile.c.obj
+FAILED: CMakeFiles/cmTC_d403a.dir/CheckIncludeFile.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_d403a.dir/CheckIncludeFile.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:10: fatal error: alloca.h: No such file or directory
+    1 | #include <alloca.h>
+      |          ^~~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the alloca exist failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_ad225 && [1/2] Building C object CMakeFiles/cmTC_ad225.dir/CheckSymbolExists.c.obj
+FAILED: CMakeFiles/cmTC_ad225.dir/CheckSymbolExists.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe   -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_ad225.dir/CheckSymbolExists.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:2:10: fatal error: alloca.h: No such file or directory
+    2 | #include <alloca.h>
+      |          ^~~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+File D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <alloca.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef alloca
+  return ((int*)(&alloca))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Performing C SOURCE FILE Test HAVE_SA_SIGACTION failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_db308 && [1/2] Building C object CMakeFiles/cmTC_db308.dir/src.c.obj
+FAILED: CMakeFiles/cmTC_db308.dir/src.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -DHAVE_SA_SIGACTION  -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_db308.dir/src.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c: In function 'main':
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c:6:39: error: invalid use of undefined type 'struct sigaction'
+    6 |   (void)sizeof(((struct sigaction *)0)->sa_sigaction);
+      |                                       ^~
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+
+#include <signal.h>
+
+int main()
+{
+  (void)sizeof(((struct sigaction *)0)->sa_sigaction);
+  return 0;
+}
+
+Performing C SOURCE FILE Test HAVE_XINPUT_GAMEPAD_EX failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_690f1 && [1/2] Building C object CMakeFiles/cmTC_690f1.dir/src.c.obj
+FAILED: CMakeFiles/cmTC_690f1.dir/src.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -DHAVE_XINPUT_GAMEPAD_EX  -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_690f1.dir/src.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c:4:7: error: unknown type name 'XINPUT_GAMEPAD_EX'; did you mean 'XINPUT_GAMEPAD_X'?
+    4 |       XINPUT_GAMEPAD_EX x1;
+      |       ^~~~~~~~~~~~~~~~~
+      |       XINPUT_GAMEPAD_X
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+
+      #include <windows.h>
+      #include <xinput.h>
+      XINPUT_GAMEPAD_EX x1;
+      int main(int argc, char **argv) { return 0; }
+Performing C SOURCE FILE Test HAVE_XINPUT_STATE_EX failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_3b6e3 && [1/2] Building C object CMakeFiles/cmTC_3b6e3.dir/src.c.obj
+FAILED: CMakeFiles/cmTC_3b6e3.dir/src.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -DHAVE_XINPUT_STATE_EX  -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_3b6e3.dir/src.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c:4:7: error: unknown type name 'XINPUT_STATE_EX'; did you mean 'XINPUT_STATE'?
+    4 |       XINPUT_STATE_EX s1;
+      |       ^~~~~~~~~~~~~~~
+      |       XINPUT_STATE
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+
+      #include <windows.h>
+      #include <xinput.h>
+      XINPUT_STATE_EX s1;
+      int main(int argc, char **argv) { return 0; }
+Performing C SOURCE FILE Test HAVE_WINDOWS_GAMING_INPUT_H failed with the following output:
+Change Dir: D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Users/Saleh/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe cmTC_9522d && [1/2] Building C object CMakeFiles/cmTC_9522d.dir/src.c.obj
+FAILED: CMakeFiles/cmTC_9522d.dir/src.c.obj 
+C:\Users\Saleh\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\mingw\bin\gcc.exe -DHAVE_WINDOWS_GAMING_INPUT_H  -idirafter "D:/Dev/test/ded/dependencies/SDL2/src/video/khronos"  -D_GNU_SOURCE=1 -fdiagnostics-color=always -o CMakeFiles/cmTC_9522d.dir/src.c.obj -c D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+D:/Dev/test/ded/cmake-build-debug/CMakeFiles/CMakeTmp/src.c:3:16: fatal error: windows.gaming.input.h: No such file or directory
+    3 |       #include <windows.gaming.input.h>
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+
+      #define COBJMACROS
+      #include <windows.gaming.input.h>
+      __x_ABI_CWindows_CGaming_CInput_CIGamepadStatics2 *s2;
+      int main(int argc, char **argv) { return 0; }

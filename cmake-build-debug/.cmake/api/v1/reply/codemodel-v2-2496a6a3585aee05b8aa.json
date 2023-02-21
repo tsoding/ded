@@ -1,0 +1,202 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						2
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.24"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						3
+					]
+				},
+				{
+					"build" : "dependencies/SDL2",
+					"jsonFile" : "directory-dependencies.SDL2-Debug-8b5ea0fc187b1ebe9dba.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.4"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : "dependencies/SDL2",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						5,
+						6
+					]
+				},
+				{
+					"build" : "D:/Dev/test/ded/dependencies/freetype",
+					"childIndexes" : 
+					[
+						3
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-dependencies.GLFW-Debug-500a6da0db52bdb30ebe.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.4"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 2,
+					"source" : "dependencies/GLFW"
+				},
+				{
+					"build" : "D:/Dev/test/ded/dependencies/freetype/src",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-dependencies.GLFW.src-Debug-5d89f3e453d704f8adde.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.4"
+					},
+					"parentIndex" : 2,
+					"projectIndex" : 2,
+					"source" : "dependencies/GLFW/src",
+					"targetIndexes" : 
+					[
+						4,
+						7
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1,
+						2
+					],
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "ded",
+					"targetIndexes" : 
+					[
+						3
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						1
+					],
+					"name" : "SDL2",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						5,
+						6
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						2,
+						3
+					],
+					"name" : "GLFW",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						4,
+						7
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 1,
+					"id" : "SDL2-static::@62c12db8d9ec8ffe9ab8",
+					"jsonFile" : "target-SDL2-static-Debug-d7c8c11b171864e16c08.json",
+					"name" : "SDL2-static",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "SDL2_test::@62c12db8d9ec8ffe9ab8",
+					"jsonFile" : "target-SDL2_test-Debug-6e3723fce1ea1f24e5d9.json",
+					"name" : "SDL2_test",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "SDL2main::@62c12db8d9ec8ffe9ab8",
+					"jsonFile" : "target-SDL2main-Debug-1ecbfc459ec576583765.json",
+					"name" : "SDL2main",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ded::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ded-Debug-080f06aff9fe2c9f9900.json",
+					"name" : "ded",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "glfw::@cf6c21fcce0daa5c05e6",
+					"jsonFile" : "target-glfw-Debug-8f247b4de793969f5f41.json",
+					"name" : "glfw",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "sdl_headers_copy::@62c12db8d9ec8ffe9ab8",
+					"jsonFile" : "target-sdl_headers_copy-Debug-4f1ce439232635d60c55.json",
+					"name" : "sdl_headers_copy",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "uninstall::@62c12db8d9ec8ffe9ab8",
+					"jsonFile" : "target-uninstall-Debug-bc7b73b78a7f322663cf.json",
+					"name" : "uninstall",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "update_mappings::@cf6c21fcce0daa5c05e6",
+					"jsonFile" : "target-update_mappings-Debug-9d24e804c5ec88474168.json",
+					"name" : "update_mappings",
+					"projectIndex" : 2
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "D:/Dev/test/ded/cmake-build-debug",
+		"source" : "D:/Dev/test/ded"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 4
+	}
+}
