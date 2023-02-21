@@ -14,9 +14,9 @@ void editor_backspace(Editor *e)
     if (e->cursor == 0) return;
 
     memmove(
-        &e->data.items[e->cursor - 1],
-        &e->data.items[e->cursor],
-        e->data.count - e->cursor
+            &e->data.items[e->cursor - 1],
+            &e->data.items[e->cursor],
+            e->data.count - e->cursor
     );
     e->cursor -= 1;
     e->data.count -= 1;
@@ -27,9 +27,9 @@ void editor_delete(Editor *e)
 {
     if (e->cursor >= e->data.count) return;
     memmove(
-        &e->data.items[e->cursor],
-        &e->data.items[e->cursor + 1],
-        e->data.count - e->cursor - 1
+            &e->data.items[e->cursor],
+            &e->data.items[e->cursor + 1],
+            e->data.count - e->cursor - 1
     );
     e->data.count -= 1;
     editor_retokenize(e);
@@ -156,9 +156,9 @@ void editor_insert_buf(Editor *e, char *buf, size_t buf_len)
         da_append(&e->data, '\0');
     }
     memmove(
-        &e->data.items[e->cursor + buf_len],
-        &e->data.items[e->cursor],
-        e->data.count - e->cursor - buf_len
+            &e->data.items[e->cursor + buf_len],
+            &e->data.items[e->cursor],
+            e->data.count - e->cursor - buf_len
     );
     memcpy(&e->data.items[e->cursor], buf, buf_len);
     e->cursor += buf_len;
@@ -260,13 +260,13 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 if (select_begin_chr <= select_end_chr) {
                     Vec2f select_begin_scr = vec2f(0, -((float)row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE);
                     free_glyph_atlas_measure_line_sized(
-                        atlas, editor->data.items + line_chr.begin, select_begin_chr - line_chr.begin,
-                        &select_begin_scr);
+                            atlas, editor->data.items + line_chr.begin, select_begin_chr - line_chr.begin,
+                            &select_begin_scr);
 
                     Vec2f select_end_scr = select_begin_scr;
                     free_glyph_atlas_measure_line_sized(
-                        atlas, editor->data.items + select_begin_chr, select_end_chr - select_begin_chr,
-                        &select_end_scr);
+                            atlas, editor->data.items + select_begin_chr, select_end_chr - select_begin_chr,
+                            &select_end_scr);
 
                     Vec4f selection_color = vec4f(.25, .25, .25, 1);
                     simple_renderer_solid_rect(sr, select_begin_scr, vec2f(select_end_scr.x - select_begin_scr.x, FREE_GLYPH_FONT_SIZE), selection_color);
@@ -284,20 +284,20 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             Vec2f pos = token.position;
             Vec4f color = vec4fs(1);
             switch (token.kind) {
-            case TOKEN_PREPROC:
-                color = hex_to_vec4f(0x95A99FFF);
-                break;
-            case TOKEN_KEYWORD:
-                color = hex_to_vec4f(0xFFDD33FF);
-                break;
-            case TOKEN_COMMENT:
-                color = hex_to_vec4f(0xCC8C3CFF);
-                break;
-            case TOKEN_STRING:
-                color = hex_to_vec4f(0x73c936ff);
-                break;
-            default:
-            {}
+                case TOKEN_PREPROC:
+                    color = hex_to_vec4f(0x95A99FFF);
+                    break;
+                case TOKEN_KEYWORD:
+                    color = hex_to_vec4f(0xFFDD33FF);
+                    break;
+                case TOKEN_COMMENT:
+                    color = hex_to_vec4f(0xCC8C3CFF);
+                    break;
+                case TOKEN_STRING:
+                    color = hex_to_vec4f(0x73c936ff);
+                    break;
+                default:
+                {}
             }
             free_glyph_atlas_render_line_sized(atlas, sr, token.text, token.text_len, &pos, color);
             // TODO: the max_line_len should be calculated based on what's visible on the screen right now
@@ -313,11 +313,11 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         size_t cursor_col = editor->cursor - line.begin;
         cursor_pos.y = -((float)cursor_row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE;
         cursor_pos.x = free_glyph_atlas_cursor_pos(
-                           atlas,
-                           editor->data.items + line.begin, line.end - line.begin,
-                           vec2f(0.0, cursor_pos.y),
-                           cursor_col
-                       );
+                atlas,
+                editor->data.items + line.begin, line.end - line.begin,
+                vec2f(0.0, cursor_pos.y),
+                cursor_col
+        );
     }
 
     // Render cursor
@@ -331,9 +331,9 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         sr->verticies_count = 0;
         if (t < CURSOR_BLINK_THRESHOLD || t/CURSOR_BLINK_PERIOD%2 != 0) {
             simple_renderer_solid_rect(
-                sr,
-                cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE),
-                vec4fs(1));
+                    sr,
+                    cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE),
+                    vec4fs(1));
         }
 
         simple_renderer_flush(sr);
@@ -359,8 +359,8 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         }
 
         sr->camera_vel = vec2f_mul(
-                             vec2f_sub(target, sr->camera_pos),
-                             vec2fs(2.0f));
+                vec2f_sub(target, sr->camera_pos),
+                vec2fs(2.0f));
         sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f;
 
         sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME)));
@@ -390,7 +390,7 @@ void editor_clipboard_copy(Editor *e)
         if (begin > end) SWAP(size_t, begin, end);
 
         e->clipboard.count = 0;
-        sb_append_buf(&e->clipboard, &e->data.items[begin], end - begin + 1);
+                sb_append_buf(&e->clipboard, &e->data.items[begin], end - begin + 1);
         sb_append_null(&e->clipboard);
 
         if (SDL_SetClipboardText(e->clipboard.items) < 0) {

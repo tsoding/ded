@@ -30,15 +30,15 @@ void free_glyph_atlas_init(Free_Glyph_Atlas *atlas, FT_Face face)
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        GL_RED,
-        (GLsizei) atlas->atlas_width,
-        (GLsizei) atlas->atlas_height,
-        0,
-        GL_RED,
-        GL_UNSIGNED_BYTE,
-        NULL);
+            GL_TEXTURE_2D,
+            0,
+            GL_RED,
+            (GLsizei) atlas->atlas_width,
+            (GLsizei) atlas->atlas_height,
+            0,
+            GL_RED,
+            GL_UNSIGNED_BYTE,
+            NULL);
 
     int x = 0;
     for (int i = 32; i < 128; ++i) {
@@ -62,15 +62,15 @@ void free_glyph_atlas_init(Free_Glyph_Atlas *atlas, FT_Face face)
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glTexSubImage2D(
-            GL_TEXTURE_2D,
-            0,
-            x,
-            0,
-            face->glyph->bitmap.width,
-            face->glyph->bitmap.rows,
-            GL_RED,
-            GL_UNSIGNED_BYTE,
-            face->glyph->bitmap.buffer);
+                GL_TEXTURE_2D,
+                0,
+                x,
+                0,
+                face->glyph->bitmap.width,
+                face->glyph->bitmap.rows,
+                GL_RED,
+                GL_UNSIGNED_BYTE,
+                face->glyph->bitmap.buffer);
         x += face->glyph->bitmap.width;
     }
 }
@@ -128,11 +128,11 @@ void free_glyph_atlas_render_line_sized(Free_Glyph_Atlas *atlas, Simple_Renderer
         pos->y += metric.ay;
 
         simple_renderer_image_rect(
-            sr,
-            vec2f(x2, -y2),
-            vec2f(w, -h),
-            vec2f(metric.tx, 0.0f),
-            vec2f(metric.bw / (float) atlas->atlas_width, metric.bh / (float) atlas->atlas_height),
-            color);
+                sr,
+                vec2f(x2, -y2),
+                vec2f(w, -h),
+                vec2f(metric.tx, 0.0f),
+                vec2f(metric.bw / (float) atlas->atlas_width, metric.bh / (float) atlas->atlas_height),
+                color);
     }
 }

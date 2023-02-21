@@ -1,31 +1,34 @@
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "./simple_renderer.h"
-#include "./common.h"
-
-#define vert_shader_file_path "./shaders/simple.vert"
+#include "simple_renderer.h"
+#include "common.h"
+#ifdef WIN32
+#include <stddef.h>
+#endif
+#define vert_shader_file_path "../shaders/simple.vert"
 
 static_assert(COUNT_SIMPLE_SHADERS == 4, "The amount of fragment shaders has changed");
 const char *frag_shader_file_paths[COUNT_SIMPLE_SHADERS] = {
-    [SHADER_FOR_COLOR] = "./shaders/simple_color.frag",
-    [SHADER_FOR_IMAGE] = "./shaders/simple_image.frag",
-    [SHADER_FOR_TEXT] = "./shaders/simple_text.frag",
-    [SHADER_FOR_EPICNESS] = "./shaders/simple_epic.frag",
+        [SHADER_FOR_COLOR] = "../shaders/simple_color.frag",
+        [SHADER_FOR_IMAGE] = "../shaders/simple_image.frag",
+        [SHADER_FOR_TEXT] = "../shaders/simple_text.frag",
+        [SHADER_FOR_EPICNESS] = "../shaders/simple_epic.frag",
 };
 
 static const char *shader_type_as_cstr(GLuint shader)
 {
     switch (shader) {
-    case GL_VERTEX_SHADER:
-        return "GL_VERTEX_SHADER";
-    case GL_FRAGMENT_SHADER:
-        return "GL_FRAGMENT_SHADER";
-    default:
-        return "(Unknown)";
+        case GL_VERTEX_SHADER:
+            return "GL_VERTEX_SHADER";
+        case GL_FRAGMENT_SHADER:
+            return "GL_FRAGMENT_SHADER";
+        default:
+            return "(Unknown)";
     }
 }
 
@@ -66,7 +69,7 @@ static bool compile_shader_file(const char *file_path, GLenum shader_type, GLuin
         fprintf(stderr, "ERROR: failed to compile `%s` shader file\n", file_path);
         return_defer(false);
     }
-defer:
+    defer:
     free(source.items);
     return result;
 }
@@ -102,22 +105,22 @@ typedef struct {
 
 static_assert(COUNT_UNIFORM_SLOTS == 4, "The amount of the shader uniforms have change. Please update the definition table accordingly");
 static const Uniform_Def uniform_defs[COUNT_UNIFORM_SLOTS] = {
-    [UNIFORM_SLOT_TIME] = {
-        .slot = UNIFORM_SLOT_TIME,
-        .name = "time",
-    },
-    [UNIFORM_SLOT_RESOLUTION] = {
-        .slot = UNIFORM_SLOT_RESOLUTION,
-        .name = "resolution",
-    },
-    [UNIFORM_SLOT_CAMERA_POS] = {
-        .slot = UNIFORM_SLOT_CAMERA_POS,
-        .name = "camera_pos",
-    },
-    [UNIFORM_SLOT_CAMERA_SCALE] = {
-        .slot = UNIFORM_SLOT_CAMERA_SCALE,
-        .name = "camera_scale",
-    },
+        [UNIFORM_SLOT_TIME] = {
+                .slot = UNIFORM_SLOT_TIME,
+                .name = "time",
+        },
+        [UNIFORM_SLOT_RESOLUTION] = {
+                .slot = UNIFORM_SLOT_RESOLUTION,
+                .name = "resolution",
+        },
+        [UNIFORM_SLOT_CAMERA_POS] = {
+                .slot = UNIFORM_SLOT_CAMERA_POS,
+                .name = "camera_pos",
+        },
+        [UNIFORM_SLOT_CAMERA_SCALE] = {
+                .slot = UNIFORM_SLOT_CAMERA_SCALE,
+                .name = "camera_scale",
+        },
 };
 
 
@@ -143,32 +146,32 @@ void simple_renderer_init(Simple_Renderer *sr)
         // position
         glEnableVertexAttribArray(SIMPLE_VERTEX_ATTR_POSITION);
         glVertexAttribPointer(
-            SIMPLE_VERTEX_ATTR_POSITION,
-            2,
-            GL_FLOAT,
-            GL_FALSE,
-            sizeof(Simple_Vertex),
-            (GLvoid *) offsetof(Simple_Vertex, position));
+                SIMPLE_VERTEX_ATTR_POSITION,
+                2,
+                GL_FLOAT,
+                GL_FALSE,
+                sizeof(Simple_Vertex),
+                (GLvoid *) offsetof(Simple_Vertex, position));
 
         // color
         glEnableVertexAttribArray(SIMPLE_VERTEX_ATTR_COLOR);
         glVertexAttribPointer(
-            SIMPLE_VERTEX_ATTR_COLOR,
-            4,
-            GL_FLOAT,
-            GL_FALSE,
-            sizeof(Simple_Vertex),
-            (GLvoid *) offsetof(Simple_Vertex, color));
+                SIMPLE_VERTEX_ATTR_COLOR,
+                4,
+                GL_FLOAT,
+                GL_FALSE,
+                sizeof(Simple_Vertex),
+                (GLvoid *) offsetof(Simple_Vertex, color));
 
         // uv
         glEnableVertexAttribArray(SIMPLE_VERTEX_ATTR_UV);
         glVertexAttribPointer(
-            SIMPLE_VERTEX_ATTR_UV,
-            2,
-            GL_FLOAT,
-            GL_FALSE,
-            sizeof(Simple_Vertex),
-            (GLvoid *) offsetof(Simple_Vertex, uv));
+                SIMPLE_VERTEX_ATTR_UV,
+                2,
+                GL_FLOAT,
+                GL_FALSE,
+                sizeof(Simple_Vertex),
+                (GLvoid *) offsetof(Simple_Vertex, uv));
     }
 
     GLuint shaders[2] = {0};
@@ -285,20 +288,20 @@ void simple_renderer_quad(Simple_Renderer *sr,
 void simple_renderer_image_rect(Simple_Renderer *sr, Vec2f p, Vec2f s, Vec2f uvp, Vec2f uvs, Vec4f c)
 {
     simple_renderer_quad(
-        sr,
-        p, vec2f_add(p, vec2f(s.x, 0)), vec2f_add(p, vec2f(0, s.y)), vec2f_add(p, s),
-        c, c, c, c,
-        uvp, vec2f_add(uvp, vec2f(uvs.x, 0)), vec2f_add(uvp, vec2f(0, uvs.y)), vec2f_add(uvp, uvs));
+            sr,
+            p, vec2f_add(p, vec2f(s.x, 0)), vec2f_add(p, vec2f(0, s.y)), vec2f_add(p, s),
+            c, c, c, c,
+            uvp, vec2f_add(uvp, vec2f(uvs.x, 0)), vec2f_add(uvp, vec2f(0, uvs.y)), vec2f_add(uvp, uvs));
 }
 
 void simple_renderer_solid_rect(Simple_Renderer *sr, Vec2f p, Vec2f s, Vec4f c)
 {
     Vec2f uv = vec2fs(0);
     simple_renderer_quad(
-        sr,
-        p, vec2f_add(p, vec2f(s.x, 0)), vec2f_add(p, vec2f(0, s.y)), vec2f_add(p, s),
-        c, c, c, c,
-        uv, uv, uv, uv);
+            sr,
+            p, vec2f_add(p, vec2f(s.x, 0)), vec2f_add(p, vec2f(0, s.y)), vec2f_add(p, s),
+            c, c, c, c,
+            uv, uv, uv, uv);
 }
 
 void simple_renderer_sync(Simple_Renderer *sr)

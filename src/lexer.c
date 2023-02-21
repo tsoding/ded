@@ -11,56 +11,56 @@ typedef struct {
 } Literal_Token;
 
 Literal_Token literal_tokens[] = {
-    {.text = "(", .kind = TOKEN_OPEN_PAREN},
-    {.text = ")", .kind = TOKEN_CLOSE_PAREN},
-    {.text = "{", .kind = TOKEN_OPEN_CURLY},
-    {.text = "}", .kind = TOKEN_CLOSE_CURLY},
-    {.text = ";", .kind = TOKEN_SEMICOLON},
+        {.text = "(", .kind = TOKEN_OPEN_PAREN},
+        {.text = ")", .kind = TOKEN_CLOSE_PAREN},
+        {.text = "{", .kind = TOKEN_OPEN_CURLY},
+        {.text = "}", .kind = TOKEN_CLOSE_CURLY},
+        {.text = ";", .kind = TOKEN_SEMICOLON},
 };
 #define literal_tokens_count (sizeof(literal_tokens)/sizeof(literal_tokens[0]))
 
 const char *keywords[] = {
-    "auto", "break", "case", "char", "const", "continue", "default", "do", "double",
-    "else", "enum", "extern", "float", "for", "goto", "if", "int", "long", "register",
-    "return", "short", "signed", "sizeof", "static", "struct", "switch", "typedef",
-    "union", "unsigned", "void", "volatile", "while", "alignas", "alignof", "and",
-    "and_eq", "asm", "atomic_cancel", "atomic_commit", "atomic_noexcept", "bitand",
-    "bitor", "bool", "catch", "char16_t", "char32_t", "char8_t", "class", "co_await",
-    "co_return", "co_yield", "compl", "concept", "const_cast", "consteval", "constexpr",
-    "constinit", "decltype", "delete", "dynamic_cast", "explicit", "export", "false",
-    "friend", "inline", "mutable", "namespace", "new", "noexcept", "not", "not_eq",
-    "nullptr", "operator", "or", "or_eq", "private", "protected", "public", "reflexpr",
-    "reinterpret_cast", "requires", "static_assert", "static_cast", "synchronized",
-    "template", "this", "thread_local", "throw", "true", "try", "typeid", "typename",
-    "using", "virtual", "wchar_t", "xor", "xor_eq",
+        "auto", "break", "case", "char", "const", "continue", "default", "do", "double",
+        "else", "enum", "extern", "float", "for", "goto", "if", "int", "long", "register",
+        "return", "short", "signed", "sizeof", "static", "struct", "switch", "typedef",
+        "union", "unsigned", "void", "volatile", "while", "alignas", "alignof", "and",
+        "and_eq", "asm", "atomic_cancel", "atomic_commit", "atomic_noexcept", "bitand",
+        "bitor", "bool", "catch", "char16_t", "char32_t", "char8_t", "class", "co_await",
+        "co_return", "co_yield", "compl", "concept", "const_cast", "consteval", "constexpr",
+        "constinit", "decltype", "delete", "dynamic_cast", "explicit", "export", "false",
+        "friend", "inline", "mutable", "namespace", "new", "noexcept", "not", "not_eq",
+        "nullptr", "operator", "or", "or_eq", "private", "protected", "public", "reflexpr",
+        "reinterpret_cast", "requires", "static_assert", "static_cast", "synchronized",
+        "template", "this", "thread_local", "throw", "true", "try", "typeid", "typename",
+        "using", "virtual", "wchar_t", "xor", "xor_eq",
 };
 #define keywords_count (sizeof(keywords)/sizeof(keywords[0]))
 
 const char *token_kind_name(Token_Kind kind)
 {
     switch (kind) {
-    case TOKEN_END:
-        return "end of content";
-    case TOKEN_INVALID:
-        return "invalid token";
-    case TOKEN_PREPROC:
-        return "preprocessor directive";
-    case TOKEN_SYMBOL:
-        return "symbol";
-    case TOKEN_OPEN_PAREN:
-        return "open paren";
-    case TOKEN_CLOSE_PAREN:
-        return "close paren";
-    case TOKEN_OPEN_CURLY:
-        return "open curly";
-    case TOKEN_CLOSE_CURLY:
-        return "close curly";
-    case TOKEN_SEMICOLON:
-        return "semicolon";
-    case TOKEN_KEYWORD:
-        return "keyword";
-    default:
-        UNREACHABLE("token_kind_name");
+        case TOKEN_END:
+            return "end of content";
+        case TOKEN_INVALID:
+            return "invalid token";
+        case TOKEN_PREPROC:
+            return "preprocessor directive";
+        case TOKEN_SYMBOL:
+            return "symbol";
+        case TOKEN_OPEN_PAREN:
+            return "open paren";
+        case TOKEN_CLOSE_PAREN:
+            return "close paren";
+        case TOKEN_OPEN_CURLY:
+            return "open curly";
+        case TOKEN_CLOSE_CURLY:
+            return "close curly";
+        case TOKEN_SEMICOLON:
+            return "semicolon";
+        case TOKEN_KEYWORD:
+            return "keyword";
+        default:
+            UNREACHABLE("token_kind_name");
     }
     return NULL;
 }
@@ -138,7 +138,7 @@ Token lexer_next(Lexer *l)
     lexer_trim_left(l);
 
     Token token = {
-        .text = &l->content[l->cursor],
+            .text = &l->content[l->cursor],
     };
 
     token.position.x = l->x;
@@ -184,7 +184,7 @@ Token lexer_next(Lexer *l)
         token.text_len = &l->content[l->cursor] - token.text;
         return token;
     }
-    
+
     for (size_t i = 0; i < literal_tokens_count; ++i) {
         if (lexer_starts_with(l, literal_tokens[i].text)) {
             // NOTE: this code assumes that there is no newlines in literal_tokens[i].text
