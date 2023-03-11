@@ -97,8 +97,7 @@ size_t editor_cursor_row(const Editor *e)
 
 void editor_move_line_up(Editor *e)
 {
-    // TODO: editor_move_line_up() should move to previous match
-    if (e->searching) return;
+    editor_stop_search(e);
 
     size_t cursor_row = editor_cursor_row(e);
     size_t cursor_col = e->cursor - e->lines.items[cursor_row].begin;
@@ -112,8 +111,7 @@ void editor_move_line_up(Editor *e)
 
 void editor_move_line_down(Editor *e)
 {
-    // TODO: editor_move_line_down should go to the next match in searching mode
-    if (e->searching) return;
+    editor_stop_search(e);
 
     size_t cursor_row = editor_cursor_row(e);
     size_t cursor_col = e->cursor - e->lines.items[cursor_row].begin;
@@ -127,19 +125,19 @@ void editor_move_line_down(Editor *e)
 
 void editor_move_char_left(Editor *e)
 {
-    if (e->searching) return;
+    editor_stop_search(e);
     if (e->cursor > 0) e->cursor -= 1;
 }
 
 void editor_move_char_right(Editor *e)
 {
-    if (e->searching) return;
+    editor_stop_search(e);
     if (e->cursor < e->data.count) e->cursor += 1;
 }
 
 void editor_move_word_left(Editor *e)
 {
-    if (e->searching) return;
+    editor_stop_search(e);
     while (e->cursor > 0 && !isalnum(e->data.items[e->cursor - 1])) {
         e->cursor -= 1;
     }
@@ -150,7 +148,7 @@ void editor_move_word_left(Editor *e)
 
 void editor_move_word_right(Editor *e)
 {
-    if (e->searching) return;
+    editor_stop_search(e);
     while (e->cursor < e->data.count && !isalnum(e->data.items[e->cursor])) {
         e->cursor += 1;
     }
