@@ -53,12 +53,22 @@ Errno editor_load_from_file(Editor *editor, const char *file_path);
 void editor_backspace(Editor *editor);
 void editor_delete(Editor *editor);
 size_t editor_cursor_row(const Editor *e);
+
 void editor_move_line_up(Editor *e);
 void editor_move_line_down(Editor *e);
 void editor_move_char_left(Editor *e);
 void editor_move_char_right(Editor *e);
 void editor_move_word_left(Editor *e);
 void editor_move_word_right(Editor *e);
+
+void editor_move_to_begin(Editor *e);
+void editor_move_to_end(Editor *e);
+void editor_move_to_line_begin(Editor *e);
+void editor_move_to_line_end(Editor *e);
+
+void editor_move_paragraph_up(Editor *e);
+void editor_move_paragraph_down(Editor *e);
+
 void editor_insert_char(Editor *e, char x);
 void editor_insert_buf(Editor *e, char *buf, size_t buf_len);
 void editor_retokenize(Editor *e);

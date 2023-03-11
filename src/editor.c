@@ -490,3 +490,55 @@ bool editor_search_matches_at(Editor *e, size_t pos)
     }
     return true;
 }
+
+void editor_move_to_begin(Editor *e)
+{
+    editor_stop_search(e);
+    e->cursor = 0;
+}
+
+void editor_move_to_end(Editor *e)
+{
+    editor_stop_search(e);
+    e->cursor = e->data.count;
+}
+
+void editor_move_to_line_begin(Editor *e)
+{
+    editor_stop_search(e);
+    size_t row = editor_cursor_row(e);
+    e->cursor = e->lines.items[row].begin;
+}
+
+void editor_move_to_line_end(Editor *e)
+{
+    editor_stop_search(e);
+    size_t row = editor_cursor_row(e);
+    e->cursor = e->lines.items[row].end;
+}
+
+void editor_move_paragraph_up(Editor *e)
+{
+    editor_stop_search(e);
+    size_t row = editor_cursor_row(e);
+    while (row > 0 && e->lines.items[row].end - e->lines.items[row].begin <= 1) {
+        row -= 1;
+    }
+    while (row > 0 && e->lines.items[row].end - e->lines.items[row].begin > 1) {
+        row -= 1;
+    }
+    e->cursor = e->lines.items[row].begin;
+}
+
+void editor_move_paragraph_down(Editor *e)
+{
+    editor_stop_search(e);
+    size_t row = editor_cursor_row(e);
+    while (row + 1 < e->lines.count && e->lines.items[row].end - e->lines.items[row].begin <= 1) {
+        row += 1;
+    }
+    while (row + 1 < e->lines.count && e->lines.items[row].end - e->lines.items[row].begin > 1) {
+        row += 1;
+    }
+    e->cursor = e->lines.items[row].begin;
+}
