@@ -265,8 +265,12 @@ int main(int argc, char **argv)
                     break;
 
                     case SDLK_RETURN: {
-                        editor_insert_char(&editor, '\n');
-                        editor.last_stroke = SDL_GetTicks();
+                        if (editor.searching) {
+                            editor_stop_search(&editor);
+                        } else {
+                            editor_insert_char(&editor, '\n');
+                            editor.last_stroke = SDL_GetTicks();
+                        }
                     }
                     break;
 
@@ -275,6 +279,16 @@ int main(int argc, char **argv)
                         editor.last_stroke = SDL_GetTicks();
                     }
                     break;
+
+                    case SDLK_f: {
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor_start_search(&editor);
+                        }
+                    } break;
+
+                    case SDLK_ESCAPE: {
+                        editor_stop_search(&editor);
+                    } break;
 
                     case SDLK_a: {
                         if (event.key.keysym.mod & KMOD_CTRL) {
