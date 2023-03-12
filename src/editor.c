@@ -323,7 +323,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     {
         if (editor->searching) {
             simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
-            Vec4f selection_color = vec4f(.10f, .10f, .25f, 1.0f);
+            Vec4f selection_color = vec4f(.10f, .10f, .25, 1);
             Vec2f p1 = cursor_pos;
             Vec2f p2 = p1;
             free_glyph_atlas_measure_line_sized(editor->atlas, editor->search.items, editor->search.count, &p2);
