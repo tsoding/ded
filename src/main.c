@@ -26,10 +26,9 @@
 // Needed when ded is ran without any file so it does not know where to save.
 
 // TODO: An ability to create a new file
-// TODO: Jump up/down by paragraph
 // TODO: Delete a word
 // TODO: Delete selection
-// TODO: Jump to the beginning/end of the line
+// TODO: Undo/redo system
 
 void MessageCallback(GLenum source,
                      GLenum type,
@@ -84,8 +83,6 @@ int main(int argc, char **argv)
     }
 
     FT_UInt pixel_size = FREE_GLYPH_FONT_SIZE;
-    // TODO: FT_Set_Pixel_Sizes does not produce good looking results
-    // We need to use something like FT_Set_Char_Size and properly set the device resolution
     error = FT_Set_Pixel_Sizes(face, 0, pixel_size);
     if (error) {
         fprintf(stderr, "ERROR: Could not set pixel size to %u\n", pixel_size);
@@ -235,6 +232,26 @@ int main(int argc, char **argv)
                     }
                 } else {
                     switch (event.key.keysym.sym) {
+                    case SDLK_HOME: {
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor_move_to_begin(&editor);
+                        } else {
+                            editor_move_to_line_begin(&editor);
+                        }
+                        editor.last_stroke = SDL_GetTicks();
+                    } break;
+
+                    case SDLK_END: {
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor_move_to_end(&editor);
+                        } else {
+                            editor_move_to_line_end(&editor);
+                        }
+                        editor.last_stroke = SDL_GetTicks();
+                    } break;
+
                     case SDLK_BACKSPACE: {
                         editor_backspace(&editor);
                         editor.last_stroke = SDL_GetTicks();
@@ -265,14 +282,31 @@ int main(int argc, char **argv)
                     break;
 
                     case SDLK_RETURN: {
-                        editor_insert_char(&editor, '\n');
-                        editor.last_stroke = SDL_GetTicks();
+                        if (editor.searching) {
+                            editor_stop_search(&editor);
+                        } else {
+                            editor_insert_char(&editor, '\n');
+                            editor.last_stroke = SDL_GetTicks();
+                        }
                     }
                     break;
 
                     case SDLK_DELETE: {
                         editor_delete(&editor);
                         editor.last_stroke = SDL_GetTicks();
+                    }
+                    break;
+
+                    case SDLK_f: {
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor_start_search(&editor);
+                        }
+                    }
+                    break;
+
+                    case SDLK_ESCAPE: {
+                        editor_stop_search(&editor);
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                     }
                     break;
 
@@ -315,14 +349,22 @@ int main(int argc, char **argv)
 
                     case SDLK_UP: {
                         editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                        editor_move_line_up(&editor);
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor_move_paragraph_up(&editor);
+                        } else {
+                            editor_move_line_up(&editor);
+                        }
                         editor.last_stroke = SDL_GetTicks();
                     }
                     break;
 
                     case SDLK_DOWN: {
                         editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                        editor_move_line_down(&editor);
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor_move_paragraph_down(&editor);
+                        } else {
+                            editor_move_line_down(&editor);
+                        }
                         editor.last_stroke = SDL_GetTicks();
                     }
                     break;
@@ -401,5 +443,4 @@ int main(int argc, char **argv)
 
 // TODO: ability to search within file browser
 // Very useful when you have a lot of files
-// TODO: ability to search with the text editor
 // TODO: ability to remove trailing whitespaces
