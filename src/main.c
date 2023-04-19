@@ -22,6 +22,7 @@
 #include "./lexer.h"
 #include "./sv.h"
 
+// TODO: Tab support
 // TODO: Save file dialog
 // Needed when ded is ran without any file so it does not know where to save.
 
@@ -94,6 +95,7 @@ int main(int argc, char **argv)
         err = editor_load_from_file(&editor, file_path);
         if (err != 0) {
             fprintf(stderr, "ERROR: Could not read file %s: %s\n", file_path, strerror(err));
+            fprintf(stderr, "HELP: If you're trying to open a directory, don't give any arguments, press F3 inside the editor.\n");
             return 1;
         }
     }

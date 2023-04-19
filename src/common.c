@@ -79,11 +79,12 @@ defer:
 
 static Errno file_size(FILE *file, size_t *size)
 {
+	errno = 0;
     long saved = ftell(file);
-    if (saved < 0) return errno;
+    if (errno) return errno;
     if (fseek(file, 0, SEEK_END) < 0) return errno;
     long result = ftell(file);
-    if (result < 0) return errno;
+    if (errno) return errno;
     if (fseek(file, saved, SEEK_SET) < 0) return errno;
     *size = (size_t) result;
     return 0;

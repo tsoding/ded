@@ -6,7 +6,7 @@ void free_glyph_atlas_init(Free_Glyph_Atlas *atlas, FT_Face face)
 {
     // TODO: Introduction of SDF font slowed down the start up time
     // We need to investigate what's up with that
-    FT_Int32 load_flags = FT_LOAD_RENDER | FT_LOAD_TARGET_(FT_RENDER_MODE_SDF);
+    FT_Int32 load_flags = FT_LOAD_RENDER;
     for (int i = 32; i < 128; ++i) {
         if (FT_Load_Char(face, i, load_flags)) {
             fprintf(stderr, "ERROR: could not load glyph of a character with code %d\n", i);
@@ -17,6 +17,8 @@ void free_glyph_atlas_init(Free_Glyph_Atlas *atlas, FT_Face face)
         if (atlas->atlas_height < face->glyph->bitmap.rows) {
             atlas->atlas_height = face->glyph->bitmap.rows;
         }
+
+        load_flags = FT_LOAD_RENDER | FT_LOAD_TARGET_(FT_RENDER_MODE_SDF);
     }
 
     glActiveTexture(GL_TEXTURE0);
@@ -41,6 +43,7 @@ void free_glyph_atlas_init(Free_Glyph_Atlas *atlas, FT_Face face)
         NULL);
 
     int x = 0;
+    load_flags = FT_LOAD_RENDER;
     for (int i = 32; i < 128; ++i) {
         if (FT_Load_Char(face, i, load_flags)) {
             fprintf(stderr, "ERROR: could not load glyph of a character with code %d\n", i);
@@ -72,6 +75,7 @@ void free_glyph_atlas_init(Free_Glyph_Atlas *atlas, FT_Face face)
             GL_UNSIGNED_BYTE,
             face->glyph->bitmap.buffer);
         x += face->glyph->bitmap.width;
+        load_flags = FT_LOAD_RENDER | FT_LOAD_TARGET_(FT_RENDER_MODE_SDF);
     }
 }
 
