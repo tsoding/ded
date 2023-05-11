@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <string.h>
-
+#define TABS_INSTEAD_OF_SPACES
 #include <SDL2/SDL.h>
 #define GLEW_STATIC
 #include <GL/glew.h>
@@ -322,16 +322,14 @@ int main(int argc, char **argv)
                     break;
 
                     case SDLK_TAB: {
-                        // TODO: indent on Tab instead of just inserting 4 spaces at the cursor
-                        // That is insert the spaces at the beginning of the line. Shift+TAB should
-                        // do unindent, that is remove 4 spaces from the beginning of the line.
-                        // TODO: customizable indentation style
-                        // - tabs/spaces
-                        // - tab width
-                        // - etc.
-                        for (size_t i = 0; i < 4; ++i) {
-                            editor_insert_char(&editor, ' ');
-                        }
+                        // XXX: Tabs are kind of a hack, needs a redo.
+                        #ifdef TABS_INSTEAD_OF_SPACES
+                        	editor_insert_char(&editor, '\t');
+                        #else
+                        	for(int i = 0; i < TAB_SIZE; i++) {
+                        		editor_insert_char(&editor, ' ');
+                        	}
+                        #endif
                     }
                     break;
 
