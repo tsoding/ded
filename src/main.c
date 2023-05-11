@@ -22,7 +22,6 @@
 #include "./lexer.h"
 #include "./sv.h"
 
-// TODO: Tab support
 // TODO: Save file dialog
 // Needed when ded is ran without any file so it does not know where to save.
 
@@ -171,6 +170,69 @@ int main(int argc, char **argv)
                 quit = true;
             }
             break;
+
+            case SDL_MOUSEWHEEL:
+                if(event.wheel.y > 0) {
+                    editor_move_line_up(&editor);
+                } else if(event.wheel.y < 0) {
+                    editor_move_line_down(&editor);
+                }
+                
+                if(file_browser) {
+                    if(event.wheel.y > 0) {
+                        if(fb.cursor > 0) fb.cursor -= 1;
+                    } else if(event.wheel.y < 0) {
+                        if(fb.cursor + 1 < fb.files.count) fb.cursor += 1;
+                    }
+                }
+                
+                break;
+            
+            case SDL_MOUSEBUTTONDOWN:
+                if(file_browser) {
+                    if((event.button.button & SDL_BUTTON_LEFT) == SDL_BUTTON_LEFT) {
+                        const char *file_path = fb_file_path(&fb);
+                        if (file_path) {
+                            File_Type ft;
+                            err = type_of_file(file_path, &ft);
+                            if (err != 0) {
+                                flash_error("Could not determine type of file %s: %s", file_path, strerror(err));
+                            } else {
+                                switch (ft) {
+                                case FT_DIRECTORY: {
+                                    err = fb_change_dir(&fb);
+                                    if (err != 0) {
+                                        flash_error("Could not change directory to %s: %s", file_path, strerror(err));
+                                    }
+                                }
+                                break;
+
+                                case FT_REGULAR: {
+                                    // TODO: before opening a new file make sure you don't have unsaved changes
+                                    // And if you do, annoy the user about it. (just like all the other editors do)
+                                    err = editor_load_from_file(&editor, file_path);
+                                    if (err != 0) {
+                                        flash_error("Could not open file %s: %s", file_path, strerror(err));
+                                    } else {
+                                        file_browser = false;
+                                    }
+                                }
+                                break;
+
+                                case FT_OTHER: {
+                                    flash_error("%s is neither a regular file nor a directory. We can't open it.", file_path);
+                                }
+                                break;
+
+                                default:
+                                    UNREACHABLE("unknown File_Type");
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                break;
 
             case SDL_KEYDOWN: {
                 if (file_browser) {
@@ -324,11 +386,11 @@ int main(int argc, char **argv)
                     case SDLK_TAB: {
                         // XXX: Tabs are kind of a hack, needs a redo.
                         #ifdef TABS_INSTEAD_OF_SPACES
-                        	editor_insert_char(&editor, '\t');
+                            editor_insert_char(&editor, '\t');
                         #else
-                        	for(int i = 0; i < TAB_SIZE; i++) {
-                        		editor_insert_char(&editor, ' ');
-                        	}
+                            for(int i = 0; i < TAB_SIZE; i++) {
+                                editor_insert_char(&editor, ' ');
+                            }
                         #endif
                     }
                     break;
@@ -411,6 +473,8 @@ int main(int argc, char **argv)
             break;
             }
         }
+
+        
 
         {
             int w, h;
