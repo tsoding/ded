@@ -8,23 +8,31 @@
 
 void editor_backspace(Editor *e)
 {
-    if (e->cursor > e->data.count) {
-        e->cursor = e->data.count;
-    }
-    if (e->cursor == 0) return;
+    if (e->searching) {
+        if (e->search.count > 0) {
+            e->search.count -= 1;
+        }
+    } else {
+        if (e->cursor > e->data.count) {
+            e->cursor = e->data.count;
+        }
+        if (e->cursor == 0) return;
 
-    memmove(
-        &e->data.items[e->cursor - 1],
-        &e->data.items[e->cursor],
-        e->data.count - e->cursor
-    );
-    e->cursor -= 1;
-    e->data.count -= 1;
-    editor_retokenize(e);
+        memmove(
+            &e->data.items[e->cursor - 1],
+            &e->data.items[e->cursor],
+            e->data.count - e->cursor
+        );
+        e->cursor -= 1;
+        e->data.count -= 1;
+        editor_retokenize(e);
+    }
 }
 
 void editor_delete(Editor *e)
 {
+    if (e->searching) return;
+
     if (e->cursor >= e->data.count) return;
     memmove(
         &e->data.items[e->cursor],
@@ -89,6 +97,8 @@ size_t editor_cursor_row(const Editor *e)
 
 void editor_move_line_up(Editor *e)
 {
+    editor_stop_search(e);
+
     size_t cursor_row = editor_cursor_row(e);
     size_t cursor_col = e->cursor - e->lines.items[cursor_row].begin;
     if (cursor_row > 0) {
@@ -101,6 +111,8 @@ void editor_move_line_up(Editor *e)
 
 void editor_move_line_down(Editor *e)
 {
+    editor_stop_search(e);
+
     size_t cursor_row = editor_cursor_row(e);
     size_t cursor_col = e->cursor - e->lines.items[cursor_row].begin;
     if (cursor_row < e->lines.count - 1) {
@@ -113,16 +125,19 @@ void editor_move_line_down(Editor *e)
 
 void editor_move_char_left(Editor *e)
 {
+    editor_stop_search(e);
     if (e->cursor > 0) e->cursor -= 1;
 }
 
 void editor_move_char_right(Editor *e)
 {
+    editor_stop_search(e);
     if (e->cursor < e->data.count) e->cursor += 1;
 }
 
 void editor_move_word_left(Editor *e)
 {
+    editor_stop_search(e);
     while (e->cursor > 0 && !isalnum(e->data.items[e->cursor - 1])) {
         e->cursor -= 1;
     }
@@ -133,6 +148,7 @@ void editor_move_word_left(Editor *e)
 
 void editor_move_word_right(Editor *e)
 {
+    editor_stop_search(e);
     while (e->cursor < e->data.count && !isalnum(e->data.items[e->cursor])) {
         e->cursor += 1;
     }
@@ -148,21 +164,34 @@ void editor_insert_char(Editor *e, char x)
 
 void editor_insert_buf(Editor *e, char *buf, size_t buf_len)
 {
-    if (e->cursor > e->data.count) {
-        e->cursor = e->data.count;
-    }
+    if (e->searching) {
+        sb_append_buf(&e->search, buf, buf_len);
+        bool matched = false;
+        for (size_t pos = e->cursor; pos < e->data.count; ++pos) {
+            if (editor_search_matches_at(e, pos)) {
+                e->cursor = pos;
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) e->search.count -= buf_len;
+    } else {
+        if (e->cursor > e->data.count) {
+            e->cursor = e->data.count;
+        }
 
-    for (size_t i = 0; i < buf_len; ++i) {
-        da_append(&e->data, '\0');
+        for (size_t i = 0; i < buf_len; ++i) {
+            da_append(&e->data, '\0');
+        }
+        memmove(
+            &e->data.items[e->cursor + buf_len],
+            &e->data.items[e->cursor],
+            e->data.count - e->cursor - buf_len
+        );
+        memcpy(&e->data.items[e->cursor], buf, buf_len);
+        e->cursor += buf_len;
+        editor_retokenize(e);
     }
-    memmove(
-        &e->data.items[e->cursor + buf_len],
-        &e->data.items[e->cursor],
-        e->data.count - e->cursor - buf_len
-    );
-    memcpy(&e->data.items[e->cursor], buf, buf_len);
-    e->cursor += buf_len;
-    editor_retokenize(e);
 }
 
 void editor_retokenize(Editor *e)
@@ -276,6 +305,33 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         simple_renderer_flush(sr);
     }
 
+    Vec2f cursor_pos = vec2fs(0.0f);
+    {
+        size_t cursor_row = editor_cursor_row(editor);
+        Line line = editor->lines.items[cursor_row];
+        size_t cursor_col = editor->cursor - line.begin;
+        cursor_pos.y = -((float)cursor_row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE;
+        cursor_pos.x = free_glyph_atlas_cursor_pos(
+                           atlas,
+                           editor->data.items + line.begin, line.end - line.begin,
+                           vec2f(0.0, cursor_pos.y),
+                           cursor_col
+                       );
+    }
+
+    // Render search
+    {
+        if (editor->searching) {
+            simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
+            Vec4f selection_color = vec4f(.10, .10, .25, 1);
+            Vec2f p1 = cursor_pos;
+            Vec2f p2 = p1;
+            free_glyph_atlas_measure_line_sized(editor->atlas, editor->search.items, editor->search.count, &p2);
+            simple_renderer_solid_rect(sr, p1, vec2f(p2.x - p1.x, FREE_GLYPH_FONT_SIZE), selection_color);
+            simple_renderer_flush(sr);
+        }
+    }
+
     // Render text
     {
         simple_renderer_set_shader(sr, SHADER_FOR_TEXT);
@@ -304,20 +360,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             if (max_line_len < pos.x) max_line_len = pos.x;
         }
         simple_renderer_flush(sr);
-    }
-
-    Vec2f cursor_pos = vec2fs(0.0f);
-    {
-        size_t cursor_row = editor_cursor_row(editor);
-        Line line = editor->lines.items[cursor_row];
-        size_t cursor_col = editor->cursor - line.begin;
-        cursor_pos.y = -((float)cursor_row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE;
-        cursor_pos.x = free_glyph_atlas_cursor_pos(
-                           atlas,
-                           editor->data.items + line.begin, line.end - line.begin,
-                           vec2f(0.0, cursor_pos.y),
-                           cursor_col
-                       );
     }
 
     // Render cursor
@@ -370,6 +412,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
 void editor_update_selection(Editor *e, bool shift)
 {
+    if (e->searching) return;
     if (shift) {
         if (!e->selection) {
             e->selection = true;
@@ -384,6 +427,7 @@ void editor_update_selection(Editor *e, bool shift)
 
 void editor_clipboard_copy(Editor *e)
 {
+    if (e->searching) return;
     if (e->selection) {
         size_t begin = e->select_begin;
         size_t end = e->cursor;
@@ -409,4 +453,92 @@ void editor_clipboard_paste(Editor *e)
         fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
     }
     SDL_free(text);
+}
+
+void editor_start_search(Editor *e)
+{
+    if (e->searching) {
+        for (size_t pos = e->cursor + 1; pos < e->data.count; ++pos) {
+            if (editor_search_matches_at(e, pos)) {
+                e->cursor = pos;
+                break;
+            }
+        }
+    } else {
+        e->searching = true;
+        if (e->selection) {
+            e->selection = false;
+            // TODO: put the selection into the search automatically
+        } else {
+            e->search.count = 0;
+        }
+    }
+}
+
+void editor_stop_search(Editor *e)
+{
+    e->searching = false;
+}
+
+bool editor_search_matches_at(Editor *e, size_t pos)
+{
+    if (e->data.count - pos < e->search.count) return false;
+    for (size_t i = 0; i < e->search.count; ++i) {
+        if (e->search.items[i] != e->data.items[pos + i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void editor_move_to_begin(Editor *e)
+{
+    editor_stop_search(e);
+    e->cursor = 0;
+}
+
+void editor_move_to_end(Editor *e)
+{
+    editor_stop_search(e);
+    e->cursor = e->data.count;
+}
+
+void editor_move_to_line_begin(Editor *e)
+{
+    editor_stop_search(e);
+    size_t row = editor_cursor_row(e);
+    e->cursor = e->lines.items[row].begin;
+}
+
+void editor_move_to_line_end(Editor *e)
+{
+    editor_stop_search(e);
+    size_t row = editor_cursor_row(e);
+    e->cursor = e->lines.items[row].end;
+}
+
+void editor_move_paragraph_up(Editor *e)
+{
+    editor_stop_search(e);
+    size_t row = editor_cursor_row(e);
+    while (row > 0 && e->lines.items[row].end - e->lines.items[row].begin <= 1) {
+        row -= 1;
+    }
+    while (row > 0 && e->lines.items[row].end - e->lines.items[row].begin > 1) {
+        row -= 1;
+    }
+    e->cursor = e->lines.items[row].begin;
+}
+
+void editor_move_paragraph_down(Editor *e)
+{
+    editor_stop_search(e);
+    size_t row = editor_cursor_row(e);
+    while (row + 1 < e->lines.count && e->lines.items[row].end - e->lines.items[row].begin <= 1) {
+        row += 1;
+    }
+    while (row + 1 < e->lines.count && e->lines.items[row].end - e->lines.items[row].begin > 1) {
+        row += 1;
+    }
+    e->cursor = e->lines.items[row].begin;
 }
