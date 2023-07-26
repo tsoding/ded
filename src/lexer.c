@@ -38,31 +38,12 @@ const char *keywords[] = {
 
 const char *token_kind_name(Token_Kind kind)
 {
-    switch (kind) {
-    case TOKEN_END:
-        return "end of content";
-    case TOKEN_INVALID:
-        return "invalid token";
-    case TOKEN_PREPROC:
-        return "preprocessor directive";
-    case TOKEN_SYMBOL:
-        return "symbol";
-    case TOKEN_OPEN_PAREN:
-        return "open paren";
-    case TOKEN_CLOSE_PAREN:
-        return "close paren";
-    case TOKEN_OPEN_CURLY:
-        return "open curly";
-    case TOKEN_CLOSE_CURLY:
-        return "close curly";
-    case TOKEN_SEMICOLON:
-        return "semicolon";
-    case TOKEN_KEYWORD:
-        return "keyword";
-    default:
-        UNREACHABLE("token_kind_name");
-    }
-    return NULL;
+    char *toknames[] = {
+        "end of content", "invalid token", "preprocessor directive",
+        "symbol", "open paren", "close paren", "open curly", "close curly",
+        "semicolon", "keyword", "comment", "string"
+    };
+    return toknames[kind];
 }
 
 Lexer lexer_new(Free_Glyph_Atlas *atlas, const char *content, size_t content_len)
