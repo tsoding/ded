@@ -4,11 +4,10 @@
 #include <errno.h>
 #include <string.h>
 
+#define GLAD_GL_IMPLEMENTATION
+#include <gl.h>
+
 #include <SDL2/SDL.h>
-#define GLEW_STATIC
-#include <GL/glew.h>
-#define GL_GLEXT_PROTOTYPES
-#include <SDL2/SDL_opengl.h>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -137,20 +136,17 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    GLenum glewErr = glewInit();
-    if (GLEW_OK != glewErr) {
-        fprintf(stderr, "ERROR: Could not initialize GLEW: %s\n", glewGetErrorString(glewErr));
-        return 1;
-    }
+    int version = gladLoadGL((GLADloadfunc) SDL_GL_GetProcAddress);
+    printf("GL %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    if (GLEW_ARB_debug_output) {
+    if (GL_ARB_debug_output) {
         glEnable(GL_DEBUG_OUTPUT);
         glDebugMessageCallback(MessageCallback, 0);
     } else {
-        fprintf(stderr, "WARNING: GLEW_ARB_debug_output is not available");
+        fprintf(stderr, "WARNING: GL_ARB_debug_output is not available");
     }
 
     simple_renderer_init(&sr);

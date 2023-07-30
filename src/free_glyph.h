@@ -4,12 +4,7 @@
 #include <stdlib.h>
 #include "./la.h"
 
-#define GLEW_STATIC
-#include <GL/glew.h>
-
-#define GL_GLEXT_PROTOTYPES
-#include <SDL2/SDL_opengl.h>
-
+#include <gl.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
