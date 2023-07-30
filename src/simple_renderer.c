@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <stddef.h>
 #include "./simple_renderer.h"
 #include "./common.h"
 
