@@ -1,6 +1,7 @@
 te
 ded
 SDL2
+dependencies/*
 *.exe
 *.obj
 *.pdb

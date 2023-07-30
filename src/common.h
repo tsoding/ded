@@ -6,6 +6,10 @@
 #include <stdint.h>
 #include "./la.h"
 
+#ifdef _WIN32
+#     include <ctype.h> //currently for isalnum only
+#endif // _WIN32
+
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 #define FPS 60
