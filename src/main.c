@@ -255,7 +255,6 @@ int main(int argc, char **argv)
 
                     case SDLK_BACKSPACE: {
                         editor_backspace(&editor);
-                        editor.last_stroke = SDL_GetTicks();
                     }
                     break;
 
@@ -287,14 +286,12 @@ int main(int argc, char **argv)
                             editor_stop_search(&editor);
                         } else {
                             editor_insert_char(&editor, '\n');
-                            editor.last_stroke = SDL_GetTicks();
                         }
                     }
                     break;
 
                     case SDLK_DELETE: {
                         editor_delete(&editor);
-                        editor.last_stroke = SDL_GetTicks();
                     }
                     break;
 
@@ -355,7 +352,6 @@ int main(int argc, char **argv)
                         } else {
                             editor_move_line_up(&editor);
                         }
-                        editor.last_stroke = SDL_GetTicks();
                     }
                     break;
 
@@ -366,7 +362,6 @@ int main(int argc, char **argv)
                         } else {
                             editor_move_line_down(&editor);
                         }
-                        editor.last_stroke = SDL_GetTicks();
                     }
                     break;
 
@@ -377,7 +372,6 @@ int main(int argc, char **argv)
                         } else {
                             editor_move_char_left(&editor);
                         }
-                        editor.last_stroke = SDL_GetTicks();
                     }
                     break;
 
@@ -388,10 +382,10 @@ int main(int argc, char **argv)
                         } else {
                             editor_move_char_right(&editor);
                         }
-                        editor.last_stroke = SDL_GetTicks();
                     }
                     break;
                     }
+                    editor.last_stroke = SDL_GetTicks();
                 }
             }
             break;
