@@ -153,6 +153,8 @@ int main(int argc, char **argv)
         fprintf(stderr, "WARNING: GLEW_ARB_debug_output is not available");
     }
 
+    Vec4f bg = hex_to_vec4f(0x181818FF);
+
     simple_renderer_init(&sr);
     free_glyph_atlas_init(&atlas, face);
 
@@ -420,7 +422,6 @@ int main(int argc, char **argv)
             glViewport(0, 0, w, h);
         }
 
-        Vec4f bg = hex_to_vec4f(0x181818FF);
         glClearColor(bg.x, bg.y, bg.z, bg.w);
         glClear(GL_COLOR_BUFFER_BIT);
 
