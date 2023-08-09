@@ -134,9 +134,14 @@ Errno type_of_file(const char *file_path, File_Type *ft)
 {
 #ifdef _WIN32
 	DWORD file_obj_type = GetFileAttributesA(file_path);
-	if (file_obj_type == FILE_ATTRIBUTE_DIRECTORY)
+	if (file_obj_type & FILE_ATTRIBUTE_DIRECTORY)
 	{
 		*ft = FT_DIRECTORY;
+	}
+	// I have no idea why, but a 'normal' file is considered an archive file?
+	else if (file_obj_type & FILE_ATTRIBUTE_ARCHIVE)
+	{
+		*ft = FT_REGULAR;
 	}
 	else
 	{
