@@ -11,7 +11,14 @@
 - [GLEW 2.1.0+](https://glew.sourceforge.net/)
 
 ## POSIX
+Install Dependencies
+```console
+$ sudo apt-get install libsdl2-dev
+$ sudo apt-get install libglew-dev
+$ sudo apt-get install libfreetype6-dev
+```
 
+Build & Run
 ```console
 $ ./build.sh
 $ ./ded src/main.c
