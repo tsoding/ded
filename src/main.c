@@ -497,9 +497,19 @@ int main(int argc, char **argv)
                       }
                       break;
 
+                  /* case SDLK_x: */
+                  /*   editor_cut_char_under_cursor(&editor); */
+                  /*   break; */
+
                   case SDLK_x:
-                    editor_cut_char_under_cursor(&editor);
+                    if (editor.selection) {
+                      editor_delete_selection(&editor);
+                      editor.selection = false;
+                    } else {
+                      editor_cut_char_under_cursor(&editor);
+                    }
                     break;
+
 
                   case SDLK_p:
                     editor_clipboard_paste(&editor);
