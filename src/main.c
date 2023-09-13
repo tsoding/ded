@@ -374,12 +374,6 @@ int main(int argc, char **argv)
                     }
                   } break;
 
-                  /* case SDLK_SLASH: { */
-                  /*   current_mode = INSERT; */
-                  /*   // TODO eat up the first press here */
-                  /*   editor_start_search(&editor); */
-                  /* } break; */
-
                   case SDLK_SLASH: {
                     current_mode = INSERT;
                     editor_start_search(&editor);
@@ -391,7 +385,6 @@ int main(int argc, char **argv)
                       SDL_PushEvent(&tmpEvent); // Push the event back if it's not the one we're trying to consume
                     }
                   } break;
-
 
                   case SDLK_n: {
                     if (SDL_GetModState() & KMOD_SHIFT) {
@@ -407,7 +400,7 @@ int main(int argc, char **argv)
                       theme_next(&currentThemeIndex);
                       printf("Changed theme to %d\n", currentThemeIndex); // Logging the theme change for debugging
                     } else if (SDL_GetModState() & KMOD_CTRL) {  // Check if CTRL is pressed
-                      zoom_factor += 0.333f;
+                      zoom_factor -= 0.8f;
                     }
                   } break;
 
@@ -416,7 +409,7 @@ int main(int argc, char **argv)
                       theme_previous(&currentThemeIndex);
                       printf("Changed theme back to %d\n", currentThemeIndex); // Logging the theme change for debugging
                     } else if (SDL_GetModState() & KMOD_CTRL) {  // Check if CTRL is pressed
-                      zoom_factor -= 0.8f;
+                      zoom_factor += 0.8f;
                       if (zoom_factor < 1.0f) zoom_factor = 1.0f;  // Ensure zoom_factor doesn't drop below a threshold
                     }
                   } break;
