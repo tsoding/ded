@@ -6,6 +6,180 @@
 #include "./editor.h"
 #include "./common.h"
 
+
+EvilMode current_mode = NORMAL;
+float zoom_factor = 5.0f;
+Theme themes[7];
+
+int currentThemeIndex = 0;
+
+
+void initialize_themes() {
+    // Best theme ever
+    themes[0] = (Theme) {
+        .cursor = hex_to_vec4f(0xFFFFFFFF),          // White cursor
+        .text = hex_to_vec4f(0xFFFFFFFF),
+        .background = hex_to_vec4f(0x181818FF),
+        .comment = hex_to_vec4f(0xCC8C3CFF),
+        .hashtag = hex_to_vec4f(0x95A99FFF),
+        .logic = hex_to_vec4f(0xFFDD33FF),
+        .string = hex_to_vec4f(0x73c936ff),
+        .selection = hex_to_vec4f(0x00000000),
+        .search = hex_to_vec4f(0xFFDD33FF),
+        .marks = hex_to_vec4f(0xFFDD33FF),
+        .fb_selection = hex_to_vec4f(0x00000000)
+    };
+
+
+    // Dracula
+    themes[1] = (Theme) {
+        .cursor = hex_to_vec4f(0xFF79C6FF),
+        .text = hex_to_vec4f(0xF8F8F2FF),
+        .logic = hex_to_vec4f(0x50FA7BFF),
+        .background = hex_to_vec4f(0x282A36FF),
+        .comment = hex_to_vec4f(0x6272A4FF),
+        .hashtag = hex_to_vec4f(0x8BE9FDFF),
+        .string = hex_to_vec4f(0xF1FA8CFF),
+        .selection = hex_to_vec4f(0x00000000),
+        .selection = hex_to_vec4f(0x44475AFF),
+        .search = hex_to_vec4f(0xFF5555FF),
+        .marks = hex_to_vec4f(0xBD93F9FF),
+        .fb_selection = hex_to_vec4f(0x44475AFF)
+    };
+
+    themes[1] = (Theme) {
+        .cursor = hex_to_vec4f(0xF8F8F2FF),
+        .text = hex_to_vec4f(0xE9E9F4FF),
+        .background = hex_to_vec4f(0x282A36FF),
+        .comment = hex_to_vec4f(0x6272A4FF),
+        .hashtag = hex_to_vec4f(0x50FA7BFF),
+        .logic = hex_to_vec4f(0xFF79C6FF),
+        .string = hex_to_vec4f(0xF1FA8CFF),
+        .selection = hex_to_vec4f(0x44475AFF),
+        .search = hex_to_vec4f(0xFF5555FF),
+        .marks = hex_to_vec4f(0xBD93F9FF),
+        .fb_selection = hex_to_vec4f(0x44475AFF)
+    };
+
+    // Palenight
+    themes[2] = (Theme) {
+        .cursor = hex_to_vec4f(0xAB47BCFF),
+        .text = hex_to_vec4f(0xA6ACCDFF),
+        .logic = hex_to_vec4f(0x89DDFFFF),
+        .background = hex_to_vec4f(0x292D3EFF),
+        .comment = hex_to_vec4f(0x676E95FF),
+        .hashtag = hex_to_vec4f(0xC792EAFF),
+        .string = hex_to_vec4f(0xC3E88DFF),
+        .selection = hex_to_vec4f(0x00000000),
+        .fb_selection = hex_to_vec4f(0x00000000)
+    };
+
+    // Monokai
+    themes[3] = (Theme) {
+        .cursor = hex_to_vec4f(0xF8F8F0FF),
+        .text = hex_to_vec4f(0xF8F8F2FF),
+        .background = hex_to_vec4f(0x272822FF),
+        .comment = hex_to_vec4f(0x75715E),
+        .hashtag = hex_to_vec4f(0xA6E22EFF),
+        .logic = hex_to_vec4f(0xF92672FF),
+        .string = hex_to_vec4f(0xE6DB74FF),
+        .selection = hex_to_vec4f(0x49483EFF),
+        .search = hex_to_vec4f(0x66D9EFFF),
+        .marks = hex_to_vec4f(0xFD971FFF),
+        .fb_selection = hex_to_vec4f(0x3E3D32FF)
+    };
+
+    // Solarized dark
+    themes[4] = (Theme) {
+        .cursor = hex_to_vec4f(0x93A1A1FF),
+        .text = hex_to_vec4f(0x839496FF),
+        .background = hex_to_vec4f(0x002B36FF),
+        .comment = hex_to_vec4f(0x586E75FF),
+        .hashtag = hex_to_vec4f(0x859900FF),
+        .logic = hex_to_vec4f(0xB58900FF),
+        .string = hex_to_vec4f(0x2AA198FF),
+        .selection = hex_to_vec4f(0x073642FF),
+        .search = hex_to_vec4f(0xDC322FFF),
+        .marks = hex_to_vec4f(0xD33682FF),
+        .fb_selection = hex_to_vec4f(0x073642FF)
+    };
+
+    // Nord
+    themes[5] = (Theme) {
+        .cursor = hex_to_vec4f(0xECEFF4FF),
+        .text = hex_to_vec4f(0xE5E9F0FF),
+        .background = hex_to_vec4f(0x2E3440FF),
+        .comment = hex_to_vec4f(0x4C566AFF),
+        .hashtag = hex_to_vec4f(0x8FBCBBFF),
+        .logic = hex_to_vec4f(0x81A1C1FF),
+        .string = hex_to_vec4f(0xA3BE8CFF),
+        .selection = hex_to_vec4f(0x3B4252FF),
+        .search = hex_to_vec4f(0xBF616AFF),
+        .marks = hex_to_vec4f(0xB48EADFF),
+        .fb_selection = hex_to_vec4f(0x3B4252FF)
+    };
+
+    // Catppuccin
+    themes[6] = (Theme) {
+        .cursor = hex_to_vec4f(0xf38ba8FF), // Red
+        .text = hex_to_vec4f(0xcdd6f4FF), // Text
+        .background = hex_to_vec4f(0x1e1e2eFF), // Base
+        .comment = hex_to_vec4f(0x9399b2FF), // Overlay2
+        .hashtag = hex_to_vec4f(0x89b4faFF), // Blue
+        .logic = hex_to_vec4f(0xa6e3a1FF), // Green
+        .string = hex_to_vec4f(0xf9e2afFF), // Yellow
+        .selection = hex_to_vec4f(0xf5c2e7FF), // Pink
+        .search = hex_to_vec4f(0xf2cdcdFF), // Flamingo
+        .marks = hex_to_vec4f(0x74c7ecFF), // Sapphire
+        .fb_selection = hex_to_vec4f(0xb4befeFF) // Lavender
+    };
+
+
+}
+
+void theme_next(int *currentThemeIndex) {
+    // Assuming themes is globally defined with a known size
+    const int themeCount = sizeof(themes) / sizeof(themes[0]);
+    *currentThemeIndex += 1;
+    if (*currentThemeIndex >= themeCount) {
+        *currentThemeIndex = 0;  // wrap around if we've gone past the last theme
+    }
+}
+
+void theme_previous(int *currentThemeIndex) {
+    *currentThemeIndex -= 1;
+    if (*currentThemeIndex < 0) {
+        // Assuming themes is globally defined with a known size
+        const int themeCount = sizeof(themes) / sizeof(themes[0]);
+        *currentThemeIndex = themeCount - 1;  // wrap around to the last theme
+    }
+}
+
+
+/* void editor_backspace(Editor *e) */
+/* { */
+/*     if (e->searching) { */
+/*         if (e->search.count > 0) { */
+/*             e->search.count -= 1; */
+/*         } */
+/*     } else { */
+/*         if (e->cursor > e->data.count) { */
+/*             e->cursor = e->data.count; */
+/*         } */
+/*         if (e->cursor == 0) return; */
+
+/*         memmove( */
+/*             &e->data.items[e->cursor - 1], */
+/*             &e->data.items[e->cursor], */
+/*             e->data.count - e->cursor */
+/*         ); */
+/*         e->cursor -= 1; */
+/*         e->data.count -= 1; */
+/*         editor_retokenize(e); */
+/*     } */
+/* } */
+
+// Smart Parenthesis
 void editor_backspace(Editor *e)
 {
     if (e->searching) {
@@ -13,21 +187,39 @@ void editor_backspace(Editor *e)
             e->search.count -= 1;
         }
     } else {
-        if (e->cursor > e->data.count) {
-            e->cursor = e->data.count;
-        }
-        if (e->cursor == 0) return;
+        if (e->cursor == 0) return; // Cursor at the beginning, nothing to delete
 
-        memmove(
-            &e->data.items[e->cursor - 1],
-            &e->data.items[e->cursor],
-            e->data.count - e->cursor
-        );
-        e->cursor -= 1;
-        e->data.count -= 1;
+        size_t cursor_pos = e->cursor;
+
+        if (cursor_pos > e->data.count) {
+            cursor_pos = e->data.count;
+        }
+
+        // Determine the characters before and after the cursor
+        char char_before_cursor = (cursor_pos > 0) ? e->data.items[cursor_pos - 1] : '\0';
+        char char_after_cursor = (cursor_pos < e->data.count) ? e->data.items[cursor_pos] : '\0';
+
+        if ((char_before_cursor == '(' && char_after_cursor == ')') ||
+            (char_before_cursor == '[' && char_after_cursor == ']') ||
+            (char_before_cursor == '{' && char_after_cursor == '}') ||
+            (char_before_cursor == '\'' && char_after_cursor == '\'') ||
+            (char_before_cursor == '"' && char_after_cursor == '"')) {
+            // Delete both characters and move cursor left
+            memmove(&e->data.items[cursor_pos - 1], &e->data.items[cursor_pos + 1], e->data.count - cursor_pos);
+            e->cursor -= 1;
+            e->data.count -= 2;
+        } else {
+            // Delete only the character before the cursor
+            memmove(&e->data.items[cursor_pos - 1], &e->data.items[cursor_pos], e->data.count - cursor_pos);
+            e->cursor -= 1;
+            e->data.count -= 1;
+        }
+
         editor_retokenize(e);
     }
 }
+
+
 
 void editor_delete(Editor *e)
 {
@@ -298,6 +490,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                         &select_end_scr);
 
                     Vec4f selection_color = vec4f(.25, .25, .25, 1);
+
                     simple_renderer_solid_rect(sr, select_begin_scr, vec2f(select_end_scr.x - select_begin_scr.x, FREE_GLYPH_FONT_SIZE), selection_color);
                 }
             }
@@ -323,7 +516,8 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     {
         if (editor->searching) {
             simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
-            Vec4f selection_color = vec4f(.10, .10, .25, 1);
+            /* Vec4f selection_color = vec4f(.10, .10, .25, 1); */
+            Vec4f selection_color = themes[currentThemeIndex].search; // or .selection_color if that's what you named it in the struct.
             Vec2f p1 = cursor_pos;
             Vec2f p2 = p1;
             free_glyph_atlas_measure_line_sized(editor->atlas, editor->search.items, editor->search.count, &p2);
@@ -332,25 +526,70 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         }
     }
 
+    // Render marked search result
+    {
+        simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
+        if (editor->has_mark) {
+            for (size_t row = 0; row < editor->lines.count; ++row) {
+                size_t mark_begin_chr = editor->mark_start;
+                size_t mark_end_chr = editor->mark_end;
+
+                Line line_chr = editor->lines.items[row];
+
+                if (mark_begin_chr < line_chr.begin) {
+                    mark_begin_chr = line_chr.begin;
+                }
+
+                if (mark_end_chr > line_chr.end) {
+                    mark_end_chr = line_chr.end;
+                }
+
+                if (mark_begin_chr <= mark_end_chr) {
+                    Vec2f mark_begin_scr = vec2f(0, -((float)row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE);
+                    free_glyph_atlas_measure_line_sized(
+                                                        atlas, editor->data.items + line_chr.begin, mark_begin_chr - line_chr.begin,
+                                                        &mark_begin_scr);
+
+                    Vec2f mark_end_scr = mark_begin_scr;
+                    free_glyph_atlas_measure_line_sized(
+                                                        atlas, editor->data.items + mark_begin_chr, mark_end_chr - mark_begin_chr,
+                                                        &mark_end_scr);
+
+                    /* Vec4f mark_color = vec4f(.20, .20, .20, 1);  // Adjust color as needed */
+                    Vec4f mark_color = themes[currentThemeIndex].marks;
+                    simple_renderer_solid_rect(sr, mark_begin_scr, vec2f(mark_end_scr.x - mark_begin_scr.x, FREE_GLYPH_FONT_SIZE), mark_color);
+                }
+            }
+        }
+        simple_renderer_flush(sr);
+    }
+
+
     // Render text
     {
         simple_renderer_set_shader(sr, SHADER_FOR_TEXT);
         for (size_t i = 0; i < editor->tokens.count; ++i) {
             Token token = editor->tokens.items[i];
             Vec2f pos = token.position;
-            Vec4f color = vec4fs(1);
+            /* Vec4f color = vec4fs(1); */
+            Vec4f color = themes[currentThemeIndex].text;
             switch (token.kind) {
             case TOKEN_PREPROC:
-                color = hex_to_vec4f(0x95A99FFF);
+                /* color = hex_to_vec4f(0x95A99FFF); */
+                color = themes[currentThemeIndex].hashtag;
                 break;
             case TOKEN_KEYWORD:
-                color = hex_to_vec4f(0xFFDD33FF);
+                /* color = hex_to_vec4f(0xFFDD33FF); */
+                color = themes[currentThemeIndex].logic;
+
                 break;
             case TOKEN_COMMENT:
-                color = hex_to_vec4f(0xCC8C3CFF);
+                /* color = hex_to_vec4f(0xCC8C3CFF); */
+                color = themes[currentThemeIndex].comment;
                 break;
             case TOKEN_STRING:
-                color = hex_to_vec4f(0x73c936ff);
+                /* color = hex_to_vec4f(0x73c936ff); */
+                color = themes[currentThemeIndex].string;
                 break;
             default:
             {}
@@ -362,24 +601,94 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         simple_renderer_flush(sr);
     }
 
+
     // Render cursor
     simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
-    {
-        float CURSOR_WIDTH = 5.0f;
-        Uint32 CURSOR_BLINK_THRESHOLD = 500;
-        Uint32 CURSOR_BLINK_PERIOD = 1000;
-        Uint32 t = SDL_GetTicks() - editor->last_stroke;
 
-        sr->verticies_count = 0;
-        if (t < CURSOR_BLINK_THRESHOLD || t/CURSOR_BLINK_PERIOD%2 != 0) {
-            simple_renderer_solid_rect(
-                sr,
-                cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE),
-                vec4fs(1));
+    // Constants
+    float CURSOR_WIDTH;
+    Uint32 CURSOR_BLINK_THRESHOLD = 500;
+    Uint32 CURSOR_BLINK_PERIOD = 1000;
+    Uint32 t = SDL_GetTicks() - editor->last_stroke;
+    /* Vec4f CURSOR_COLOR = vec4fs(1); // Default color for NORMAL */
+    Vec4f CURSOR_COLOR = themes[currentThemeIndex].cursor;
+
+    sr->verticies_count = 0;
+
+    switch (current_mode) {
+    case NORMAL:
+        CURSOR_WIDTH = FREE_GLYPH_FONT_SIZE / 2.0f; // Half the size for NORMAL mode
+        /* CURSOR_COLOR = vec4fs(1); // Assuming this sets it to a solid color */
+        simple_renderer_solid_rect(sr, cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE), CURSOR_COLOR);
+
+
+
+        /* // Render cursor based on the set dimensions */
+        /* simple_renderer_solid_rect(sr, cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE), CURSOR_COLOR); */
+        break;
+
+    case INSERT:
+        CURSOR_WIDTH = 5.0f; // Thin vertical line for INSERT mode
+
+        // Implement blinking for INSERT mode
+        if (t < CURSOR_BLINK_THRESHOLD || (t / CURSOR_BLINK_PERIOD) % 2 != 0) {
+            simple_renderer_solid_rect(sr, cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE), CURSOR_COLOR);
         }
+        break;
 
-        simple_renderer_flush(sr);
+    case VISUAL:
+        CURSOR_WIDTH = FREE_GLYPH_FONT_SIZE / 2.0f;  // Same size as NORMAL mode
+
+        // Solid border color
+        /* CURSOR_COLOR = vec4f(1, 1, 1, 1); // Fully opaque white */
+
+        // Inner transparent color
+        /* Vec4f INNER_COLOR = vec4f(1, 1, 1, 0.3);  // White with low alpha */
+        Vec4f INNER_COLOR = themes[currentThemeIndex].cursor; // TODO remove alpha
+
+
+
+
+        // Border thickness (adjust to your liking)
+        float BORDER_THICKNESS = 5.0f;
+
+        // Draw inner rectangle (more transparent)
+        simple_renderer_solid_rect(sr, cursor_pos, vec2f(CURSOR_WIDTH - 2 * BORDER_THICKNESS, FREE_GLYPH_FONT_SIZE - 2 * BORDER_THICKNESS), INNER_COLOR);
+
+        // Draw the outline (borders)
+
+        // Top border
+        simple_renderer_solid_rect(sr, cursor_pos, vec2f(CURSOR_WIDTH, BORDER_THICKNESS), CURSOR_COLOR);
+
+        // Bottom border
+        simple_renderer_solid_rect(sr, vec2f(cursor_pos.x, cursor_pos.y + FREE_GLYPH_FONT_SIZE - BORDER_THICKNESS), vec2f(CURSOR_WIDTH, BORDER_THICKNESS), CURSOR_COLOR);
+
+        // Left border
+        simple_renderer_solid_rect(sr, cursor_pos, vec2f(BORDER_THICKNESS, FREE_GLYPH_FONT_SIZE), CURSOR_COLOR);
+
+        // Right border
+        simple_renderer_solid_rect(sr, vec2f(cursor_pos.x + CURSOR_WIDTH - BORDER_THICKNESS, cursor_pos.y), vec2f(BORDER_THICKNESS, FREE_GLYPH_FONT_SIZE), CURSOR_COLOR);
+
+        break;
+
     }
+
+    // Render minibuffer TODO
+    /* { */
+    /*     simple_renderer_set_shader(sr, SHADER_FOR_TEXT); */
+
+    /*     // Positioning the minibuffer at the bottom of the window */
+    /*     Vec2f minibuffer_pos = vec2f(5.0f, h - FREE_GLYPH_FONT_SIZE - 5.0f);  // 5px padding from the bottom and left */
+    /*     Vec4f minibuffer_color = hex_to_vec4f(0xFFFFFF);  // Assuming white color for the text; adjust if needed */
+
+    /*     // Rendering the minibuffer text */
+    /*     free_glyph_atlas_render_line_sized(atlas, sr, editor->minibuffer, strlen(editor->minibuffer), &minibuffer_pos, minibuffer_color); */
+
+    /*     simple_renderer_flush(sr); */
+    /* } */
+
+
+
 
     // Update camera
     {
@@ -387,7 +696,10 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             max_line_len = 1000.0f;
         }
 
-        float target_scale = w/3/(max_line_len*0.75); // TODO: division by 0
+        /* float target_scale = w/5/(max_line_len*0.75); // TODO: division by 0 */
+        float target_scale = w / zoom_factor / (max_line_len * 0.75); // TODO: division by 0
+
+
 
         Vec2f target = cursor_pos;
         float offset = 0.0f;
@@ -406,24 +718,10 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f;
 
         sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME)));
-        sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME;
+        sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME; // ORIGINAL
     }
 }
 
-void editor_update_selection(Editor *e, bool shift)
-{
-    if (e->searching) return;
-    if (shift) {
-        if (!e->selection) {
-            e->selection = true;
-            e->select_begin = e->cursor;
-        }
-    } else {
-        if (e->selection) {
-            e->selection = false;
-        }
-    }
-}
 
 void editor_clipboard_copy(Editor *e)
 {
@@ -455,6 +753,85 @@ void editor_clipboard_paste(Editor *e)
     SDL_free(text);
 }
 
+// ADDED
+void editor_cut_char_under_cursor(Editor *e) {
+    if (e->searching) return;
+
+    if (e->cursor >= e->data.count) return;
+
+    // 1. Copy the character to clipboard.
+    e->clipboard.count = 0;
+    sb_append_buf(&e->clipboard, &e->data.items[e->cursor], 1);
+    sb_append_null(&e->clipboard);
+    if (SDL_SetClipboardText(e->clipboard.items) < 0) {
+        fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
+    }
+
+    // 2. Delete the character from the editor.
+    memmove(
+        &e->data.items[e->cursor],
+        &e->data.items[e->cursor + 1],
+        (e->data.count - e->cursor - 1) * sizeof(e->data.items[0])
+    );
+    e->data.count -= 1;
+    editor_retokenize(e);
+}
+
+// VISUAL selection
+
+void editor_start_visual_selection(Editor *e) {
+    e->selection = true;
+
+    // Identify the current line the cursor is on
+    size_t cursor_row = editor_cursor_row(e);
+    Line current_line = e->lines.items[cursor_row];
+
+    // If in VISUAL_LINE mode, adjust the selection to span the entire line
+    if (current_mode == VISUAL_LINE) {
+        e->select_begin = current_line.begin;
+
+        // Set the cursor to the end of the current line to span the whole line
+        e->cursor = current_line.end;
+    } else {
+        e->select_begin = e->cursor;
+    }
+}
+
+void editor_start_visual_line_selection(Editor *e) {
+    e->selection = true;
+
+    // Identify the current line the cursor is on
+    size_t cursor_row = editor_cursor_row(e);
+    Line current_line = e->lines.items[cursor_row];
+
+    // Set the beginning and end of the selection to span the entire line
+    e->select_begin = current_line.begin;
+    e->cursor = current_line.end;
+}
+
+
+
+
+void editor_update_selection(Editor *e, bool shift) {
+    if (e->searching) return;
+
+    if (current_mode == VISUAL) {
+        if (!e->selection) {
+            editor_start_visual_selection(e);
+        }
+        // If you want the selection to end when you leave VISUAL mode,
+        // you will need to handle that logic elsewhere (perhaps where mode changes are managed).
+    } else if (shift) {
+        if (!e->selection) {
+            e->selection = true;
+            e->select_begin = e->cursor;
+        }
+    } else {
+        e->selection = false;
+    }
+}
+
+// search
 void editor_start_search(Editor *e)
 {
     if (e->searching) {
@@ -480,6 +857,15 @@ void editor_stop_search(Editor *e)
     e->searching = false;
 }
 
+void editor_stop_search_and_mark(Editor *e) {
+    e->searching = false;
+
+    e->has_mark = true;  // Mark the search result.
+    e->mark_start = e->cursor;
+    e->mark_end = e->cursor + e->search.count;
+}
+
+
 bool editor_search_matches_at(Editor *e, size_t pos)
 {
     if (e->data.count - pos < e->search.count) return false;
@@ -490,6 +876,59 @@ bool editor_search_matches_at(Editor *e, size_t pos)
     }
     return true;
 }
+
+void editor_search_next(Editor *e) {
+    size_t startPos = e->cursor + 1;
+    for (size_t pos = startPos; pos < e->data.count; ++pos) {
+        if (editor_search_matches_at(e, pos)) {
+            e->cursor = pos;
+            editor_stop_search_and_mark(e);
+            return; // Exit after finding a match
+        }
+    }
+
+    // If not found in the remainder of the text, wrap around to the beginning
+    for (size_t pos = 0; pos < startPos; ++pos) {
+        if (editor_search_matches_at(e, pos)) {
+            e->cursor = pos;
+            editor_stop_search_and_mark(e);
+            return; // Exit after finding a match
+        }
+    }
+}
+
+void editor_search_previous(Editor *e) {
+    if (e->cursor == 0) {
+        // If we are at the beginning of the file, wrap around immediately
+        for (size_t pos = e->data.count - 1; pos != SIZE_MAX; --pos) { // Note the loop condition
+            if (editor_search_matches_at(e, pos)) {
+                e->cursor = pos;
+                editor_stop_search_and_mark(e);
+                return; // Exit after finding a match
+            }
+        }
+    } else {
+        for (size_t pos = e->cursor - 1; pos != SIZE_MAX; --pos) { // Note the loop condition
+            if (editor_search_matches_at(e, pos)) {
+                e->cursor = pos;
+                editor_stop_search_and_mark(e);
+                return; // Exit after finding a match
+            }
+        }
+
+        // If not found in the preceding text, wrap around to the end
+        for (size_t pos = e->data.count - 1; pos > e->cursor; --pos) {
+            if (editor_search_matches_at(e, pos)) {
+                e->cursor = pos;
+                editor_stop_search_and_mark(e);
+                return; // Exit after finding a match
+            }
+        }
+    }
+}
+
+
+
 
 void editor_move_to_begin(Editor *e)
 {

@@ -7,7 +7,10 @@
 #include "simple_renderer.h"
 #include "lexer.h"
 
+#include <stdbool.h>
+
 #include <SDL2/SDL.h>
+
 
 typedef struct {
     size_t begin;
@@ -26,6 +29,32 @@ typedef struct {
     size_t capacity;
 } Tokens;
 
+typedef enum {
+    NORMAL,
+    INSERT,
+    VISUAL,
+    VISUAL_LINE,
+    COMMAND,
+    CHORDING
+} EvilMode;
+
+extern EvilMode current_mode;
+
+typedef struct {
+    Vec4f cursor;
+    Vec4f text;
+    Vec4f background;
+    Vec4f logic;
+    Vec4f comment;
+    Vec4f hashtag;
+    Vec4f string;
+    Vec4f selection;
+    Vec4f search;
+    Vec4f marks;
+    Vec4f fb_selection;
+} Theme;
+
+
 typedef struct {
     Free_Glyph_Atlas *atlas;
 
@@ -40,6 +69,12 @@ typedef struct {
     bool selection;
     size_t select_begin;
     size_t cursor;
+
+    /* EvilMode mode; // TODO */
+    bool has_mark;            // Indicates if there's a marked search result.
+    size_t mark_start;        // Start of marked search result.
+    size_t mark_end;          // End of marked search result.
+
 
     Uint32 last_stroke;
 
@@ -79,5 +114,20 @@ void editor_clipboard_paste(Editor *e);
 void editor_start_search(Editor *e);
 void editor_stop_search(Editor *e);
 bool editor_search_matches_at(Editor *e, size_t pos);
+
+// ADDED
+void editor_stop_search_and_mark(Editor *e);
+void editor_search_next(Editor *e);
+void editor_search_previous(Editor *e);
+extern float zoom_factor;
+// THEME
+extern Theme themes[];
+extern int currentThemeIndex;
+void initialize_themes();
+#define CURRENT_THEME (themes[currentThemeIndex])
+
+void theme_next(int *currentThemeIndex);
+void theme_previous(int *currentThemeIndex);
+
 
 #endif // EDITOR_H_

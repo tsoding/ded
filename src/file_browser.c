@@ -1,6 +1,9 @@
 #include <string.h>
 #include "file_browser.h"
 #include "sv.h"
+#include <stdbool.h>
+
+
 
 static int file_cmp(const void *ap, const void *bp)
 {
@@ -150,6 +153,8 @@ void fb_render(const File_Browser *fb, SDL_Window *window, Free_Glyph_Atlas *atl
             atlas, fb->files.items[fb->cursor], strlen(fb->files.items[fb->cursor]),
             &end);
         simple_renderer_solid_rect(sr, begin, vec2f(end.x - begin.x, FREE_GLYPH_FONT_SIZE), vec4f(.25, .25, .25, 1));
+
+
     }
     simple_renderer_flush(sr);
 
@@ -184,7 +189,7 @@ void fb_render(const File_Browser *fb, SDL_Window *window, Free_Glyph_Atlas *atl
         if (target_scale > 3.0f) {
             target_scale = 3.0f;
         } else {
-            offset = cursor_pos.x - w/3/sr->camera_scale;
+            offset = cursor_pos.x - w/1/sr->camera_scale;
             if (offset < 0.0f) offset = 0.0f;
             target = vec2f(w/3/sr->camera_scale + offset, cursor_pos.y);
         }

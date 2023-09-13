@@ -89,6 +89,18 @@ static Errno file_size(FILE *file, size_t *size)
     return 0;
 }
 
+Errno create_new_file_here(const char *file_name)
+{
+    Errno result = 0;
+
+    FILE *f = fopen(file_name, "wb");
+    if (f == NULL)
+        return errno;
+
+    fclose(f);
+    return result;
+}
+
 Errno read_entire_file(const char *file_path, String_Builder *sb)
 {
     Errno result = 0;
