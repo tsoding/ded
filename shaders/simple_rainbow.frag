@@ -16,16 +16,7 @@ void main() {
     float d = tc.r;
     float aaf = fwidth(d);
     float alpha = smoothstep(0.5 - aaf, 0.5 + aaf, d);
-
     vec2 frag_uv = gl_FragCoord.xy / resolution;
-
-    // Dynamic color-shifting aura
-    vec3 auraColor = hsl2rgb(vec3(mod(time * 0.2 + frag_uv.y, 1.0), 0.5, 0.5));
-
-    // Shimmering gradient across the text
-    float shimmer = (sin(time * 3.0 + frag_uv.x * 10.0) + 1.0) * 0.5;
-    vec3 shimmerColor = mix(vec3(1.0, 0.8, 0.6), vec3(0.6, 0.8, 1.0), shimmer);
-
-    vec3 finalColor = mix(auraColor, shimmerColor, d);
-    gl_FragColor = vec4(finalColor, alpha);
+    vec4 rainbow = vec4(hsl2rgb(vec3((time + frag_uv.x + frag_uv.y), 0.5, 0.5)), 1.0);
+    gl_FragColor = vec4(rainbow.rgb, alpha);
 }

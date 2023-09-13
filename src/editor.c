@@ -9,7 +9,7 @@
 
 EvilMode current_mode = NORMAL;
 float zoom_factor = 5.0f;
-Theme themes[7];
+Theme themes[10];
 
 int currentThemeIndex = 0;
 
@@ -47,28 +47,15 @@ void initialize_themes() {
         .fb_selection = hex_to_vec4f(0x44475AFF)
     };
 
-    themes[1] = (Theme) {
-        .cursor = hex_to_vec4f(0xF8F8F2FF),
-        .text = hex_to_vec4f(0xE9E9F4FF),
-        .background = hex_to_vec4f(0x282A36FF),
-        .comment = hex_to_vec4f(0x6272A4FF),
-        .hashtag = hex_to_vec4f(0x50FA7BFF),
-        .logic = hex_to_vec4f(0xFF79C6FF),
-        .string = hex_to_vec4f(0xF1FA8CFF),
-        .selection = hex_to_vec4f(0x44475AFF),
-        .search = hex_to_vec4f(0xFF5555FF),
-        .marks = hex_to_vec4f(0xBD93F9FF),
-        .fb_selection = hex_to_vec4f(0x44475AFF)
-    };
 
     // Palenight
     themes[2] = (Theme) {
-        .cursor = hex_to_vec4f(0xAB47BCFF),
+        .cursor = hex_to_vec4f(0xC792EAFF),
         .text = hex_to_vec4f(0xA6ACCDFF),
         .logic = hex_to_vec4f(0x89DDFFFF),
         .background = hex_to_vec4f(0x292D3EFF),
         .comment = hex_to_vec4f(0x676E95FF),
-        .hashtag = hex_to_vec4f(0xC792EAFF),
+        .hashtag = hex_to_vec4f(0xAB47BCFF),
         .string = hex_to_vec4f(0xC3E88DFF),
         .selection = hex_to_vec4f(0x00000000),
         .fb_selection = hex_to_vec4f(0x00000000)
@@ -119,8 +106,53 @@ void initialize_themes() {
         .fb_selection = hex_to_vec4f(0x3B4252FF)
     };
 
-    // Catppuccin
+    // Modus Operandi Inspired 1
     themes[6] = (Theme) {
+        .cursor = hex_to_vec4f(0x000f0eff),
+        .text = hex_to_vec4f(0x000f0eff),
+        .logic = hex_to_vec4f(0x0090a1ff),
+        .background = hex_to_vec4f(0xfafafaff),
+        .comment = hex_to_vec4f(0x52676fff),
+        .hashtag = hex_to_vec4f(0xa070c0ff),
+        .string = hex_to_vec4f(0x7a5eafff),
+        .selection = hex_to_vec4f(0xd0d0e0ff),
+        .search = hex_to_vec4f(0xffc9c0ff),
+        .marks = hex_to_vec4f(0x9058d7ff),
+        .fb_selection = hex_to_vec4f(0xc0c0d8ff)
+    };
+
+    // Wildcherry Theme
+    themes[7] = (Theme) {
+        .background = hex_to_vec4f(0x000507FF),
+        .cursor = hex_to_vec4f(0xAA6F99FF),
+        .text = hex_to_vec4f(0xacbbc7FF),
+        .logic = hex_to_vec4f(0x6E5F95FF),
+        .comment = hex_to_vec4f(0x78828bFF),
+        .hashtag = hex_to_vec4f(0x7B6DA9FF),
+        .string = hex_to_vec4f(0xAA6F99FF),
+        .selection = hex_to_vec4f(0x8370AFFF),
+        .search = hex_to_vec4f(0xB375A8FF),
+        .marks = hex_to_vec4f(0x66578AFF),
+        .fb_selection = hex_to_vec4f(0x6E5F95FF)
+    };
+
+    // Rose-Pine
+    themes[8] = (Theme) {
+        .cursor = hex_to_vec4f(0xeb6f92FF), // Love (Pinkish)
+        .text = hex_to_vec4f(0xe0def4FF), // Text
+        .background = hex_to_vec4f(0x191724FF), // Base
+        .comment = hex_to_vec4f(0x6e6a86FF), // Muted
+        .hashtag = hex_to_vec4f(0x31748fFF), // Pine (Bluish)
+        .logic = hex_to_vec4f(0x908caaFF), // Subtle (Purple-ish)
+        .string = hex_to_vec4f(0xf6c177FF), // Gold (Yellow)
+        .selection = hex_to_vec4f(0x26233aFF), // Overlay
+        .search = hex_to_vec4f(0xc4a7e7FF), // Iris (Light Purple)
+        .marks = hex_to_vec4f(0xebbcbaFF), // Rose (Light Pink)
+        .fb_selection = hex_to_vec4f(0x9ccfd8FF) // Foam (Cyan)
+    };
+
+    // Catppuccin
+    themes[9] = (Theme) {
         .cursor = hex_to_vec4f(0xf38ba8FF), // Red
         .text = hex_to_vec4f(0xcdd6f4FF), // Text
         .background = hex_to_vec4f(0x1e1e2eFF), // Base

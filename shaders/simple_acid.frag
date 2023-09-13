@@ -19,13 +19,18 @@ void main() {
 
     vec2 frag_uv = gl_FragCoord.xy / resolution;
 
-    // Dynamic color-shifting aura
-    vec3 auraColor = hsl2rgb(vec3(mod(time * 0.2 + frag_uv.y, 1.0), 0.5, 0.5));
+    // Firefly movement: This simulates the movement of 3 "fireflies"
+    float f1 = abs(sin(frag_uv.x * 10.0 + time));
+    float f2 = abs(cos(frag_uv.y * 8.0 + time * 1.5));
+    float f3 = abs(sin(frag_uv.x * 12.0 + frag_uv.y * 12.0 + time * 0.7));
 
-    // Shimmering gradient across the text
-    float shimmer = (sin(time * 3.0 + frag_uv.x * 10.0) + 1.0) * 0.5;
-    vec3 shimmerColor = mix(vec3(1.0, 0.8, 0.6), vec3(0.6, 0.8, 1.0), shimmer);
+    // Combine fireflies' impact
+    float fireflyEffect = f1 + f2 + f3;
 
-    vec3 finalColor = mix(auraColor, shimmerColor, d);
+    // Translate that to a color-shifting effect
+    vec3 fireflyColor = hsl2rgb(vec3(fireflyEffect * 0.3, 0.6, 0.5));
+
+    vec3 finalColor = mix(tc.rgb, fireflyColor, d * fireflyEffect);
+
     gl_FragColor = vec4(finalColor, alpha);
 }

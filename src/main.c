@@ -220,6 +220,25 @@ int main(int argc, char **argv)
                 } break;
 
 
+                case SDLK_F5: {
+                  simple_renderer_reload_shaders(&sr);
+                }
+                  break;
+
+                case SDLK_EQUALS: {
+                  if (SDL_GetModState() & KMOD_ALT) {  // Check if ALT is pressed
+                    theme_next(&currentThemeIndex);
+                    printf("Changed theme to %d\n", currentThemeIndex); // Logging the theme change for debugging
+                  }
+                } break;
+
+                case SDLK_MINUS: {
+                  if (SDL_GetModState() & KMOD_ALT) {  // Check if ALT is pressed
+                    theme_previous(&currentThemeIndex);
+                    printf("Changed theme back to %d\n", currentThemeIndex); // Logging the theme change for debugging
+                  }
+                } break;
+
                 case SDLK_UP: {
                   if (fb.cursor > 0)
                     fb.cursor -= 1;
@@ -350,6 +369,11 @@ int main(int argc, char **argv)
                         for (size_t i = 0; i < 4; ++i) {
                             editor_insert_char(&editor, ' ');
                         }
+                    }
+                    break;
+
+                    case SDLK_F5: {
+                        simple_renderer_reload_shaders(&sr);
                     }
                     break;
 
