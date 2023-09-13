@@ -476,7 +476,8 @@ void editor_retokenize(Editor *e)
     // Syntax Highlighting
     {
         e->tokens.count = 0;
-        Lexer l = lexer_new(e->atlas, e->data.items, e->data.count);
+        /* Lexer l = lexer_new(e->atlas, e->data.items, e->data.count); */
+        Lexer l = lexer_new(e->atlas, e->data.items, e->data.count, e->file_path);
         Token t = lexer_next(&l);
         while (t.kind != TOKEN_END) {
             da_append(&e->tokens, t);
