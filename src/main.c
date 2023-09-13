@@ -853,6 +853,22 @@ int main(int argc, char **argv)
                 case VISUAL:
                   switch (event.key.keysym.sym) {
 
+                  /* case SDLK_x: */
+                  /*     editor_delete_selection(&editor); */
+                  /*     editor.selection = false; */
+                  /*   break; */
+
+
+                  case SDLK_x:
+                    if (editor.selection) {
+                      editor_delete_selection(&editor);
+                      editor.selection = false;
+                      current_mode = NORMAL;
+
+                    }
+                    break;
+
+
                   case SDLK_j:  // Down
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                     if (event.key.keysym.mod & KMOD_CTRL) {
