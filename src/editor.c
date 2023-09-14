@@ -10,6 +10,9 @@
 EvilMode current_mode = NORMAL;
 float zoom_factor = 5.0f;
 Theme themes[10];
+bool showLineNumbers = true;  // This is the actual definition and initialization
+
+
 
 int currentThemeIndex = 0;
 
@@ -523,6 +526,10 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     sr->resolution = vec2f(w, h);
     sr->time = (float) SDL_GetTicks() / 1000.0f;
 
+    float lineNumberWidth = FREE_GLYPH_FONT_SIZE * 5;
+    Vec4f lineNumberColor = vec4f(0.5, 0.5, 0.5, 1);  // A lighter color for line numbers, adjust as needed
+
+
     // Render selection
     {
         simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
@@ -547,13 +554,19 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 if (select_begin_chr <= select_end_chr) {
                     Vec2f select_begin_scr = vec2f(0, -((float)row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE);
                     free_glyph_atlas_measure_line_sized(
-                        atlas, editor->data.items + line_chr.begin, select_begin_chr - line_chr.begin,
-                        &select_begin_scr);
+                                                        atlas, editor->data.items + line_chr.begin, select_begin_chr - line_chr.begin,
+                                                        &select_begin_scr);
 
                     Vec2f select_end_scr = select_begin_scr;
                     free_glyph_atlas_measure_line_sized(
-                        atlas, editor->data.items + select_begin_chr, select_end_chr - select_begin_chr,
-                        &select_end_scr);
+                                                        atlas, editor->data.items + select_begin_chr, select_end_chr - select_begin_chr,
+                                                        &select_end_scr);
+
+                    // Adjust selection for line numbers if displayed
+                    if (showLineNumbers) {
+                        select_begin_scr.x += lineNumberWidth;
+                        select_end_scr.x += lineNumberWidth;
+                    }
 
                     Vec4f selection_color = vec4f(.25, .25, .25, 1);
 
@@ -578,19 +591,81 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                        );
     }
 
+    /* // Render search */
+    /* { */
+    /*     if (editor->searching) { */
+    /*         simple_renderer_set_shader(sr, SHADER_FOR_COLOR); */
+    /*         /\* Vec4f selection_color = vec4f(.10, .10, .25, 1); *\/ */
+    /*         Vec4f selection_color = themes[currentThemeIndex].search; // or .selection_color if that's what you named it in the struct. */
+    /*         Vec2f p1 = cursor_pos; */
+    /*         Vec2f p2 = p1; */
+    /*         free_glyph_atlas_measure_line_sized(editor->atlas, editor->search.items, editor->search.count, &p2); */
+    /*         simple_renderer_solid_rect(sr, p1, vec2f(p2.x - p1.x, FREE_GLYPH_FONT_SIZE), selection_color); */
+    /*         simple_renderer_flush(sr); */
+    /*     } */
+    /* } */
+
     // Render search
     {
         if (editor->searching) {
             simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
-            /* Vec4f selection_color = vec4f(.10, .10, .25, 1); */
             Vec4f selection_color = themes[currentThemeIndex].search; // or .selection_color if that's what you named it in the struct.
+
             Vec2f p1 = cursor_pos;
             Vec2f p2 = p1;
+
             free_glyph_atlas_measure_line_sized(editor->atlas, editor->search.items, editor->search.count, &p2);
+
+            // Adjust for line numbers width if they are displayed
+            if (showLineNumbers) {
+                p1.x += lineNumberWidth;
+                p2.x += lineNumberWidth;
+            }
+
             simple_renderer_solid_rect(sr, p1, vec2f(p2.x - p1.x, FREE_GLYPH_FONT_SIZE), selection_color);
             simple_renderer_flush(sr);
         }
     }
+
+
+
+    /* // Render marked search result */
+    /* { */
+    /*     simple_renderer_set_shader(sr, SHADER_FOR_COLOR); */
+    /*     if (editor->has_mark) { */
+    /*         for (size_t row = 0; row < editor->lines.count; ++row) { */
+    /*             size_t mark_begin_chr = editor->mark_start; */
+    /*             size_t mark_end_chr = editor->mark_end; */
+
+    /*             Line line_chr = editor->lines.items[row]; */
+
+    /*             if (mark_begin_chr < line_chr.begin) { */
+    /*                 mark_begin_chr = line_chr.begin; */
+    /*             } */
+
+    /*             if (mark_end_chr > line_chr.end) { */
+    /*                 mark_end_chr = line_chr.end; */
+    /*             } */
+
+    /*             if (mark_begin_chr <= mark_end_chr) { */
+    /*                 Vec2f mark_begin_scr = vec2f(0, -((float)row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE); */
+    /*                 free_glyph_atlas_measure_line_sized( */
+    /*                                                     atlas, editor->data.items + line_chr.begin, mark_begin_chr - line_chr.begin, */
+    /*                                                     &mark_begin_scr); */
+
+    /*                 Vec2f mark_end_scr = mark_begin_scr; */
+    /*                 free_glyph_atlas_measure_line_sized( */
+    /*                                                     atlas, editor->data.items + mark_begin_chr, mark_end_chr - mark_begin_chr, */
+    /*                                                     &mark_end_scr); */
+
+    /*                 /\* Vec4f mark_color = vec4f(.20, .20, .20, 1);  // Adjust color as needed *\/ */
+    /*                 Vec4f mark_color = themes[currentThemeIndex].marks; */
+    /*                 simple_renderer_solid_rect(sr, mark_begin_scr, vec2f(mark_end_scr.x - mark_begin_scr.x, FREE_GLYPH_FONT_SIZE), mark_color); */
+    /*             } */
+    /*         } */
+    /*     } */
+    /*     simple_renderer_flush(sr); */
+    /* } */
 
     // Render marked search result
     {
@@ -621,7 +696,12 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                                                         atlas, editor->data.items + mark_begin_chr, mark_end_chr - mark_begin_chr,
                                                         &mark_end_scr);
 
-                    /* Vec4f mark_color = vec4f(.20, .20, .20, 1);  // Adjust color as needed */
+                    // Adjust for line numbers width if they are displayed
+                    if (showLineNumbers) {
+                        mark_begin_scr.x += lineNumberWidth;
+                        mark_end_scr.x += lineNumberWidth;
+                    }
+
                     Vec4f mark_color = themes[currentThemeIndex].marks;
                     simple_renderer_solid_rect(sr, mark_begin_scr, vec2f(mark_end_scr.x - mark_begin_scr.x, FREE_GLYPH_FONT_SIZE), mark_color);
                 }
@@ -630,6 +710,29 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         simple_renderer_flush(sr);
     }
 
+    if (showLineNumbers) {
+        // Render line numbers
+        simple_renderer_set_shader(sr, SHADER_FOR_TEXT);
+
+        // Calculate the width for the line numbers, say every line number takes up to 5 characters of space
+
+        for (size_t i = 0; i < editor->lines.count; ++i) {
+            char lineNumberStr[10];  // Buffer for line number string
+            snprintf(lineNumberStr, sizeof(lineNumberStr), "%zu", i + 1);  // Convert line number to string
+
+            Vec2f pos;
+            pos.x = 0;  // Start from the left edge of the window
+            pos.y = -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE;
+
+            free_glyph_atlas_render_line_sized(atlas, sr, lineNumberStr, strlen(lineNumberStr), &pos, lineNumberColor);
+        }
+
+        simple_renderer_flush(sr);
+    }
+
+
+
+    /* pos.x += lineNumberWidth;  // Push the main text content to the right */
 
     // Render text
     {
@@ -641,12 +744,12 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             // TODO match color for open and close
             Vec4f color = themes[currentThemeIndex].text;
 
-            switch (token.kind) {
-            /* case TOKEN_PREPROC: */
-            /*     /\* color = hex_to_vec4f(0x95A99FFF); *\/ */
-            /*     color = themes[currentThemeIndex].hashtag; */
-            /*     break; */
+            // Adjust for line numbers width if they are displayed
+            if (showLineNumbers) {
+                pos.x += lineNumberWidth;
+            }
 
+            switch (token.kind) {
             case TOKEN_PREPROC:
                 if (token.text_len >= 7 && token.text[0] == '#') { // Check if it's likely a hex color
                     bool valid_hex = true;
@@ -705,6 +808,12 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
     // Render cursor
     simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
+
+    /* cursor_pos.x += lineNumberWidth; */
+    if (showLineNumbers) {
+        cursor_pos.x += lineNumberWidth;
+    }
+
 
     // Constants
     float CURSOR_WIDTH;

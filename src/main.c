@@ -68,6 +68,8 @@ static File_Browser fb = {0};
 static Repl repl = {0};
 
 
+
+
 // TODO: display errors reported via flash_error right in the text editor window somehow
 #define flash_error(...) do { fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); } while(0)
 
@@ -371,6 +373,14 @@ int main(int argc, char **argv)
                         }
                     }
                     break;
+
+                  case SDLK_z: {
+                    if (SDL_GetModState() & KMOD_CTRL) {
+                      showLineNumbers = !showLineNumbers;  // Toggle the state of showLineNumbers
+                    }
+                  }
+                    break;
+
 
                     case SDLK_F5: {
                         simple_renderer_reload_shaders(&sr);

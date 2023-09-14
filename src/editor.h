@@ -121,6 +121,8 @@ void editor_stop_search_and_mark(Editor *e);
 void editor_search_next(Editor *e);
 void editor_search_previous(Editor *e);
 extern float zoom_factor;
+extern bool showLineNumbers;
+
 // THEME
 extern Theme themes[];
 extern int currentThemeIndex;
