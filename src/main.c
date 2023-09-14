@@ -741,10 +741,6 @@ int main(int argc, char **argv)
                   }
                     break;
 
-
-
-                    // TODO QUOTE
-
                   case SDLK_BACKSPACE:
                     editor_backspace(&editor);
                     break;

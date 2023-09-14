@@ -11,6 +11,9 @@ typedef struct {
     const char *text;
 } Literal_Token;
 
+
+/* int nesting_level = 0; */ // TODO
+
 Literal_Token literal_tokens[] = {
     {.text = "(", .kind = TOKEN_OPEN_PAREN},
     {.text = ")", .kind = TOKEN_CLOSE_PAREN},
@@ -49,6 +52,10 @@ const char *cKeywords[] = {
 
 
 
+
+
+
+
 const char *pyKeywords[] = {
     "False", "None", "True", "and", "as", "assert", "async", "await", "break", "class", "continue", "def", "del", "elif", "else", "except", "finally", "for", "from", "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try", "while", "with", "yield",
 };
@@ -76,6 +83,8 @@ const char *token_kind_name(Token_Kind kind)
         return "close paren";
     case TOKEN_OPEN_CURLY:
         return "open curly";
+    case TOKEN_COLOR:
+        return "color";
     case TOKEN_CLOSE_CURLY:
         return "close curly";
     case TOKEN_SEMICOLON:
@@ -183,6 +192,28 @@ Token lexer_next(Lexer *l)
 
     if (l->cursor >= l->content_len) return token;
 
+    // Check for color-like format (e.g., 0xf38ba8FF)
+    if (l->content[l->cursor] == '0' &&
+        (l->cursor + 1 < l->content_len) &&
+        (l->content[l->cursor + 1] == 'x' || l->content[l->cursor + 1] == 'X')) {
+
+        size_t start_cursor = l->cursor;
+        size_t potential_length = 0;
+
+        // Count the potential hex digits
+        while ((start_cursor + 2 + potential_length) < l->content_len && isxdigit(l->content[start_cursor + 2 + potential_length])) {
+            potential_length++;
+        }
+
+        // Check if the length is 8, meaning it's a full color
+        if (potential_length == 8) {
+            lexer_chop_char(l, 10); // Skip the entire color token including '0x'
+            token.kind = TOKEN_COLOR;
+            token.text_len = 10; // Including the '0x' prefix
+            return token;
+        }
+    }
+
     if (l->content[l->cursor] == '"') {
         // TODO: TOKEN_STRING should also handle escape sequences
         token.kind = TOKEN_STRING;
@@ -198,17 +229,34 @@ Token lexer_next(Lexer *l)
     }
 
     if (l->content[l->cursor] == '#') {
-        // TODO: preproc should also handle newlines
-        token.kind = TOKEN_PREPROC;
-        while (l->cursor < l->content_len && l->content[l->cursor] != '\n') {
-            lexer_chop_char(l, 1);
+        if (l->cursor + 6 < l->content_len && is_hex_digit(l->content[l->cursor + 1])
+            && is_hex_digit(l->content[l->cursor + 2])
+            && is_hex_digit(l->content[l->cursor + 3])
+            && is_hex_digit(l->content[l->cursor + 4])
+            && is_hex_digit(l->content[l->cursor + 5])
+            && is_hex_digit(l->content[l->cursor + 6])) {
+            token.kind = TOKEN_PREPROC;
+            lexer_chop_char(l, 7); // Chop # and the 6 characters
+            token.text_len = &l->content[l->cursor] - token.text;
+            return token;
+        } else {
+            // Your existing handling for # as a preprocessor directive
+            token.kind = TOKEN_PREPROC;
+            while (l->cursor < l->content_len && l->content[l->cursor] != '\n') {
+                lexer_chop_char(l, 1);
+            }
+            if (l->cursor < l->content_len) {
+                lexer_chop_char(l, 1);
+            }
+            token.text_len = &l->content[l->cursor] - token.text;
+            return token;
         }
-        if (l->cursor < l->content_len) {
-            lexer_chop_char(l, 1);
-        }
-        token.text_len = &l->content[l->cursor] - token.text;
-        return token;
     }
+
+
+
+
+
 
     if (lexer_starts_with(l, "//")) {
         token.kind = TOKEN_COMMENT;

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include "./la.h"
 
 #define SCREEN_WIDTH 800
@@ -109,6 +110,8 @@ Errno read_entire_file(const char *file_path, String_Builder *sb);
 Errno write_entire_file(const char *file_path, const char *buf, size_t buf_size);
 Errno read_entire_dir(const char *dir_path, Files *files);
 
+
+bool is_hex_digit(char c);
 Vec4f hex_to_vec4f(uint32_t color);
 
 #endif // COMMON_H_

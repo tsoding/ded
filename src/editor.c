@@ -14,20 +14,22 @@ Theme themes[10];
 int currentThemeIndex = 0;
 
 
+
 void initialize_themes() {
-    // Best theme ever
+
+    // Catppuccin
     themes[0] = (Theme) {
-        .cursor = hex_to_vec4f(0xFFFFFFFF),          // White cursor
-        .text = hex_to_vec4f(0xFFFFFFFF),
-        .background = hex_to_vec4f(0x181818FF),
-        .comment = hex_to_vec4f(0xCC8C3CFF),
-        .hashtag = hex_to_vec4f(0x95A99FFF),
-        .logic = hex_to_vec4f(0xFFDD33FF),
-        .string = hex_to_vec4f(0x73c936ff),
-        .selection = hex_to_vec4f(0x00000000),
-        .search = hex_to_vec4f(0xFFDD33FF),
-        .marks = hex_to_vec4f(0xFFDD33FF),
-        .fb_selection = hex_to_vec4f(0x00000000)
+        .cursor = hex_to_vec4f(0xf38ba8FF), // Red
+        .text = hex_to_vec4f(0xcdd6f4FF), // Text
+        .background = hex_to_vec4f(0x1e1e2eFF), // Base
+        .comment = hex_to_vec4f(0x9399b2FF), // Overlay2
+        .hashtag = hex_to_vec4f(0x89b4faFF), // Blue
+        .logic = hex_to_vec4f(0xa6e3a1FF), // Green
+        .string = hex_to_vec4f(0xf9e2afFF), // Yellow
+        .selection = hex_to_vec4f(0xf5c2e7FF), // Pink
+        .search = hex_to_vec4f(0xf2cdcdFF), // Flamingo
+        .marks = hex_to_vec4f(0x74c7ecFF), // Sapphire
+        .fb_selection = hex_to_vec4f(0xb4befeFF) // Lavender
     };
 
 
@@ -41,7 +43,6 @@ void initialize_themes() {
         .hashtag = hex_to_vec4f(0x8BE9FDFF),
         .string = hex_to_vec4f(0xF1FA8CFF),
         .selection = hex_to_vec4f(0x00000000),
-        .selection = hex_to_vec4f(0x44475AFF),
         .search = hex_to_vec4f(0xFF5555FF),
         .marks = hex_to_vec4f(0xBD93F9FF),
         .fb_selection = hex_to_vec4f(0x44475AFF)
@@ -151,22 +152,20 @@ void initialize_themes() {
         .fb_selection = hex_to_vec4f(0x9ccfd8FF) // Foam (Cyan)
     };
 
-    // Catppuccin
+    // Best theme ever
     themes[9] = (Theme) {
-        .cursor = hex_to_vec4f(0xf38ba8FF), // Red
-        .text = hex_to_vec4f(0xcdd6f4FF), // Text
-        .background = hex_to_vec4f(0x1e1e2eFF), // Base
-        .comment = hex_to_vec4f(0x9399b2FF), // Overlay2
-        .hashtag = hex_to_vec4f(0x89b4faFF), // Blue
-        .logic = hex_to_vec4f(0xa6e3a1FF), // Green
-        .string = hex_to_vec4f(0xf9e2afFF), // Yellow
-        .selection = hex_to_vec4f(0xf5c2e7FF), // Pink
-        .search = hex_to_vec4f(0xf2cdcdFF), // Flamingo
-        .marks = hex_to_vec4f(0x74c7ecFF), // Sapphire
-        .fb_selection = hex_to_vec4f(0xb4befeFF) // Lavender
+        .cursor = hex_to_vec4f(0xFFFFFFFF),          // White cursor
+        .text = hex_to_vec4f(0xFFFFFFFF),
+        .background = hex_to_vec4f(0x181818FF),
+        .comment = hex_to_vec4f(0xCC8C3CFF),
+        .hashtag = hex_to_vec4f(0x95A99FFF),
+        .logic = hex_to_vec4f(0xFFDD33FF),
+        .string = hex_to_vec4f(0x73c936ff),
+        .selection = hex_to_vec4f(0x00000000),
+        .search = hex_to_vec4f(0xFFDD33FF),
+        .marks = hex_to_vec4f(0xFFDD33FF),
+        .fb_selection = hex_to_vec4f(0x00000000)
     };
-
-
 }
 
 void theme_next(int *currentThemeIndex) {
@@ -638,13 +637,40 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         for (size_t i = 0; i < editor->tokens.count; ++i) {
             Token token = editor->tokens.items[i];
             Vec2f pos = token.position;
-            /* Vec4f color = vec4fs(1); */
+            //Vec4f color = vec4fs(1);
+            // TODO match color for open and close
             Vec4f color = themes[currentThemeIndex].text;
+
             switch (token.kind) {
+            /* case TOKEN_PREPROC: */
+            /*     /\* color = hex_to_vec4f(0x95A99FFF); *\/ */
+            /*     color = themes[currentThemeIndex].hashtag; */
+            /*     break; */
+
             case TOKEN_PREPROC:
-                /* color = hex_to_vec4f(0x95A99FFF); */
-                color = themes[currentThemeIndex].hashtag;
+                if (token.text_len >= 7 && token.text[0] == '#') { // Check if it's likely a hex color
+                    bool valid_hex = true;
+                    for (size_t j = 1; j < 7 && valid_hex; ++j) {
+                        if (!is_hex_digit(token.text[j])) {
+                            valid_hex = false;
+                        }
+                    }
+
+                    if (valid_hex) {
+                        unsigned int hex_value;
+                        if(sscanf(token.text, "#%06x", &hex_value) == 1) {
+                            color = hex_to_vec4f(hex_value);
+                        } else {
+                            color = themes[currentThemeIndex].hashtag; // Default to the hashtag color if not a valid hex
+                        }
+                    } else {
+                        color = themes[currentThemeIndex].hashtag; // Not a valid hex color
+                    }
+                } else {
+                    color = themes[currentThemeIndex].hashtag; // Default color for preprocessor directives
+                }
                 break;
+
             case TOKEN_KEYWORD:
                 /* color = hex_to_vec4f(0xFFDD33FF); */
                 color = themes[currentThemeIndex].logic;
@@ -657,6 +683,14 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             case TOKEN_STRING:
                 /* color = hex_to_vec4f(0x73c936ff); */
                 color = themes[currentThemeIndex].string;
+                break;
+            case TOKEN_COLOR: // Added case for TOKEN_COLOR
+                {
+                    unsigned long long hex_value;
+                    if(sscanf(token.text, "0x%llx", &hex_value) == 1) {
+                        color = hex_to_vec4f((uint32_t)hex_value);
+                    }
+                }
                 break;
             default:
             {}

@@ -19,7 +19,8 @@ typedef enum {
     TOKEN_KEYWORD,
     TOKEN_COMMENT,
     TOKEN_STRING,
-} Token_Kind;
+    TOKEN_COLOR,
+  } Token_Kind;
 
 const char *token_kind_name(Token_Kind kind);
 
@@ -28,6 +29,7 @@ typedef struct {
     const char *text;
     size_t text_len;
     Vec2f position;
+    int nesting_level; // <-- New attribute
 } Token;
 
 typedef struct {
