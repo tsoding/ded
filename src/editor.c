@@ -11,7 +11,7 @@ EvilMode current_mode = NORMAL;
 float zoom_factor = 5.0f;
 Theme themes[10];
 bool showLineNumbers = true;  // This is the actual definition and initialization
-
+bool is_animated = true;  // or false, depending on your initial requirement
 
 
 int currentThemeIndex = 0;
@@ -712,7 +712,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
     if (showLineNumbers) {
         // Render line numbers
-        simple_renderer_set_shader(sr, SHADER_FOR_TEXT);
+        simple_renderer_set_shader(sr, SHADER_FOR_EPICNESS);
 
         // Calculate the width for the line numbers, say every line number takes up to 5 characters of space
 
@@ -899,38 +899,152 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
 
 
+    // ORIGINAL
+    /* // Update camera */
+    /* { */
+    /*     if (max_line_len > 1000.0f) { */
+    /*         max_line_len = 1000.0f; */
+    /*     } */
+
+    /*     /\* float target_scale = w/5/(max_line_len*0.75); // TODO: division by 0 *\/ */
+    /*     float target_scale = w / zoom_factor / (max_line_len * 0.75); // TODO: division by 0 */
+
+
+
+    /*     Vec2f target = cursor_pos; */
+    /*     float offset = 0.0f; */
+
+    /*     if (target_scale > 3.0f) { */
+    /*         target_scale = 3.0f; */
+    /*     } else { */
+    /*         offset = cursor_pos.x - w/3/sr->camera_scale; */
+    /*         if (offset < 0.0f) offset = 0.0f; */
+    /*         target = vec2f(w/3/sr->camera_scale + offset, cursor_pos.y); */
+    /*     } */
+
+    /*     sr->camera_vel = vec2f_mul( */
+    /*                          vec2f_sub(target, sr->camera_pos), */
+    /*                          vec2fs(2.0f)); */
+    /*     sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f; */
+
+    /*     sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME))); */
+    /*     sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME; // ORIGINAL */
+    /* } */
+
+
+
+    /* // Update camera */
+    /* { */
+    /*     if (is_animated) { */
+    /*         // Your current camera update logic for animated behavior */
+
+    /*         if (max_line_len > 1000.0f) { */
+    /*             max_line_len = 1000.0f; */
+    /*         } */
+
+    /*         float target_scale = w / zoom_factor / (max_line_len * 0.75); // TODO: division by 0 */
+
+    /*         Vec2f target = cursor_pos; */
+    /*         float offset = 0.0f; */
+
+    /*         if (target_scale > 3.0f) { */
+    /*             target_scale = 3.0f; */
+    /*         } else { */
+    /*             offset = cursor_pos.x - w/3/sr->camera_scale; */
+    /*             if (offset < 0.0f) offset = 0.0f; */
+    /*             target = vec2f(w/3/sr->camera_scale + offset, cursor_pos.y); */
+    /*         } */
+
+    /*         sr->camera_vel = vec2f_mul( */
+    /*                                    vec2f_sub(target, sr->camera_pos), */
+    /*                                    vec2fs(2.0f)); */
+    /*         sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f; */
+
+    /*         sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME))); */
+    /*         sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME; */
+
+    /*     } else { */
+    /*         static bool hasShifted = false;  // This will ensure the code inside the if-block runs once */
+
+    /*         sr->camera_scale = 0.5f;  // Set the zoom level to 0.5 */
+    /*         if (!hasShifted) { */
+    /*             sr->camera_pos.x = 101.0f;  // Set the x-position */
+    /*             sr->camera_pos.y = 11.0f;  // Set the y-position */
+    /*             hasShifted = true;  // Mark as shifted */
+    /*         } */
+    /*     } */
+    /* } */
+
 
     // Update camera
     {
-        if (max_line_len > 1000.0f) {
-            max_line_len = 1000.0f;
-        }
+        if (is_animated) {
+            // Your current camera update logic for animated behavior
 
-        /* float target_scale = w/5/(max_line_len*0.75); // TODO: division by 0 */
-        float target_scale = w / zoom_factor / (max_line_len * 0.75); // TODO: division by 0
+            if (max_line_len > 1000.0f) {
+                max_line_len = 1000.0f;
+            }
 
+            float target_scale = w / zoom_factor / (max_line_len * 0.75); // TODO: division by 0
 
+            Vec2f target = cursor_pos;
+            float offset = 0.0f;
 
-        Vec2f target = cursor_pos;
-        float offset = 0.0f;
+            if (target_scale > 3.0f) {
+                target_scale = 3.0f;
+            } else {
+                offset = cursor_pos.x - w/3/sr->camera_scale;
+                if (offset < 0.0f) offset = 0.0f;
+                target = vec2f(w/3/sr->camera_scale + offset, cursor_pos.y);
+            }
 
-        if (target_scale > 3.0f) {
-            target_scale = 3.0f;
+            sr->camera_vel = vec2f_mul(
+                                       vec2f_sub(target, sr->camera_pos),
+                                       vec2fs(2.0f));
+            sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f;
+
+            sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME)));
+            sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME;
+
         } else {
-            offset = cursor_pos.x - w/3/sr->camera_scale;
-            if (offset < 0.0f) offset = 0.0f;
-            target = vec2f(w/3/sr->camera_scale + offset, cursor_pos.y);
+            static bool hasShifted = false;  // This will ensure the code inside the if-block runs once
+            sr->camera_scale = 0.24f;  // Set the zoom level to 0.5
+
+            if (!hasShifted) {
+                sr->camera_pos.x = 2150.0f;  // Set the x-position
+                sr->camera_pos.y = -2000.0f;  // Set the initial y-position
+                hasShifted = true;  // Mark as shifted
+            } else {
+                // Determine the height of a line
+                Vec2f pos = {0.0f, 0.0f};
+                const char *sampleText = "Sample text to measure.";
+                free_glyph_atlas_measure_line_sized(atlas, sampleText, strlen(sampleText), &pos);
+                float lineHeight = pos.y;
+
+                // Check the current cursor line position and adjust camera's Y-position if necessary
+                int currentLine = editor_cursor_row(editor);
+                if (currentLine > 66) {
+                    sr->camera_pos.y = -2000.0f - (lineHeight * (currentLine - 66));
+                }
+            }
         }
-
-        sr->camera_vel = vec2f_mul(
-                             vec2f_sub(target, sr->camera_pos),
-                             vec2fs(2.0f));
-        sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f;
-
-        sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME)));
-        sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME; // ORIGINAL
     }
 }
+
+
+
+        /* } else { */
+        /*     static bool hasShifted = false;  // This will ensure the code inside the if-block runs once */
+
+        /*     sr->camera_scale = 0.24f;  // Set the zoom level to 0.5 */
+        /*     if (!hasShifted) { */
+        /*         sr->camera_pos.x = 2150.0f;  // Set the x-position */
+        /*         sr->camera_pos.y = -2000.0f;  // Set the y-position */
+        /*         hasShifted = true;  // Mark as shifted */
+        /*     } */
+        /* } */
+
+
 
 
 void editor_clipboard_copy(Editor *e)
