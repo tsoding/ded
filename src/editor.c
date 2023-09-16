@@ -34,6 +34,7 @@ void initialize_themes() {
         .todo = hex_to_vec4f(0xf2cdcdFF), // Flamingo
         .fixme = hex_to_vec4f(0xf2cdcdFF), // Flamingo
         .note = hex_to_vec4f(0xa6e3a1FF), // Green
+        .bug = hex_to_vec4f(0xf38ba8FF), // Red
         .marks = hex_to_vec4f(0x74c7ecFF), // Sapphire
         .fb_selection = hex_to_vec4f(0xb4befeFF) // Lavender
     };
@@ -772,13 +773,20 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                         color.w = baseColor.w;
                     }
 
+                    // Checking for BUG...
+                    char* bugLoc = strstr(token.text, "BUG");
+                    if (bugLoc && (bugLoc - token.text + 2) < token.text_len) {
+                        color = themes[currentThemeIndex].bug;
+                    }
+
+
                     // Checking for NOTE...
                     char* noteLoc = strstr(token.text, "NOTE");
                     if (noteLoc && (noteLoc - token.text + 3) < token.text_len) {
                         color = themes[currentThemeIndex].note;
                     }
 
-                    // Continue rendering with the determined color
+                    // Continue rendering with
                 }
                 break;
 
@@ -808,37 +816,32 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     // Render cursor
     simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
 
-    /* cursor_pos.x += lineNumberWidth; */
+    // Adjust cursor position if line numbers are shown
     if (showLineNumbers) {
         cursor_pos.x += lineNumberWidth;
     }
 
-
-    // Constants
+    // Constants and Default Settings
     float CURSOR_WIDTH;
-    Uint32 CURSOR_BLINK_THRESHOLD = 500;
-    Uint32 CURSOR_BLINK_PERIOD = 1000;
-    Uint32 t = SDL_GetTicks() - editor->last_stroke;
-    /* Vec4f CURSOR_COLOR = vec4fs(1); // Default color for NORMAL */
-    Vec4f CURSOR_COLOR = themes[currentThemeIndex].cursor;
+    const Uint32 CURSOR_BLINK_THRESHOLD = 500;
+    const Uint32 CURSOR_BLINK_PERIOD = 1000;
+    const Uint32 t = SDL_GetTicks() - editor->last_stroke;
+    Vec4f CURSOR_COLOR = themes[currentThemeIndex].cursor;  // Default cursor color
+    float VISUAL_CURSOR_WIDTH = FREE_GLYPH_FONT_SIZE / 2.0f;
+    float BORDER_THICKNESS = 5.0f;
+    Vec4f INNER_COLOR = vec4f(CURSOR_COLOR.x, CURSOR_COLOR.y, CURSOR_COLOR.z, 0.3); // Same color but with reduced alpha
 
     sr->verticies_count = 0;
 
+    // Rendering based on mode
     switch (current_mode) {
     case NORMAL:
         CURSOR_WIDTH = FREE_GLYPH_FONT_SIZE / 2.0f; // Half the size for NORMAL mode
-        /* CURSOR_COLOR = vec4fs(1); // Assuming this sets it to a solid color */
         simple_renderer_solid_rect(sr, cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE), CURSOR_COLOR);
-
-
-
-        /* // Render cursor based on the set dimensions */
-        /* simple_renderer_solid_rect(sr, cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE), CURSOR_COLOR); */
         break;
 
     case INSERT:
         CURSOR_WIDTH = 5.0f; // Thin vertical line for INSERT mode
-
         // Implement blinking for INSERT mode
         if (t < CURSOR_BLINK_THRESHOLD || (t / CURSOR_BLINK_PERIOD) % 2 != 0) {
             simple_renderer_solid_rect(sr, cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE), CURSOR_COLOR);
@@ -846,40 +849,23 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         break;
 
     case VISUAL:
-        CURSOR_WIDTH = FREE_GLYPH_FONT_SIZE / 2.0f;  // Same size as NORMAL mode
+        // Draw inner rectangle with reduced alpha
+        simple_renderer_solid_rect(sr, cursor_pos, vec2f(VISUAL_CURSOR_WIDTH - 2 * BORDER_THICKNESS, FREE_GLYPH_FONT_SIZE - 2 * BORDER_THICKNESS), INNER_COLOR);
 
-        // Solid border color
-        /* CURSOR_COLOR = vec4f(1, 1, 1, 1); // Fully opaque white */
-
-        // Inner transparent color
-        /* Vec4f INNER_COLOR = vec4f(1, 1, 1, 0.3);  // White with low alpha */
-        Vec4f INNER_COLOR = themes[currentThemeIndex].cursor; // TODO remove alpha
-
-
-
-
-        // Border thickness (adjust to your liking)
-        float BORDER_THICKNESS = 5.0f;
-
-        // Draw inner rectangle (more transparent)
-        simple_renderer_solid_rect(sr, cursor_pos, vec2f(CURSOR_WIDTH - 2 * BORDER_THICKNESS, FREE_GLYPH_FONT_SIZE - 2 * BORDER_THICKNESS), INNER_COLOR);
-
-        // Draw the outline (borders)
-
+        // Draw the outline (borders) using the theme's cursor color
         // Top border
-        simple_renderer_solid_rect(sr, cursor_pos, vec2f(CURSOR_WIDTH, BORDER_THICKNESS), CURSOR_COLOR);
+        simple_renderer_solid_rect(sr, cursor_pos, vec2f(VISUAL_CURSOR_WIDTH, BORDER_THICKNESS), CURSOR_COLOR);
 
         // Bottom border
-        simple_renderer_solid_rect(sr, vec2f(cursor_pos.x, cursor_pos.y + FREE_GLYPH_FONT_SIZE - BORDER_THICKNESS), vec2f(CURSOR_WIDTH, BORDER_THICKNESS), CURSOR_COLOR);
+        simple_renderer_solid_rect(sr, vec2f(cursor_pos.x, cursor_pos.y + FREE_GLYPH_FONT_SIZE - BORDER_THICKNESS), vec2f(VISUAL_CURSOR_WIDTH, BORDER_THICKNESS), CURSOR_COLOR);
 
         // Left border
         simple_renderer_solid_rect(sr, cursor_pos, vec2f(BORDER_THICKNESS, FREE_GLYPH_FONT_SIZE), CURSOR_COLOR);
 
         // Right border
-        simple_renderer_solid_rect(sr, vec2f(cursor_pos.x + CURSOR_WIDTH - BORDER_THICKNESS, cursor_pos.y), vec2f(BORDER_THICKNESS, FREE_GLYPH_FONT_SIZE), CURSOR_COLOR);
+        simple_renderer_solid_rect(sr, vec2f(cursor_pos.x + VISUAL_CURSOR_WIDTH - BORDER_THICKNESS, cursor_pos.y), vec2f(BORDER_THICKNESS, FREE_GLYPH_FONT_SIZE), CURSOR_COLOR);
 
         break;
-
     }
 
     // Update camera

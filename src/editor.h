@@ -54,6 +54,7 @@ typedef struct {
     Vec4f todo;
     Vec4f fixme;
     Vec4f note;
+    Vec4f bug;
     Vec4f marks;
     Vec4f fb_selection;
 } Theme;

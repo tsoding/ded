@@ -610,6 +610,10 @@ int main(int argc, char **argv)
                     }
                     break;
 
+                  case SDLK_F3:
+                    file_browser = true;
+                    break;
+
                   case SDLK_MINUS:
                     if (SDL_GetModState() & KMOD_CTRL) {
                       zoom_factor -= 2;
@@ -725,9 +729,6 @@ int main(int argc, char **argv)
                   }
                     break;
 
-
-
-
                   case SDLK_QUOTE: {
                     if (event.key.keysym.mod & KMOD_SHIFT) {
                       // If Shift + ' is pressed, insert double quotes ""
@@ -789,18 +790,11 @@ int main(int argc, char **argv)
                     }
                     break;
 
-
                   case SDLK_c:
                     if (event.key.keysym.mod & KMOD_CTRL) {
                       editor_clipboard_copy(&editor);
                     }
                     break;
-
-                  /* case SDLK_s: */
-                  /*   if (event.key.keysym.mod & KMOD_CTRL) { */
-                  /*     editor_save(&editor); */
-                  /*   } */
-                  /*   break; */
 
                   case SDLK_s: {
                     if (SDL_GetModState() & KMOD_CTRL) {  // Checks if CTRL is held down
