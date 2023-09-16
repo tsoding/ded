@@ -52,6 +52,7 @@ typedef struct {
     Vec4f selection;
     Vec4f search;
     Vec4f todo;
+    Vec4f fixme;
     Vec4f marks;
     Vec4f fb_selection;
 } Theme;

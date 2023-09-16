@@ -329,11 +329,6 @@ Token lexer_next(Lexer *l)
         else
             file_ext = dot + 1;
 
-
-
-
-
-
         /* for (size_t i = 0; i < keywords_count; ++i) { */
         /*     size_t keyword_len = strlen(keywords[i]); */
         /*     if (keyword_len == token.text_len && memcmp(keywords[i], token.text, keyword_len) == 0) { */

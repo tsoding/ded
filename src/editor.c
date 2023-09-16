@@ -32,6 +32,7 @@ void initialize_themes() {
         .selection = hex_to_vec4f(0xf5c2e7FF), // Pink
         .search = hex_to_vec4f(0xf2cdcdFF), // Flamingo
         .todo = hex_to_vec4f(0xf2cdcdFF), // Flamingo
+        .fixme = hex_to_vec4f(0xf2cdcdFF), // Flamingo
         .marks = hex_to_vec4f(0x74c7ecFF), // Sapphire
         .fb_selection = hex_to_vec4f(0xb4befeFF) // Lavender
     };
@@ -723,47 +724,14 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 color = themes[currentThemeIndex].logic;
 
                 break;
-            /* case TOKEN_COMMENT: */
-            /*     color = themes[currentThemeIndex].comment; */
-            /*     break; */
-
-            /* case TOKEN_COMMENT: */
-            /*     { */
-            /*         color = themes[currentThemeIndex].comment; */
-
-            /*         // Find the "TODO" in the comment */
-            /*         char* todoLoc = strstr(token.text, "TODO"); */
-
-            /*         // If "TODO" was found inside the comment */
-            /*         if (todoLoc) { */
-            /*             size_t numOs = 0;  // Count the number of Os */
-            /*             for (size_t j = 4; todoLoc[j] && (todoLoc[j] == 'O' || todoLoc[j] == 'o'); j++) { */
-            /*                 numOs++; */
-            /*             } */
-
-            /*             // Adjust the color if any Os were found */
-            /*             if (numOs >= 1) { */
-            /*                 Vec4f baseColor = themes[currentThemeIndex].todo; */
-            /*                 float deltaRed = (1.0f - baseColor.x) / 5;  // We divide by 5 to adjust for TODO to TODOOOOO */
-
-            /*                 color.x = baseColor.x + deltaRed * numOs; */
-            /*                 color.y = baseColor.y * (1 - 0.2 * numOs);  // Decrease green component */
-            /*                 color.z = baseColor.z * (1 - 0.2 * numOs);  // Decrease blue component */
-            /*                 color.w = baseColor.w;  // alpha remains unchanged */
-            /*             } */
-            /*         } */
-
-            /*         // TODO: Continue the rendering with the determined color */
-            /*     } */
-            /*     break; */
-
 
             case TOKEN_COMMENT:
                 {
                     color = themes[currentThemeIndex].comment;
 
+                    // Checking for TODOOOO...
                     char* todoLoc = strstr(token.text, "TODO");
-                    if (todoLoc && (todoLoc - token.text + 3) < token.text_len) { // Ensure "TODO" is within token boundary
+                    if (todoLoc && (todoLoc - token.text + 3) < token.text_len) {
                         size_t numOs = 0;
                         char* ptr = todoLoc + 4; // Start right after "TODO"
 
@@ -782,12 +750,30 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                         color.w = baseColor.w;
                     }
 
+                    // Checking for FIXMEEEE...
+                    char* fixmeLoc = strstr(token.text, "FIXME");
+                    if (fixmeLoc && (fixmeLoc - token.text + 4) < token.text_len) {
+                        size_t numEs = 0;
+                        char* ptr = fixmeLoc + 5; // Start right after "FIXME"
+
+                        // Count 'E's without crossing token boundary
+                        while ((ptr - token.text) < token.text_len && (*ptr == 'E' || *ptr == 'e')) {
+                            numEs++;
+                            ptr++;
+                        }
+
+                        Vec4f baseColor = themes[currentThemeIndex].fixme; // Assuming you have a similar color definition for FIXME
+                        float deltaRed = (1.0f - baseColor.x) / 5;  // Adjusting for maximum of FIXMEEEE
+
+                        color.x = baseColor.x + deltaRed * numEs;
+                        color.y = baseColor.y * (1 - 0.2 * numEs);
+                        color.z = baseColor.z * (1 - 0.2 * numEs);
+                        color.w = baseColor.w;
+                    }
+
                     // Continue rendering with the determined color
                 }
                 break;
-
-
-
 
 
 
