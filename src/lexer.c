@@ -83,8 +83,6 @@ const char *token_kind_name(Token_Kind kind)
         return "open curly";
     case TOKEN_COLOR:
         return "color";
-    case TOKEN_TODO:
-        return "color";
     case TOKEN_CLOSE_CURLY:
         return "close curly";
     case TOKEN_SEMICOLON:
@@ -191,29 +189,6 @@ Token lexer_next(Lexer *l)
     token.position.y = -(float)l->line * FREE_GLYPH_FONT_SIZE;
 
     if (l->cursor >= l->content_len) return token;
-
-    // Check for TODO-like format (e.g., TODO, TODOO, TODOOO...)
-    if (l->content[l->cursor] == 'T' && (l->cursor + 1 < l->content_len) &&
-        l->content[l->cursor + 1] == 'O' && (l->cursor + 2 < l->content_len) &&
-        l->content[l->cursor + 2] == 'D') {
-
-        size_t start_cursor = l->cursor;
-        size_t potential_length = 3; // "TOD" already accounted for
-
-        // Count the consecutive 'O's
-        while ((start_cursor + potential_length) < l->content_len &&
-               l->content[start_cursor + potential_length] == 'O') {
-            potential_length++;
-        }
-
-        // If the sequence starts with "TOD", we consider it a TODO token
-        if (potential_length > 2) { // Ensure we have at least "TOD"
-            lexer_chop_char(l, potential_length); // Skip the entire TODO token
-            token.kind = TOKEN_TODO;
-            token.text_len = potential_length;
-            return token;
-        }
-    }
 
     // Check for color-like format (e.g., 0xf38ba8FF)
     if (l->content[l->cursor] == '0' &&

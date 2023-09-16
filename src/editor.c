@@ -33,6 +33,7 @@ void initialize_themes() {
         .search = hex_to_vec4f(0xf2cdcdFF), // Flamingo
         .todo = hex_to_vec4f(0xf2cdcdFF), // Flamingo
         .fixme = hex_to_vec4f(0xf2cdcdFF), // Flamingo
+        .note = hex_to_vec4f(0xa6e3a1FF), // Green
         .marks = hex_to_vec4f(0x74c7ecFF), // Sapphire
         .fb_selection = hex_to_vec4f(0xb4befeFF) // Lavender
     };
@@ -762,7 +763,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                             ptr++;
                         }
 
-                        Vec4f baseColor = themes[currentThemeIndex].fixme; // Assuming you have a similar color definition for FIXME
+                        Vec4f baseColor = themes[currentThemeIndex].fixme;
                         float deltaRed = (1.0f - baseColor.x) / 5;  // Adjusting for maximum of FIXMEEEE
 
                         color.x = baseColor.x + deltaRed * numEs;
@@ -771,11 +772,15 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                         color.w = baseColor.w;
                     }
 
+                    // Checking for NOTE...
+                    char* noteLoc = strstr(token.text, "NOTE");
+                    if (noteLoc && (noteLoc - token.text + 3) < token.text_len) {
+                        color = themes[currentThemeIndex].note;
+                    }
+
                     // Continue rendering with the determined color
                 }
                 break;
-
-
 
             case TOKEN_STRING:
                 /* color = hex_to_vec4f(0x73c936ff); */
@@ -787,30 +792,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                     if(sscanf(token.text, "0x%llx", &hex_value) == 1) {
                         color = hex_to_vec4f((uint32_t)hex_value);
                     }
-                }
-                break;
-            case TOKEN_TODO:
-                {
-                    size_t numOs = 0;  // Count the number of Os
-                    for (size_t j = 3; j < token.text_len; j++) {
-                        if (token.text[j] == 'O' || token.text[j] == 'o') {
-                            numOs++;
-                        } else {
-                            break;
-                        }
-                    }
-
-                    // Base color (from theme)
-                    Vec4f baseColor = themes[currentThemeIndex].todo;
-
-                    // The change required in the red component of the color for each additional 'O'
-                    float deltaRed = (1.0f - baseColor.x) / 5;  // We divide by 5 because there are 5 steps from TODO to TODOOOOO
-
-                    // Calculate the new color
-                    color.x = baseColor.x + deltaRed * numOs;
-                    color.y = baseColor.y * (1 - 0.2 * numOs);  // Decrease green component
-                    color.z = baseColor.z * (1 - 0.2 * numOs);  // Decrease blue component
-                    color.w = baseColor.w;  // alpha remains the same
                 }
                 break;
             default:
