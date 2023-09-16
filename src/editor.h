@@ -12,6 +12,7 @@
 #include <SDL2/SDL.h>
 
 
+extern bool is_animated;
 typedef struct {
     size_t begin;
     size_t end;
@@ -50,6 +51,7 @@ typedef struct {
     Vec4f string;
     Vec4f selection;
     Vec4f search;
+    Vec4f todo;
     Vec4f marks;
     Vec4f fb_selection;
 } Theme;

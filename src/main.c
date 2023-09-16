@@ -35,7 +35,6 @@
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 
-
 // TODO: Save file dialog
 // Needed when ded is ran without any file so it does not know where to save.
 
@@ -381,6 +380,13 @@ int main(int argc, char **argv)
                   }
                     break;
 
+                  case SDLK_t: {
+                    if (SDL_GetModState() & KMOD_CTRL) {
+                      is_animated = !is_animated;  // Toggle the state
+                    }
+                  }
+                    break;
+
 
                     case SDLK_F5: {
                         simple_renderer_reload_shaders(&sr);
@@ -513,9 +519,11 @@ int main(int argc, char **argv)
 
                   case SDLK_x:
                     if (editor.selection) {
+                      editor_clipboard_copy(&editor);
                       editor_delete_selection(&editor);
                       editor.selection = false;
                     } else {
+                      editor_clipboard_copy(&editor);
                       editor_cut_char_under_cursor(&editor);
                     }
                     break;
@@ -877,6 +885,7 @@ int main(int argc, char **argv)
 
                   case SDLK_x:
                     if (editor.selection) {
+                      editor_clipboard_copy(&editor);
                       editor_delete_selection(&editor);
                       editor.selection = false;
                       current_mode = NORMAL;
@@ -928,6 +937,7 @@ int main(int argc, char **argv)
 
                   //  transition back to NORMAL mode
                   case SDLK_ESCAPE:
+                    editor.selection = false;
                     current_mode = NORMAL;
                     break;
                   }
@@ -1018,7 +1028,6 @@ int main(int argc, char **argv)
         int w, h;
         SDL_GetWindowSize(window, &w, &h);
         glViewport(0, 0, w, h);
-        /* Vec4f bg = hex_to_vec4f(0x181818FF); // FDABCF   181818 */
         Vec4f bg = themes[currentThemeIndex].background;
         glClearColor(bg.x, bg.y, bg.z, bg.w);
         glClear(GL_COLOR_BUFFER_BIT);

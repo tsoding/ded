@@ -10,7 +10,7 @@
 EvilMode current_mode = NORMAL;
 float zoom_factor = 5.0f;
 Theme themes[10];
-bool showLineNumbers = true;  // This is the actual definition and initialization
+bool showLineNumbers = false;  // This is the actual definition and initialization
 bool is_animated = true;  // or false, depending on your initial requirement
 
 
@@ -31,6 +31,7 @@ void initialize_themes() {
         .string = hex_to_vec4f(0xf9e2afFF), // Yellow
         .selection = hex_to_vec4f(0xf5c2e7FF), // Pink
         .search = hex_to_vec4f(0xf2cdcdFF), // Flamingo
+        .todo = hex_to_vec4f(0xf2cdcdFF), // Flamingo
         .marks = hex_to_vec4f(0x74c7ecFF), // Sapphire
         .fb_selection = hex_to_vec4f(0xb4befeFF) // Lavender
     };
@@ -47,6 +48,7 @@ void initialize_themes() {
         .string = hex_to_vec4f(0xF1FA8CFF),
         .selection = hex_to_vec4f(0x00000000),
         .search = hex_to_vec4f(0xFF5555FF),
+        .todo = hex_to_vec4f(0xBD93F9FF),
         .marks = hex_to_vec4f(0xBD93F9FF),
         .fb_selection = hex_to_vec4f(0x44475AFF)
     };
@@ -591,20 +593,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                        );
     }
 
-    /* // Render search */
-    /* { */
-    /*     if (editor->searching) { */
-    /*         simple_renderer_set_shader(sr, SHADER_FOR_COLOR); */
-    /*         /\* Vec4f selection_color = vec4f(.10, .10, .25, 1); *\/ */
-    /*         Vec4f selection_color = themes[currentThemeIndex].search; // or .selection_color if that's what you named it in the struct. */
-    /*         Vec2f p1 = cursor_pos; */
-    /*         Vec2f p2 = p1; */
-    /*         free_glyph_atlas_measure_line_sized(editor->atlas, editor->search.items, editor->search.count, &p2); */
-    /*         simple_renderer_solid_rect(sr, p1, vec2f(p2.x - p1.x, FREE_GLYPH_FONT_SIZE), selection_color); */
-    /*         simple_renderer_flush(sr); */
-    /*     } */
-    /* } */
-
     // Render search
     {
         if (editor->searching) {
@@ -626,46 +614,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             simple_renderer_flush(sr);
         }
     }
-
-
-
-    /* // Render marked search result */
-    /* { */
-    /*     simple_renderer_set_shader(sr, SHADER_FOR_COLOR); */
-    /*     if (editor->has_mark) { */
-    /*         for (size_t row = 0; row < editor->lines.count; ++row) { */
-    /*             size_t mark_begin_chr = editor->mark_start; */
-    /*             size_t mark_end_chr = editor->mark_end; */
-
-    /*             Line line_chr = editor->lines.items[row]; */
-
-    /*             if (mark_begin_chr < line_chr.begin) { */
-    /*                 mark_begin_chr = line_chr.begin; */
-    /*             } */
-
-    /*             if (mark_end_chr > line_chr.end) { */
-    /*                 mark_end_chr = line_chr.end; */
-    /*             } */
-
-    /*             if (mark_begin_chr <= mark_end_chr) { */
-    /*                 Vec2f mark_begin_scr = vec2f(0, -((float)row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE); */
-    /*                 free_glyph_atlas_measure_line_sized( */
-    /*                                                     atlas, editor->data.items + line_chr.begin, mark_begin_chr - line_chr.begin, */
-    /*                                                     &mark_begin_scr); */
-
-    /*                 Vec2f mark_end_scr = mark_begin_scr; */
-    /*                 free_glyph_atlas_measure_line_sized( */
-    /*                                                     atlas, editor->data.items + mark_begin_chr, mark_end_chr - mark_begin_chr, */
-    /*                                                     &mark_end_scr); */
-
-    /*                 /\* Vec4f mark_color = vec4f(.20, .20, .20, 1);  // Adjust color as needed *\/ */
-    /*                 Vec4f mark_color = themes[currentThemeIndex].marks; */
-    /*                 simple_renderer_solid_rect(sr, mark_begin_scr, vec2f(mark_end_scr.x - mark_begin_scr.x, FREE_GLYPH_FONT_SIZE), mark_color); */
-    /*             } */
-    /*         } */
-    /*     } */
-    /*     simple_renderer_flush(sr); */
-    /* } */
 
     // Render marked search result
     {
@@ -730,10 +678,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         simple_renderer_flush(sr);
     }
 
-
-
-    /* pos.x += lineNumberWidth;  // Push the main text content to the right */
-
     // Render text
     {
         simple_renderer_set_shader(sr, SHADER_FOR_TEXT);
@@ -779,10 +723,74 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 color = themes[currentThemeIndex].logic;
 
                 break;
+            /* case TOKEN_COMMENT: */
+            /*     color = themes[currentThemeIndex].comment; */
+            /*     break; */
+
+            /* case TOKEN_COMMENT: */
+            /*     { */
+            /*         color = themes[currentThemeIndex].comment; */
+
+            /*         // Find the "TODO" in the comment */
+            /*         char* todoLoc = strstr(token.text, "TODO"); */
+
+            /*         // If "TODO" was found inside the comment */
+            /*         if (todoLoc) { */
+            /*             size_t numOs = 0;  // Count the number of Os */
+            /*             for (size_t j = 4; todoLoc[j] && (todoLoc[j] == 'O' || todoLoc[j] == 'o'); j++) { */
+            /*                 numOs++; */
+            /*             } */
+
+            /*             // Adjust the color if any Os were found */
+            /*             if (numOs >= 1) { */
+            /*                 Vec4f baseColor = themes[currentThemeIndex].todo; */
+            /*                 float deltaRed = (1.0f - baseColor.x) / 5;  // We divide by 5 to adjust for TODO to TODOOOOO */
+
+            /*                 color.x = baseColor.x + deltaRed * numOs; */
+            /*                 color.y = baseColor.y * (1 - 0.2 * numOs);  // Decrease green component */
+            /*                 color.z = baseColor.z * (1 - 0.2 * numOs);  // Decrease blue component */
+            /*                 color.w = baseColor.w;  // alpha remains unchanged */
+            /*             } */
+            /*         } */
+
+            /*         // TODO: Continue the rendering with the determined color */
+            /*     } */
+            /*     break; */
+
+
             case TOKEN_COMMENT:
-                /* color = hex_to_vec4f(0xCC8C3CFF); */
-                color = themes[currentThemeIndex].comment;
+                {
+                    color = themes[currentThemeIndex].comment;
+
+                    char* todoLoc = strstr(token.text, "TODO");
+                    if (todoLoc && (todoLoc - token.text + 3) < token.text_len) { // Ensure "TODO" is within token boundary
+                        size_t numOs = 0;
+                        char* ptr = todoLoc + 4; // Start right after "TODO"
+
+                        // Count 'O's without crossing token boundary
+                        while ((ptr - token.text) < token.text_len && (*ptr == 'O' || *ptr == 'o')) {
+                            numOs++;
+                            ptr++;
+                        }
+
+                        Vec4f baseColor = themes[currentThemeIndex].todo;
+                        float deltaRed = (1.0f - baseColor.x) / 5;  // Adjusting for maximum of TODOOOOO
+
+                        color.x = baseColor.x + deltaRed * numOs;
+                        color.y = baseColor.y * (1 - 0.2 * numOs);
+                        color.z = baseColor.z * (1 - 0.2 * numOs);
+                        color.w = baseColor.w;
+                    }
+
+                    // Continue rendering with the determined color
+                }
                 break;
+
+
+
+
+
+
             case TOKEN_STRING:
                 /* color = hex_to_vec4f(0x73c936ff); */
                 color = themes[currentThemeIndex].string;
@@ -793,6 +801,30 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                     if(sscanf(token.text, "0x%llx", &hex_value) == 1) {
                         color = hex_to_vec4f((uint32_t)hex_value);
                     }
+                }
+                break;
+            case TOKEN_TODO:
+                {
+                    size_t numOs = 0;  // Count the number of Os
+                    for (size_t j = 3; j < token.text_len; j++) {
+                        if (token.text[j] == 'O' || token.text[j] == 'o') {
+                            numOs++;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    // Base color (from theme)
+                    Vec4f baseColor = themes[currentThemeIndex].todo;
+
+                    // The change required in the red component of the color for each additional 'O'
+                    float deltaRed = (1.0f - baseColor.x) / 5;  // We divide by 5 because there are 5 steps from TODO to TODOOOOO
+
+                    // Calculate the new color
+                    color.x = baseColor.x + deltaRed * numOs;
+                    color.y = baseColor.y * (1 - 0.2 * numOs);  // Decrease green component
+                    color.z = baseColor.z * (1 - 0.2 * numOs);  // Decrease blue component
+                    color.w = baseColor.w;  // alpha remains the same
                 }
                 break;
             default:
@@ -882,99 +914,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         break;
 
     }
-
-    // Render minibuffer TODO
-    /* { */
-    /*     simple_renderer_set_shader(sr, SHADER_FOR_TEXT); */
-
-    /*     // Positioning the minibuffer at the bottom of the window */
-    /*     Vec2f minibuffer_pos = vec2f(5.0f, h - FREE_GLYPH_FONT_SIZE - 5.0f);  // 5px padding from the bottom and left */
-    /*     Vec4f minibuffer_color = hex_to_vec4f(0xFFFFFF);  // Assuming white color for the text; adjust if needed */
-
-    /*     // Rendering the minibuffer text */
-    /*     free_glyph_atlas_render_line_sized(atlas, sr, editor->minibuffer, strlen(editor->minibuffer), &minibuffer_pos, minibuffer_color); */
-
-    /*     simple_renderer_flush(sr); */
-    /* } */
-
-
-
-    // ORIGINAL
-    /* // Update camera */
-    /* { */
-    /*     if (max_line_len > 1000.0f) { */
-    /*         max_line_len = 1000.0f; */
-    /*     } */
-
-    /*     /\* float target_scale = w/5/(max_line_len*0.75); // TODO: division by 0 *\/ */
-    /*     float target_scale = w / zoom_factor / (max_line_len * 0.75); // TODO: division by 0 */
-
-
-
-    /*     Vec2f target = cursor_pos; */
-    /*     float offset = 0.0f; */
-
-    /*     if (target_scale > 3.0f) { */
-    /*         target_scale = 3.0f; */
-    /*     } else { */
-    /*         offset = cursor_pos.x - w/3/sr->camera_scale; */
-    /*         if (offset < 0.0f) offset = 0.0f; */
-    /*         target = vec2f(w/3/sr->camera_scale + offset, cursor_pos.y); */
-    /*     } */
-
-    /*     sr->camera_vel = vec2f_mul( */
-    /*                          vec2f_sub(target, sr->camera_pos), */
-    /*                          vec2fs(2.0f)); */
-    /*     sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f; */
-
-    /*     sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME))); */
-    /*     sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME; // ORIGINAL */
-    /* } */
-
-
-
-    /* // Update camera */
-    /* { */
-    /*     if (is_animated) { */
-    /*         // Your current camera update logic for animated behavior */
-
-    /*         if (max_line_len > 1000.0f) { */
-    /*             max_line_len = 1000.0f; */
-    /*         } */
-
-    /*         float target_scale = w / zoom_factor / (max_line_len * 0.75); // TODO: division by 0 */
-
-    /*         Vec2f target = cursor_pos; */
-    /*         float offset = 0.0f; */
-
-    /*         if (target_scale > 3.0f) { */
-    /*             target_scale = 3.0f; */
-    /*         } else { */
-    /*             offset = cursor_pos.x - w/3/sr->camera_scale; */
-    /*             if (offset < 0.0f) offset = 0.0f; */
-    /*             target = vec2f(w/3/sr->camera_scale + offset, cursor_pos.y); */
-    /*         } */
-
-    /*         sr->camera_vel = vec2f_mul( */
-    /*                                    vec2f_sub(target, sr->camera_pos), */
-    /*                                    vec2fs(2.0f)); */
-    /*         sr->camera_scale_vel = (target_scale - sr->camera_scale) * 2.0f; */
-
-    /*         sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME))); */
-    /*         sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME; */
-
-    /*     } else { */
-    /*         static bool hasShifted = false;  // This will ensure the code inside the if-block runs once */
-
-    /*         sr->camera_scale = 0.5f;  // Set the zoom level to 0.5 */
-    /*         if (!hasShifted) { */
-    /*             sr->camera_pos.x = 101.0f;  // Set the x-position */
-    /*             sr->camera_pos.y = 11.0f;  // Set the y-position */
-    /*             hasShifted = true;  // Mark as shifted */
-    /*         } */
-    /*     } */
-    /* } */
-
 
     // Update camera
     {

@@ -12,8 +12,6 @@ typedef struct {
 } Literal_Token;
 
 
-/* int nesting_level = 0; */ // TODO
-
 Literal_Token literal_tokens[] = {
     {.text = "(", .kind = TOKEN_OPEN_PAREN},
     {.text = ")", .kind = TOKEN_CLOSE_PAREN},
@@ -84,6 +82,8 @@ const char *token_kind_name(Token_Kind kind)
     case TOKEN_OPEN_CURLY:
         return "open curly";
     case TOKEN_COLOR:
+        return "color";
+    case TOKEN_TODO:
         return "color";
     case TOKEN_CLOSE_CURLY:
         return "close curly";
@@ -192,6 +192,29 @@ Token lexer_next(Lexer *l)
 
     if (l->cursor >= l->content_len) return token;
 
+    // Check for TODO-like format (e.g., TODO, TODOO, TODOOO...)
+    if (l->content[l->cursor] == 'T' && (l->cursor + 1 < l->content_len) &&
+        l->content[l->cursor + 1] == 'O' && (l->cursor + 2 < l->content_len) &&
+        l->content[l->cursor + 2] == 'D') {
+
+        size_t start_cursor = l->cursor;
+        size_t potential_length = 3; // "TOD" already accounted for
+
+        // Count the consecutive 'O's
+        while ((start_cursor + potential_length) < l->content_len &&
+               l->content[start_cursor + potential_length] == 'O') {
+            potential_length++;
+        }
+
+        // If the sequence starts with "TOD", we consider it a TODO token
+        if (potential_length > 2) { // Ensure we have at least "TOD"
+            lexer_chop_char(l, potential_length); // Skip the entire TODO token
+            token.kind = TOKEN_TODO;
+            token.text_len = potential_length;
+            return token;
+        }
+    }
+
     // Check for color-like format (e.g., 0xf38ba8FF)
     if (l->content[l->cursor] == '0' &&
         (l->cursor + 1 < l->content_len) &&
@@ -253,10 +276,28 @@ Token lexer_next(Lexer *l)
         }
     }
 
+    /* if (lexer_starts_with(l, "//")) { */
+    /*     token.kind = TOKEN_COMMENT; */
+    /*     while (l->cursor < l->content_len && l->content[l->cursor] != '\n') { */
+    /*         lexer_chop_char(l, 1); */
+    /*     } */
+    /*     if (l->cursor < l->content_len) { */
+    /*         lexer_chop_char(l, 1); */
+    /*     } */
+    /*     token.text_len = &l->content[l->cursor] - token.text; */
+    /*     return token; */
+    /* } */
 
-
-
-
+    /* for (size_t i = 0; i < literal_tokens_count; ++i) { */
+    /*     if (lexer_starts_with(l, literal_tokens[i].text)) { */
+    /*         // NOTE: this code assumes that there is no newlines in literal_tokens[i].text */
+    /*         size_t text_len = strlen(literal_tokens[i].text); */
+    /*         token.kind = literal_tokens[i].kind; */
+    /*         token.text_len = text_len; */
+    /*         lexer_chop_char(l, text_len); */
+    /*         return token; */
+    /*     } */
+    /* } */
 
     if (lexer_starts_with(l, "//")) {
         token.kind = TOKEN_COMMENT;
@@ -268,17 +309,6 @@ Token lexer_next(Lexer *l)
         }
         token.text_len = &l->content[l->cursor] - token.text;
         return token;
-    }
-    
-    for (size_t i = 0; i < literal_tokens_count; ++i) {
-        if (lexer_starts_with(l, literal_tokens[i].text)) {
-            // NOTE: this code assumes that there is no newlines in literal_tokens[i].text
-            size_t text_len = strlen(literal_tokens[i].text);
-            token.kind = literal_tokens[i].kind;
-            token.text_len = text_len;
-            lexer_chop_char(l, text_len);
-            return token;
-        }
     }
 
     if (is_symbol_start(l->content[l->cursor])) {
@@ -299,6 +329,11 @@ Token lexer_next(Lexer *l)
         else
             file_ext = dot + 1;
 
+
+
+
+
+
         /* for (size_t i = 0; i < keywords_count; ++i) { */
         /*     size_t keyword_len = strlen(keywords[i]); */
         /*     if (keyword_len == token.text_len && memcmp(keywords[i], token.text, keyword_len) == 0) { */
@@ -317,6 +352,14 @@ Token lexer_next(Lexer *l)
             for (size_t i = 0; i < pyKeywords_count; ++i) {
                 size_t keyword_len = strlen(pyKeywords[i]);
                 if (keyword_len == token.text_len && memcmp(pyKeywords[i], token.text, keyword_len) == 0) {
+                    token.kind = TOKEN_KEYWORD;
+                    break;
+                }
+            }
+        } else if (strcmp(file_ext, "c") == 0) {
+            for (size_t i = 0; i < cKeywords_count; ++i) {
+                size_t keyword_len = strlen(cKeywords[i]);
+                if (keyword_len == token.text_len && memcmp(cKeywords[i], token.text, keyword_len) == 0) {
                     token.kind = TOKEN_KEYWORD;
                     break;
                 }
