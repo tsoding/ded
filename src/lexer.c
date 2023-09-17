@@ -18,6 +18,10 @@ Literal_Token literal_tokens[] = {
     {.text = "{", .kind = TOKEN_OPEN_CURLY},
     {.text = "}", .kind = TOKEN_CLOSE_CURLY},
     {.text = ";", .kind = TOKEN_SEMICOLON},
+    {.text = "=",  .kind = TOKEN_EQUALS},
+    {.text = "!=", .kind = TOKEN_NOT_EQUALS},
+    {.text = "==", .kind = TOKEN_EQUALS_EQUALS},
+    {.text = "!",  .kind = TOKEN_EXCLAMATION},
 };
 #define literal_tokens_count (sizeof(literal_tokens)/sizeof(literal_tokens[0]))
 
@@ -26,8 +30,6 @@ const char *jKeywords[] = {
     "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native", "new", "package", "private", "protected", "public", "return", "short", "static", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile", "while", "non-sealed", "open", "opens", "permits", "provides", "record", "sealed", "to", "transitive", "uses", "var", "with", "yield", "true", "false", "null", "const", "goto", "strictfp",
 };
 #define jKeywords_count (sizeof(jKeywords)/sizeof(jKeywords[0]))
-
-
 
 
 const char *cKeywords[] = {
@@ -45,23 +47,15 @@ const char *cKeywords[] = {
     "template", "this", "thread_local", "throw", "true", "try", "typeid", "typename",
     "using", "virtual", "wchar_t", "xor", "xor_eq",
 };
+
 /* #define keywords_count (sizeof(keywords)/sizeof(keywords[0])) */
 #define cKeywords_count (sizeof(cKeywords)/sizeof(cKeywords[0]))
-
-
-
-
-
 
 
 const char *pyKeywords[] = {
     "False", "None", "True", "and", "as", "assert", "async", "await", "break", "class", "continue", "def", "del", "elif", "else", "except", "finally", "for", "from", "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try", "while", "with", "yield",
 };
 #define pyKeywords_count (sizeof(pyKeywords)/sizeof(pyKeywords[0]))
-
-
-
-
 
 
 const char *token_kind_name(Token_Kind kind)
@@ -89,6 +83,24 @@ const char *token_kind_name(Token_Kind kind)
         return "semicolon";
     case TOKEN_KEYWORD:
         return "keyword";
+    case TOKEN_EQUALS:
+        return "=";
+    case TOKEN_NOT_EQUALS:
+        return "!=";
+    case TOKEN_EQUALS_EQUALS:
+        return "==";
+    case TOKEN_EXCLAMATION:
+        return "!";
+    case TOKEN_ARROW:
+        return "->";
+    case TOKEN_MINUS:
+        return "-";
+    case TOKEN_PLUS:
+        return "+";
+    case TOKEN_TRUE:
+        return "true";
+    case TOKEN_FALSE:
+        return "false";
     default:
         UNREACHABLE("token_kind_name");
     }
@@ -189,6 +201,110 @@ Token lexer_next(Lexer *l)
     token.position.y = -(float)l->line * FREE_GLYPH_FONT_SIZE;
 
     if (l->cursor >= l->content_len) return token;
+
+    // Check for specific operators (e.g., "=", "!", "!=", "==", "<", ">", "<=", ">=")
+    if (l->cursor < l->content_len) {
+        char current_char = l->content[l->cursor];
+        char next_char = (l->cursor + 1 < l->content_len) ? l->content[l->cursor + 1] : '\0';
+
+        switch (current_char) {
+        case '=':
+            if (next_char == '=') {
+                token.kind = TOKEN_EQUALS_EQUALS;
+                token.text_len = 2;
+                lexer_chop_char(l, 2);
+            } else {
+                token.kind = TOKEN_EQUALS;
+                token.text_len = 1;
+                lexer_chop_char(l, 1);
+            }
+            return token;
+
+        case '!':
+            if (next_char == '=') {
+                token.kind = TOKEN_NOT_EQUALS;
+                token.text_len = 2;
+                lexer_chop_char(l, 2);
+            } else {
+                token.kind = TOKEN_EXCLAMATION;
+                token.text_len = 1;
+                lexer_chop_char(l, 1);
+            }
+            return token;
+
+        case '<':
+            token.kind = TOKEN_LESS_THAN;
+            token.text_len = 1;
+            lexer_chop_char(l, 1);
+            return token;
+
+        case '>':
+            token.kind = TOKEN_GREATER_THAN;
+            token.text_len = 1;
+            lexer_chop_char(l, 1);
+            return token;
+
+        case '-':
+            if (next_char == '>') {
+                token.kind = TOKEN_ARROW;
+                token.text_len = 2;
+                lexer_chop_char(l, 2);
+            } else {
+                token.kind = TOKEN_MINUS;
+                token.text_len = 1;
+                lexer_chop_char(l, 1);
+            }
+            return token;
+
+        case '+':
+            token.kind = TOKEN_PLUS;
+            token.text_len = 1;
+            lexer_chop_char(l, 1);
+            return token;
+
+        }
+    }
+
+
+    /* // Check for boolean literals "true" and "false" */
+    /* if ((l->cursor + 3 < l->content_len) && */
+    /*     (strncmp(&l->content[l->cursor], "true", 4) == 0)) { */
+
+    /*     lexer_chop_char(l, 4); // Skip the entire "true" token */
+    /*     token.kind = TOKEN_TRUE; */
+    /*     token.text_len = 4; */
+    /*     return token; */
+
+    /* } else if ((l->cursor + 4 < l->content_len) && */
+    /*            (strncmp(&l->content[l->cursor], "false", 5) == 0)) { */
+
+    /*     lexer_chop_char(l, 5); // Skip the entire "false" token */
+    /*     token.kind = TOKEN_FALSE; */
+    /*     token.text_len = 5; */
+    /*     return token; */
+
+    /* } */
+
+    // Check for boolean literals "true" and "false"
+    if ((l->cursor + 3 < l->content_len) &&
+        (strncmp(&l->content[l->cursor], "true", 4) == 0) &&
+        ((l->cursor + 4 == l->content_len) || !isalnum(l->content[l->cursor + 4]))) {
+
+        lexer_chop_char(l, 4); // Skip the entire "true" token
+        token.kind = TOKEN_TRUE;
+        token.text_len = 4;
+        return token;
+
+    } else if ((l->cursor + 4 < l->content_len) &&
+               (strncmp(&l->content[l->cursor], "false", 5) == 0) &&
+               ((l->cursor + 5 == l->content_len) || !isalnum(l->content[l->cursor + 5]))) {
+
+        lexer_chop_char(l, 5); // Skip the entire "false" token
+        token.kind = TOKEN_FALSE;
+        token.text_len = 5;
+        return token;
+    }
+
 
     // Check for color-like format (e.g., 0xf38ba8FF)
     if (l->content[l->cursor] == '0' &&

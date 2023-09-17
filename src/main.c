@@ -774,32 +774,6 @@ int main(int argc, char **argv)
                   }
                     break;
 
-                  case SDLK_LESS: {
-                    if (event.key.keysym.mod & KMOD_SHIFT) {
-                      // Handle '<' with shift pressed
-                      char pair[] = "<>";
-                      editor_insert_buf(&editor, pair, 2);
-                      editor_move_char_left(&editor); // Move cursor between angle brackets
-                    } else {
-                      // Handle '<' without shift.
-                      editor_insert_char(&editor, '<');
-                    }
-
-                    // Consume the upcoming character events
-                    SDL_Event tmpEvent;
-                    SDL_PollEvent(&tmpEvent); // Consume the first character
-                    if (tmpEvent.type != SDL_TEXTINPUT || (tmpEvent.text.text[0] != '<' && tmpEvent.text.text[0] != '>')) {
-                      SDL_PushEvent(&tmpEvent); // Push the event back if it's not the one we're trying to consume
-                    }
-                    if (event.key.keysym.mod & KMOD_SHIFT) { // Only try to consume the second character if shift was pressed
-                      SDL_PollEvent(&tmpEvent); // Consume the second character
-                      if (tmpEvent.type != SDL_TEXTINPUT || tmpEvent.text.text[0] != '>') {
-                        SDL_PushEvent(&tmpEvent); // Push the event back if it's not the one we're trying to consume
-                      }
-                    }
-                  }
-                    break;
-
                   case SDLK_QUOTE: {
                     if (event.key.keysym.mod & KMOD_SHIFT) {
                       // If Shift + ' is pressed, insert double quotes ""

@@ -27,7 +27,7 @@ void initialize_themes() {
         .background = hex_to_vec4f(0x1e1e2eFF), // Base
         .comment = hex_to_vec4f(0x9399b2FF), // Overlay2
         .hashtag = hex_to_vec4f(0x89b4faFF), // Blue
-        .logic = hex_to_vec4f(0xa6e3a1FF), // Green
+        .logic = hex_to_vec4f(0xCBA6F7FF), // Peach
         .string = hex_to_vec4f(0xf9e2afFF), // Yellow
         .selection = hex_to_vec4f(0xf5c2e7FF), // Pink
         .search = hex_to_vec4f(0xf2cdcdFF), // Flamingo
@@ -36,8 +36,19 @@ void initialize_themes() {
         .fixme = hex_to_vec4f(0xf2cdcdFF), // Flamingo
         .note = hex_to_vec4f(0xa6e3a1FF), // Green
         .bug = hex_to_vec4f(0xf38ba8FF), // Red
+        .not_equals = hex_to_vec4f(0xf38ba8FF), // Red
+        .exclamation = hex_to_vec4f(0xf38ba8FF), // Red
+        .equals = hex_to_vec4f(0xa6e3a1FF), // Green
+        .equals_equals = hex_to_vec4f(0xa6e3a1FF), // Green
+        .greater_than = hex_to_vec4f(0xa6e3a1FF), // Green
+        .less_than = hex_to_vec4f(0x74c7ecFF), // Sapphire
         .marks = hex_to_vec4f(0x74c7ecFF), // Sapphire
-        .fb_selection = hex_to_vec4f(0xb4befeFF) // Lavender
+        .fb_selection = hex_to_vec4f(0xb4befeFF), // Lavender
+        .plus = hex_to_vec4f(0xa6e3a1FF), // Green
+        .minus = hex_to_vec4f(0xf38ba8FF), // Red
+        .truee = hex_to_vec4f(0xa6e3a1FF), // Green
+        .falsee = hex_to_vec4f(0xf38ba8FF), // Red
+        .arrow = hex_to_vec4f(0xf9e2afFF), // Yellow
     };
 
 
@@ -814,6 +825,51 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                     // Continue rendering with
                 }
                 break;
+
+
+            case TOKEN_EQUALS:
+                color = themes[currentThemeIndex].equals;
+                break;
+
+            case TOKEN_EXCLAMATION:
+                color = themes[currentThemeIndex].exclamation;
+                break;
+
+            case TOKEN_NOT_EQUALS:
+                color = themes[currentThemeIndex].not_equals;
+                break;
+
+            case TOKEN_EQUALS_EQUALS:
+                color = themes[currentThemeIndex].equals_equals;
+                break;
+
+
+            case TOKEN_LESS_THAN:
+                color = themes[currentThemeIndex].less_than;
+                break;
+
+            case TOKEN_GREATER_THAN:
+                color = themes[currentThemeIndex].greater_than;
+                break;
+            case TOKEN_ARROW:
+                color = themes[currentThemeIndex].arrow;
+                break;
+
+            case TOKEN_MINUS:
+                color = themes[currentThemeIndex].minus;
+                break;
+
+            case TOKEN_PLUS:
+                color = themes[currentThemeIndex].plus;
+                break;
+
+            case TOKEN_TRUE:
+                color = themes[currentThemeIndex].truee;
+                break;
+            case TOKEN_FALSE:
+                color = themes[currentThemeIndex].falsee;
+                break;
+
 
             case TOKEN_STRING:
                 /* color = hex_to_vec4f(0x73c936ff); */

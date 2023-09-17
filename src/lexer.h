@@ -20,6 +20,17 @@ typedef enum {
     TOKEN_COMMENT,
     TOKEN_STRING,
     TOKEN_COLOR,
+    TOKEN_EQUALS,
+    TOKEN_NOT_EQUALS,
+    TOKEN_EQUALS_EQUALS,
+    TOKEN_EXCLAMATION,
+    TOKEN_LESS_THAN,
+    TOKEN_GREATER_THAN,
+    TOKEN_ARROW,
+    TOKEN_MINUS,
+    TOKEN_PLUS,
+    TOKEN_TRUE,
+    TOKEN_FALSE,
   } Token_Kind;
 
 const char *token_kind_name(Token_Kind kind);

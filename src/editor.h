@@ -56,6 +56,17 @@ typedef struct {
     Vec4f fixme;
     Vec4f note;
     Vec4f bug;
+    Vec4f equals;
+    Vec4f not_equals;
+    Vec4f exclamation;
+    Vec4f equals_equals;
+    Vec4f less_than;
+    Vec4f greater_than;
+    Vec4f arrow;
+    Vec4f plus;
+    Vec4f minus;
+    Vec4f truee;
+    Vec4f falsee;
     Vec4f marks;
     Vec4f fb_selection;
 } Theme;
