@@ -51,6 +51,7 @@ typedef struct {
     Vec4f string;
     Vec4f selection;
     Vec4f search;
+    Vec4f line_numbers;
     Vec4f todo;
     Vec4f fixme;
     Vec4f note;
@@ -125,6 +126,8 @@ bool editor_search_matches_at(Editor *e, size_t pos);
 void editor_stop_search_and_mark(Editor *e);
 void editor_search_next(Editor *e);
 void editor_search_previous(Editor *e);
+void editor_clear_mark(Editor *editor);
+
 extern float zoom_factor;
 extern bool showLineNumbers;
 

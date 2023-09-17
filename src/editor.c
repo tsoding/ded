@@ -10,8 +10,8 @@
 EvilMode current_mode = NORMAL;
 float zoom_factor = 5.0f;
 Theme themes[10];
-bool showLineNumbers = false;  // This is the actual definition and initialization
-bool is_animated = true;  // or false, depending on your initial requirement
+bool showLineNumbers = true;  // This is the actual definition and initialization
+bool is_animated = false;  // or false, depending on your initial requirement
 
 
 int currentThemeIndex = 0;
@@ -32,6 +32,7 @@ void initialize_themes() {
         .selection = hex_to_vec4f(0xf5c2e7FF), // Pink
         .search = hex_to_vec4f(0xf2cdcdFF), // Flamingo
         .todo = hex_to_vec4f(0xf2cdcdFF), // Flamingo
+        .line_numbers = hex_to_vec4f(0x9399b2FF), // Overlay2
         .fixme = hex_to_vec4f(0xf2cdcdFF), // Flamingo
         .note = hex_to_vec4f(0xa6e3a1FF), // Green
         .bug = hex_to_vec4f(0xf38ba8FF), // Red
@@ -257,8 +258,6 @@ void editor_backspace(Editor *e)
         editor_retokenize(e);
     }
 }
-
-
 
 void editor_delete(Editor *e)
 {
@@ -661,9 +660,33 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         simple_renderer_flush(sr);
     }
 
+    /* if (showLineNumbers) { */
+    /*     // Render line numbers */
+    /*     simple_renderer_set_shader(sr, SHADER_FOR_TEXT); */
+
+    /*     // Calculate the width for the line numbers, say every line number takes up to 5 characters of space */
+
+    /*     for (size_t i = 0; i < editor->lines.count; ++i) { */
+    /*         char lineNumberStr[10];  // Buffer for line number string */
+    /*         snprintf(lineNumberStr, sizeof(lineNumberStr), "%zu", i + 1);  // Convert line number to string */
+
+    /*         Vec2f pos; */
+    /*         pos.x = 0;  // Start from the left edge of the window */
+    /*         pos.y = -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE; */
+
+    /*         free_glyph_atlas_render_line_sized(atlas, sr, lineNumberStr, strlen(lineNumberStr), &pos, lineNumberColor); */
+    /*     } */
+
+    /*     simple_renderer_flush(sr); */
+    /* } */
+
+
     if (showLineNumbers) {
         // Render line numbers
-        simple_renderer_set_shader(sr, SHADER_FOR_EPICNESS);
+        simple_renderer_set_shader(sr, SHADER_FOR_TEXT);
+
+        // Get the color for line numbers from the current theme
+        Vec4f color = themes[currentThemeIndex].line_numbers;
 
         // Calculate the width for the line numbers, say every line number takes up to 5 characters of space
 
@@ -675,11 +698,13 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             pos.x = 0;  // Start from the left edge of the window
             pos.y = -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE;
 
-            free_glyph_atlas_render_line_sized(atlas, sr, lineNumberStr, strlen(lineNumberStr), &pos, lineNumberColor);
+            // Use the theme color for line numbers
+            free_glyph_atlas_render_line_sized(atlas, sr, lineNumberStr, strlen(lineNumberStr), &pos, color);
         }
 
         simple_renderer_flush(sr);
     }
+
 
     // Render text
     {
@@ -803,7 +828,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 }
                 break;
             default:
-            {}
+                {}
             }
             free_glyph_atlas_render_line_sized(atlas, sr, token.text, token.text_len, &pos, color);
             // TODO: the max_line_len should be calculated based on what's visible on the screen right now
@@ -815,6 +840,12 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
     // Render cursor
     simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
+
+    // Exit early if the editor has a mark and should not render the cursor
+    // since the camera follow the cursor i cant do it or i dont know how
+    /* if (editor->has_mark) { */
+    /*     return;  // Skip the cursor rendering */
+    /* } */
 
     // Adjust cursor position if line numbers are shown
     if (showLineNumbers) {
@@ -903,9 +934,9 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             sr->camera_scale = 0.24f;  // Set the zoom level to 0.5
 
             if (!hasShifted) {
-                sr->camera_pos.x = 2150.0f;  // Set the x-position
+                sr->camera_pos.x = 3850.0f;  // Set the x-position
                 sr->camera_pos.y = -2000.0f;  // Set the initial y-position
-                hasShifted = true;  // Mark as shifted
+                /* hasShifted = true;  // Mark as shifted */
             } else {
                 // Determine the height of a line
                 Vec2f pos = {0.0f, 0.0f};
@@ -1080,6 +1111,13 @@ void editor_stop_search_and_mark(Editor *e) {
     e->mark_start = e->cursor;
     e->mark_end = e->cursor + e->search.count;
 }
+
+void editor_clear_mark(Editor *editor) {
+    editor->has_mark = false;
+    editor->mark_start = 0;  // or some other appropriate default value
+    editor->mark_end = 0;    // or some other appropriate default value
+}
+
 
 
 bool editor_search_matches_at(Editor *e, size_t pos)

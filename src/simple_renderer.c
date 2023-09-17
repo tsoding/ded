@@ -6,6 +6,7 @@
 #include <errno.h>
 #include "./simple_renderer.h"
 #include "./common.h"
+#include "./editor.h"
 
 #define vert_shader_file_path "./shaders/simple.vert"
 
@@ -130,7 +131,10 @@ static void get_uniform_location(GLuint program, GLint locations[COUNT_UNIFORM_S
 
 void simple_renderer_init(Simple_Renderer *sr)
 {
-    sr->camera_scale = 3.0f;
+
+    if (is_animated) {
+        sr->camera_scale = 3.0f;
+    }
 
     {
         glGenVertexArrays(1, &sr->vao);

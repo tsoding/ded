@@ -220,16 +220,12 @@ int main(int argc, char **argv)
                   file_browser = false;
                 } break;
 
-
-                case SDLK_F5: {
-                  simple_renderer_reload_shaders(&sr);
-                }
-                  break;
-
                 case SDLK_EQUALS: {
                   if (SDL_GetModState() & KMOD_ALT) {  // Check if ALT is pressed
                     theme_next(&currentThemeIndex);
                     printf("Changed theme to %d\n", currentThemeIndex); // Logging the theme change for debugging
+                  } else if (SDL_GetModState() & KMOD_CTRL) {  // Check if CTRL is pressed
+                    zoom_factor -= 0.8f;
                   }
                 } break;
 
@@ -237,8 +233,28 @@ int main(int argc, char **argv)
                   if (SDL_GetModState() & KMOD_ALT) {  // Check if ALT is pressed
                     theme_previous(&currentThemeIndex);
                     printf("Changed theme back to %d\n", currentThemeIndex); // Logging the theme change for debugging
+                  } else if (SDL_GetModState() & KMOD_CTRL) {  // Check if CTRL is pressed
+                    zoom_factor += 0.8f;
+                    if (zoom_factor < 1.0f) zoom_factor = 1.0f;  // Ensure zoom_factor doesn't drop below a threshold
                   }
                 } break;
+
+                case SDLK_ESCAPE: {
+                  file_browser = false;
+                } break;
+
+
+                case SDLK_r:
+                  if (event.key.keysym.mod & KMOD_CTRL) {
+                    file_browser = false;
+                  }
+                  break;
+
+
+                case SDLK_F5: {
+                  simple_renderer_reload_shaders(&sr);
+                }
+                  break;
 
                 case SDLK_UP: {
                   if (fb.cursor > 0)
@@ -278,13 +294,22 @@ int main(int argc, char **argv)
                   }
                 } break;
 
+                // TODO
+                /* case SDLK_t: { */
+                /*   if (!file_creation_mode) { */
+                /*     file_creation_mode = true; */
+                /*     memset(new_filename, 0, sizeof(new_filename));  // Reset filename buffer */
+                /*     filename_cursor = 0; */
+                /*   } */
+                /* } break; */
+
+
                 case SDLK_t: {
-                  if (!file_creation_mode) {
-                    file_creation_mode = true;
-                    memset(new_filename, 0, sizeof(new_filename));  // Reset filename buffer
-                    filename_cursor = 0;
+                  if (SDL_GetModState() & KMOD_CTRL) {
+                    is_animated = !is_animated;  // Toggle the state
                   }
-                } break;
+                }
+                  break;
 
 
                 case SDLK_l: {
@@ -358,6 +383,13 @@ int main(int argc, char **argv)
                 case NORMAL:
                   switch (event.key.keysym.sym) {
                     SDL_Event tmpEvent; // Declare once at the beginning of the switch block
+
+                  case SDLK_ESCAPE: {
+                    editor_clear_mark(&editor);
+                    editor_stop_search(&editor);
+                    editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                  }
+                    break;
 
                     case SDLK_TAB: {
                         // TODO: indent on Tab instead of just inserting 4 spaces at the cursor
@@ -467,6 +499,9 @@ int main(int argc, char **argv)
                     case SDLK_i:
                       current_mode = INSERT;
 
+
+                      /* is_animated = true;  // TODO make this an option and smooth */
+
                       // Eat up the next SDL_TEXTINPUT event for 'i'
                       SDL_PollEvent(&tmpEvent); // This will typically be the SDL_TEXTINPUT event for 'i'
                       if (tmpEvent.type != SDL_TEXTINPUT || tmpEvent.text.text[0] != 'i') {
@@ -545,6 +580,13 @@ int main(int argc, char **argv)
                     file_browser = true;
                     break;
 
+
+                  case SDLK_r:
+                    if (event.key.keysym.mod & KMOD_CTRL) {
+                    file_browser = true;
+                    }
+                    break;
+
                   case SDLK_BACKSPACE:       //  yes you can delete in normal mode
                     editor_backspace(&editor);
                     break;
@@ -593,8 +635,37 @@ int main(int argc, char **argv)
                   }
                   break;
 
+
                 case INSERT:
                   switch (event.key.keysym.sym) {
+
+                  case SDLK_h:  // Left
+                    if (event.key.keysym.mod & KMOD_CTRL) {
+                      editor_move_char_left(&editor);
+                    }
+                    editor.last_stroke = SDL_GetTicks();
+                    break;
+
+                  case SDLK_j:  // Down
+                    if (event.key.keysym.mod & KMOD_CTRL) {
+                      editor_move_line_down(&editor);
+                    }
+                    editor.last_stroke = SDL_GetTicks();
+                    break;
+
+                  case SDLK_k:  // Up
+                    if (event.key.keysym.mod & KMOD_CTRL) {
+                      editor_move_line_up(&editor);
+                    }
+                    editor.last_stroke = SDL_GetTicks();
+                    break;
+
+                  case SDLK_l:  // Right
+                    if (event.key.keysym.mod & KMOD_CTRL) {
+                      editor_move_char_right(&editor);
+                    }
+                    editor.last_stroke = SDL_GetTicks();
+                    break;
 
                     case SDLK_TAB: {
                         // TODO: indent on Tab instead of just inserting 4 spaces at the cursor
@@ -785,6 +856,7 @@ int main(int argc, char **argv)
 
                     case SDLK_ESCAPE: {
                         current_mode = NORMAL;
+                        editor_clear_mark(&editor);
                         editor_stop_search(&editor);
                         editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                     }
@@ -867,6 +939,7 @@ int main(int argc, char **argv)
                     break;
                   }
                   break;
+
 
                 case VISUAL:
                   switch (event.key.keysym.sym) {
