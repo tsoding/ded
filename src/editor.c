@@ -17,7 +17,6 @@ bool is_animated = false;  // or false, depending on your initial requirement
 int currentThemeIndex = 0;
 
 
-
 void initialize_themes() {
 
     // Catppuccin
@@ -50,7 +49,7 @@ void initialize_themes() {
         .falsee = hex_to_vec4f(0xf38ba8FF), // Red
         .arrow = hex_to_vec4f(0xf9e2afFF), // Yellow
         .open_square = hex_to_vec4f(0x89b4faFF), // Blue
-        .close_square = hex_to_vec4f(0xa6e3a1FF), // Blue
+        .close_square = hex_to_vec4f(0x89b4faFF), // Blue
         .array_content = hex_to_vec4f(0x74c7ecFF), // Sapphire
     };
 
@@ -881,7 +880,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             case TOKEN_ARRAY_CONTENT:
                 color = themes[currentThemeIndex].array_content;
                 break;
-
 
             case TOKEN_STRING:
                 /* color = hex_to_vec4f(0x73c936ff); */
