@@ -101,6 +101,12 @@ const char *token_kind_name(Token_Kind kind)
         return "true";
     case TOKEN_FALSE:
         return "false";
+    case TOKEN_ARRAY_CONTENT:
+        return "array_content";
+    case TOKEN_OPEN_SQUARE:
+        return "open_square";
+    case TOKEN_CLOSE_SQUARE:
+        return "close_square";
     default:
         UNREACHABLE("token_kind_name");
     }
@@ -266,24 +272,50 @@ Token lexer_next(Lexer *l)
     }
 
 
-    /* // Check for boolean literals "true" and "false" */
-    /* if ((l->cursor + 3 < l->content_len) && */
-    /*     (strncmp(&l->content[l->cursor], "true", 4) == 0)) { */
 
-    /*     lexer_chop_char(l, 4); // Skip the entire "true" token */
-    /*     token.kind = TOKEN_TRUE; */
-    /*     token.text_len = 4; */
-    /*     return token; */
 
-    /* } else if ((l->cursor + 4 < l->content_len) && */
-    /*            (strncmp(&l->content[l->cursor], "false", 5) == 0)) { */
+    // Check for arrays
+    if (l->cursor < l->content_len) {
+        char current_char = l->content[l->cursor];
 
-    /*     lexer_chop_char(l, 5); // Skip the entire "false" token */
-    /*     token.kind = TOKEN_FALSE; */
-    /*     token.text_len = 5; */
-    /*     return token; */
+        // If the current character is the start of an array
+        if (current_char == '[') {
+            token.kind = TOKEN_OPEN_SQUARE;
+            token.text_len = 1;
+            lexer_chop_char(l, 1);
+            l->in_array = true;  // Set the flag indicating we are inside an array
+            return token;
+        }
+        else if (current_char == ']' && l->in_array) {
+            token.kind = TOKEN_CLOSE_SQUARE;
+            token.text_len = 1;
+            lexer_chop_char(l, 1);
+            l->in_array = false;  // Reset the flag indicating we are no longer inside an array
+            return token;
+        }
+    }
 
-    /* } */
+    // Check for array content, but only if we are inside an array
+    if (l->in_array && l->cursor < l->content_len) {
+        size_t potential_length = 0;
+
+        while (l->cursor + potential_length < l->content_len && l->content[l->cursor + potential_length] != ']') {
+            potential_length++;
+        }
+
+        // If potential array content was detected and not empty
+        if (potential_length > 0) {
+            token.kind = TOKEN_ARRAY_CONTENT;
+            token.text_len = potential_length;
+            lexer_chop_char(l, potential_length);
+            return token;
+        }
+    }
+
+
+
+
+
 
     // Check for boolean literals "true" and "false"
     if ((l->cursor + 3 < l->content_len) &&
@@ -366,29 +398,6 @@ Token lexer_next(Lexer *l)
             return token;
         }
     }
-
-    /* if (lexer_starts_with(l, "//")) { */
-    /*     token.kind = TOKEN_COMMENT; */
-    /*     while (l->cursor < l->content_len && l->content[l->cursor] != '\n') { */
-    /*         lexer_chop_char(l, 1); */
-    /*     } */
-    /*     if (l->cursor < l->content_len) { */
-    /*         lexer_chop_char(l, 1); */
-    /*     } */
-    /*     token.text_len = &l->content[l->cursor] - token.text; */
-    /*     return token; */
-    /* } */
-
-    /* for (size_t i = 0; i < literal_tokens_count; ++i) { */
-    /*     if (lexer_starts_with(l, literal_tokens[i].text)) { */
-    /*         // NOTE: this code assumes that there is no newlines in literal_tokens[i].text */
-    /*         size_t text_len = strlen(literal_tokens[i].text); */
-    /*         token.kind = literal_tokens[i].kind; */
-    /*         token.text_len = text_len; */
-    /*         lexer_chop_char(l, text_len); */
-    /*         return token; */
-    /*     } */
-    /* } */
 
     if (lexer_starts_with(l, "//")) {
         token.kind = TOKEN_COMMENT;

@@ -49,6 +49,9 @@ void initialize_themes() {
         .truee = hex_to_vec4f(0xa6e3a1FF), // Green
         .falsee = hex_to_vec4f(0xf38ba8FF), // Red
         .arrow = hex_to_vec4f(0xf9e2afFF), // Yellow
+        .open_square = hex_to_vec4f(0x89b4faFF), // Blue
+        .close_square = hex_to_vec4f(0xa6e3a1FF), // Blue
+        .array_content = hex_to_vec4f(0x74c7ecFF), // Sapphire
     };
 
 
@@ -868,6 +871,15 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 break;
             case TOKEN_FALSE:
                 color = themes[currentThemeIndex].falsee;
+                break;
+            case TOKEN_OPEN_SQUARE:
+                color = themes[currentThemeIndex].open_square;
+                break;
+            case TOKEN_CLOSE_SQUARE:
+                color = themes[currentThemeIndex].close_square;
+                break;
+            case TOKEN_ARRAY_CONTENT:
+                color = themes[currentThemeIndex].array_content;
                 break;
 
 

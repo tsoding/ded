@@ -31,6 +31,9 @@ typedef enum {
     TOKEN_PLUS,
     TOKEN_TRUE,
     TOKEN_FALSE,
+    TOKEN_OPEN_SQUARE,
+    TOKEN_CLOSE_SQUARE,
+    TOKEN_ARRAY_CONTENT,
   } Token_Kind;
 
 const char *token_kind_name(Token_Kind kind);
@@ -52,6 +55,7 @@ typedef struct {
     size_t bol;
     float x;
     String_Builder file_path;
+    bool in_array;   // to remember if we are inside an array
 } Lexer;
 
 /* Lexer lexer_new(Free_Glyph_Atlas *atlas, const char *content, size_t content_len); */

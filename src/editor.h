@@ -67,6 +67,9 @@ typedef struct {
     Vec4f minus;
     Vec4f truee;
     Vec4f falsee;
+    Vec4f open_square;
+    Vec4f close_square;
+    Vec4f array_content;
     Vec4f marks;
     Vec4f fb_selection;
 } Theme;
