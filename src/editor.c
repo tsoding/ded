@@ -5,13 +5,14 @@
 #include <string.h>
 #include "./editor.h"
 #include "./common.h"
+#include "./free_glyph.h"
 
 
 EvilMode current_mode = NORMAL;
 float zoom_factor = 5.0f;
 Theme themes[10];
-bool showLineNumbers = true;  // This is the actual definition and initialization
-bool is_animated = false;  // or false, depending on your initial requirement
+bool showLineNumbers = false;  // This is the actual definition and initialization
+bool is_animated = true;  // or false, depending on your initial requirement
 
 
 int currentThemeIndex = 0;
@@ -994,15 +995,41 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
             sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME)));
             sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME;
+        // original
+        /* } else { */
+        /*     static bool hasShifted = false;  // This will ensure the code inside the if-block runs once */
+        /*     sr->camera_scale = 0.24f;  // Set the zoom level to 0.5 */
+
+        /*     if (!hasShifted) { */
+        /*         sr->camera_pos.x = 3850.0f;  // Set the x-position */
+        /*         sr->camera_pos.y = -2000.0f;  // Set the initial y-position */
+        /*         /\* hasShifted = true;  // Mark as shifted *\/ */
+        /*     } else { */
+        /*         // Determine the height of a line */
+        /*         Vec2f pos = {0.0f, 0.0f}; */
+        /*         const char *sampleText = "Sample text to measure."; */
+        /*         free_glyph_atlas_measure_line_sized(atlas, sampleText, strlen(sampleText), &pos); */
+        /*         float lineHeight = pos.y; */
+
+        /*         // Check the current cursor line position and adjust camera's Y-position if necessary */
+        /*         int currentLine = editor_cursor_row(editor); */
+        /*         if (currentLine > 66) { */
+        /*             sr->camera_pos.y = -2000.0f - (lineHeight * (currentLine - 66)); */
+        /*         } */
+        /*     } */
+        /* } */
 
         } else {
             static bool hasShifted = false;  // This will ensure the code inside the if-block runs once
-            sr->camera_scale = 0.24f;  // Set the zoom level to 0.5
+            sr->camera_scale = 0.24f * zoom_factor;  // Adjust the zoom based on zoom_factor.
 
             if (!hasShifted) {
                 sr->camera_pos.x = 3850.0f;  // Set the x-position
                 sr->camera_pos.y = -2000.0f;  // Set the initial y-position
-                /* hasShifted = true;  // Mark as shifted */
+
+                /* Apply a shift factor based on zoom. */
+                sr->camera_pos.x *= zoom_factor;
+                sr->camera_pos.y *= zoom_factor;
             } else {
                 // Determine the height of a line
                 Vec2f pos = {0.0f, 0.0f};
@@ -1013,28 +1040,12 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 // Check the current cursor line position and adjust camera's Y-position if necessary
                 int currentLine = editor_cursor_row(editor);
                 if (currentLine > 66) {
-                    sr->camera_pos.y = -2000.0f - (lineHeight * (currentLine - 66));
+                    sr->camera_pos.y = (-2000.0f * zoom_factor) - (lineHeight * (currentLine - 66));
                 }
             }
         }
     }
 }
-
-
-
-        /* } else { */
-        /*     static bool hasShifted = false;  // This will ensure the code inside the if-block runs once */
-
-        /*     sr->camera_scale = 0.24f;  // Set the zoom level to 0.5 */
-        /*     if (!hasShifted) { */
-        /*         sr->camera_pos.x = 2150.0f;  // Set the x-position */
-        /*         sr->camera_pos.y = -2000.0f;  // Set the y-position */
-        /*         hasShifted = true;  // Mark as shifted */
-        /*     } */
-        /* } */
-
-
-
 
 void editor_clipboard_copy(Editor *e)
 {

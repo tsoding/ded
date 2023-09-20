@@ -5,6 +5,7 @@
 #include <string.h>
 #include "common.h"
 
+#include <dirent.h>
 
 #include <SDL2/SDL.h>
 #define GLEW_STATIC
@@ -33,6 +34,15 @@
 #include "keychords.h"
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+
+#define FONT_DIR "~/.config/ded/fonts/"
+#define DEFAULT_FONT "jet-extra-bold.ttf"
+#define MAX_FONTS 100
+#define MAX_PATH_SIZE 1024
+
+char *fonts[MAX_FONTS];
+int font_count = 0;
+int current_font_index = 0;
 
 
 // TODO: Save file dialog
@@ -67,6 +77,96 @@ static File_Browser fb = {0};
 static Repl repl = {0};
 
 
+FT_Face load_font_face(FT_Library library, const char *font_name) {
+    char font_path[MAX_PATH_SIZE];
+    const char *homeDir = getenv("HOME");
+    snprintf(font_path, sizeof(font_path), "%s/.config/ded/fonts/%s", homeDir, font_name);
+
+    FT_Face face;
+    FT_Error error = FT_New_Face(library, font_path, 0, &face);
+    if (error == FT_Err_Unknown_File_Format) {
+        fprintf(stderr, "ERROR: `%s` has an unknown format\n", font_path);
+        exit(1);
+    } else if (error) {
+        fprintf(stderr, "ERROR: Could not load file `%s`\n", font_path);
+        exit(1);
+    }
+
+    return face;
+}
+
+
+
+
+
+void prev_font(FT_Library library) {
+    if (current_font_index > 0) {
+        current_font_index--;
+    } else {
+        current_font_index = font_count - 1;  // wrap around to the last font
+    }
+
+    FT_Face face = load_font_face(library, fonts[current_font_index]);
+    // TODO: Apply the face to your text rendering system
+}
+
+void next_font(FT_Library library) {
+    if (current_font_index < font_count - 1) {
+        current_font_index++;
+    } else {
+        current_font_index = 0;  // wrap around to the first font
+    }
+
+    FT_Face face = load_font_face(library, fonts[current_font_index]);
+    // TODO: Apply the face to your text rendering system
+}
+
+
+
+void populate_font_list() {
+    char path[MAX_PATH_SIZE];
+    const char *homeDir = getenv("HOME");
+    if (!homeDir) {
+        fprintf(stderr, "ERROR: Could not get HOME directory\n");
+        exit(1);
+    }
+
+    snprintf(path, sizeof(path), "%s/.config/ded/fonts/", homeDir);
+
+    DIR *dir = opendir(path);
+    if (!dir) {
+        fprintf(stderr, "ERROR: Could not open directory `%s`\n", path);
+        exit(1);
+    }
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) && font_count < MAX_FONTS) {
+        if (entry->d_type == DT_REG) {  // If the entry is a regular file
+            fonts[font_count] = strdup(entry->d_name);
+            font_count++;
+        }
+    }
+    closedir(dir);
+}
+
+
+
+
+void switch_to_font(FT_Library library, FT_Face *currentFace, Free_Glyph_Atlas *atlas, int direction) {
+    if (direction > 0) {
+        next_font(library);
+    } else {
+        prev_font(library);
+    }
+    *currentFace = load_font_face(library, fonts[current_font_index]);
+
+    // Dispose the old texture
+    /* glDeleteTextures(1, &atlas->glyphs_texture); */
+
+    // Reinitialize the atlas with the new font face
+    free_glyph_atlas_init(atlas, *currentFace);
+}
+
 
 
 // TODO: display errors reported via flash_error right in the text editor window somehow
@@ -97,26 +197,51 @@ int main(int argc, char **argv)
     /* const char *const font_file_path = "./fonts/iosevka-regular.ttf"; */
 
 
-    char font_file_path_buffer[1024];
-    const char *homeDir = getenv("HOME");
-    if (homeDir) {
-      snprintf(font_file_path_buffer, sizeof(font_file_path_buffer), "%s/.config/ded/fonts/jet-extra-bold.ttf", homeDir);
-    } else {
-      // handle the error, for now, we'll just set it to the original value as a fallback
-      strncpy(font_file_path_buffer, "~/.config/ded/fonts/jet-extra-bold.ttf", sizeof(font_file_path_buffer));
-    }
-    const char *const font_file_path = font_file_path_buffer;
+    /* char font_file_path_buffer[1024]; */
+    /* const char *homeDir = getenv("HOME"); */
+    /* if (homeDir) { */
+    /*   snprintf(font_file_path_buffer, sizeof(font_file_path_buffer), "%s/.config/ded/fonts/minecraft_font.ttf", homeDir); */
+    /* } else { */
+    /*   // handle the error, for now, we'll just set it to the original value as a fallback */
+    /*   strncpy(font_file_path_buffer, "~/.config/ded/fonts/jet-extra-bold.ttf", sizeof(font_file_path_buffer)); */
+    /* } */
+    /* const char *const font_file_path = font_file_path_buffer; */
 
 
-    FT_Face face;
-    error = FT_New_Face(library, font_file_path, 0, &face);
-    if (error == FT_Err_Unknown_File_Format) {
-        fprintf(stderr, "ERROR: `%s` has an unknown format\n", font_file_path);
-        return 1;
-    } else if (error) {
-        fprintf(stderr, "ERROR: Could not load file `%s`\n", font_file_path);
-        return 1;
+
+    populate_font_list();
+
+    if (font_count == 0) {
+      fprintf(stderr, "ERROR: No fonts found in `%s`\n", FONT_DIR);
+      return 1;
     }
+
+    // Start with the default font
+    for (int i = 0; i < font_count; i++) {
+      if (strcmp(fonts[i], DEFAULT_FONT) == 0) {
+        current_font_index = i;
+        break;
+      }
+    }
+
+    FT_Face face = load_font_face(library, fonts[current_font_index]);
+
+
+
+
+
+
+    /* original */
+    /* FT_Face face; */
+    /* error = FT_New_Face(library, font_file_path, 0, &face); */
+    /* if (error == FT_Err_Unknown_File_Format) { */
+    /*     fprintf(stderr, "ERROR: `%s` has an unknown format\n", font_file_path); */
+    /*     return 1; */
+    /* } else if (error) { */
+    /*     fprintf(stderr, "ERROR: Could not load file `%s`\n", font_file_path); */
+    /*     return 1; */
+    /* } */
+
 
     FT_UInt pixel_size = FREE_GLYPH_FONT_SIZE;
     error = FT_Set_Pixel_Sizes(face, 0, pixel_size);
@@ -390,6 +515,28 @@ int main(int argc, char **argv)
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                   }
                     break;
+
+
+                  case SDLK_LEFTBRACKET:
+                    if (SDL_GetModState() & KMOD_ALT) {
+                      switch_to_font(library, &face, &atlas, -1);
+                      printf("Switched to previous font: %s\n", fonts[current_font_index]);
+                      /* redraw_screen(); */
+                    }
+                    break;
+
+                  case SDLK_RIGHTBRACKET:
+                    if (SDL_GetModState() & KMOD_ALT) {
+                      switch_to_font(library, &face, &atlas, 1);
+                      printf("Switched to next font: %s\n", fonts[current_font_index]);
+                      /* redraw_screen(); */
+                    }
+                    break;
+
+
+
+
+
 
                     case SDLK_TAB: {
                         // TODO: indent on Tab instead of just inserting 4 spaces at the cursor
