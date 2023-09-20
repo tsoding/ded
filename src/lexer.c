@@ -25,13 +25,6 @@ Literal_Token literal_tokens[] = {
 };
 #define literal_tokens_count (sizeof(literal_tokens)/sizeof(literal_tokens[0]))
 
-
-const char *jKeywords[] = {
-    "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native", "new", "package", "private", "protected", "public", "return", "short", "static", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile", "while", "non-sealed", "open", "opens", "permits", "provides", "record", "sealed", "to", "transitive", "uses", "var", "with", "yield", "true", "false", "null", "const", "goto", "strictfp",
-};
-#define jKeywords_count (sizeof(jKeywords)/sizeof(jKeywords[0]))
-
-
 const char *cKeywords[] = {
     "auto", "break", "case", "char", "const", "continue", "default", "do", "double",
     "else", "enum", "extern", "float", "for", "goto", "if", "int", "long", "register",
@@ -50,12 +43,6 @@ const char *cKeywords[] = {
 
 /* #define keywords_count (sizeof(keywords)/sizeof(keywords[0])) */
 #define cKeywords_count (sizeof(cKeywords)/sizeof(cKeywords[0]))
-
-
-const char *pyKeywords[] = {
-    "False", "None", "True", "and", "as", "assert", "async", "await", "break", "class", "continue", "def", "del", "elif", "else", "except", "finally", "for", "from", "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try", "while", "with", "yield",
-};
-#define pyKeywords_count (sizeof(pyKeywords)/sizeof(pyKeywords[0]))
 
 
 const char *token_kind_name(Token_Kind kind)
@@ -113,7 +100,6 @@ const char *token_kind_name(Token_Kind kind)
     return NULL;
 }
 
-// ORIGINAL
 Lexer lexer_new(Free_Glyph_Atlas *atlas, const char *content, size_t content_len)
 {
     Lexer l = {0};
@@ -122,19 +108,6 @@ Lexer lexer_new(Free_Glyph_Atlas *atlas, const char *content, size_t content_len
     l.content_len = content_len;
     return l;
 }
-
-/* Lexer lexer_new(Free_Glyph_Atlas *atlas, const char *content, size_t content_len, String_Builder file_path) */
-/* { */
-/*     Lexer l = {0}; */
-/*     l.atlas = atlas; */
-/*     l.content = content; */
-/*     l.content_len = content_len; */
-/*     if (file_path.items != NULL) { */
-/*         l.file_path.items = (char*) malloc(sizeof(char*) * (strlen(file_path.items) + 1)); */
-/*         strcpy(l.file_path.items, file_path.items); */
-/*     } */
-/*     return l; */
-/* } */
 
 bool lexer_starts_with(Lexer *l, const char *prefix)
 {
@@ -271,9 +244,6 @@ Token lexer_next(Lexer *l)
         }
     }
 
-
-
-
     // Check for arrays
     if (l->cursor < l->content_len) {
         char current_char = l->content[l->cursor];
@@ -311,11 +281,6 @@ Token lexer_next(Lexer *l)
             return token;
         }
     }
-
-
-
-
-
 
     // Check for boolean literals "true" and "false"
     if ((l->cursor + 3 < l->content_len) &&
@@ -410,73 +375,6 @@ Token lexer_next(Lexer *l)
         token.text_len = &l->content[l->cursor] - token.text;
         return token;
     }
-
-    /* if (is_symbol_start(l->content[l->cursor])) { */
-    /*     token.kind = TOKEN_SYMBOL; */
-    /*     while (l->cursor < l->content_len && is_symbol(l->content[l->cursor])) { */
-    /*         lexer_chop_char(l, 1); */
-    /*         token.text_len += 1; */
-    /*     } */
-
-    /*     if (l->file_path.items == NULL) */
-    /*         return token; */
-
-    /*     const char* file_ext; */
-    /*     const char* filename = l->file_path.items; */
-    /*     const char *dot = strrchr(filename, '.'); */
-    /*     if(!dot || dot == filename) */
-    /*         file_ext = ""; */
-    /*     else */
-    /*         file_ext = dot + 1; */
-
-/*         /\* for (size_t i = 0; i < cKeywords_count; ++i) { *\/ */
-/*         /\*     size_t keyword_len = strlen(cKeywords[i]); *\/ */
-/*         /\*     if (keyword_len == token.text_len && memcmp(cKeywords[i], token.text, keyword_len) == 0) { *\/ */
-/*         /\*         token.kind = TOKEN_KEYWORD; *\/ */
-/*         /\*         break; *\/ */
-
-/*         if (strcmp(file_ext, "java") == 0) { */
-/*             for (size_t i = 0; i < jKeywords_count; ++i) { */
-/*                 size_t keyword_len = strlen(jKeywords[i]); */
-/*                 if (keyword_len == token.text_len && memcmp(jKeywords[i], token.text, keyword_len) == 0) { */
-/*                     token.kind = TOKEN_KEYWORD; */
-/*                     break; */
-/*                 } */
-/*             } */
-/*         } else if (strcmp(file_ext, "py") == 0) { */
-/*             for (size_t i = 0; i < pyKeywords_count; ++i) { */
-/*                 size_t keyword_len = strlen(pyKeywords[i]); */
-/*                 if (keyword_len == token.text_len && memcmp(pyKeywords[i], token.text, keyword_len) == 0) { */
-/*                     token.kind = TOKEN_KEYWORD; */
-/*                     break; */
-/*                 } */
-/*             } */
-/*         } else if (strcmp(file_ext, "c") == 0) { */
-/*             for (size_t i = 0; i < cKeywords_count; ++i) { */
-/*                 size_t keyword_len = strlen(cKeywords[i]); */
-/*                 if (keyword_len == token.text_len && memcmp(cKeywords[i], token.text, keyword_len) == 0) { */
-/*                     token.kind = TOKEN_KEYWORD; */
-/*                     break; */
-/*                 } */
-/*             } */
-/*         } else { */
-/*             for (size_t i = 0; i < cKeywords_count; ++i) { */
-/*                 size_t keyword_len = strlen(cKeywords[i]); */
-/*                 if (keyword_len == token.text_len && memcmp(cKeywords[i], token.text, keyword_len) == 0) { */
-/*                     token.kind = TOKEN_KEYWORD; */
-/*                     break; */
-/*                 } */
-/*             } */
-/*         } */
-/*         return token; */
-/*     } */
-
-/*     lexer_chop_char(l, 1); */
-/*     token.kind = TOKEN_INVALID; */
-/*     token.text_len = 1; */
-/*     return token; */
-/* } */
-
 
      for (size_t i = 0; i < literal_tokens_count; ++i) {
         if (lexer_starts_with(l, literal_tokens[i].text)) {
