@@ -36,7 +36,8 @@
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 #define FONT_DIR "~/.config/ded/fonts/"
-#define DEFAULT_FONT "jet-extra-bold.ttf"
+/* #define DEFAULT_FONT "jet-extra-bold.ttf" */
+#define DEFAULT_FONT "Letters.ttf"
 #define MAX_FONTS 100
 #define MAX_PATH_SIZE 1024
 
@@ -77,7 +78,8 @@ static File_Browser fb = {0};
 static Repl repl = {0};
 
 
-FT_Face load_font_face(FT_Library library, const char *font_name) {
+FT_Face load_font_face(FT_Library library, const char *font_name, FT_UInt pixel_size) {
+    printf("Loading font: %s at index: %d\n", font_name, current_font_index);
     char font_path[MAX_PATH_SIZE];
     const char *homeDir = getenv("HOME");
     snprintf(font_path, sizeof(font_path), "%s/.config/ded/fonts/%s", homeDir, font_name);
@@ -92,35 +94,34 @@ FT_Face load_font_face(FT_Library library, const char *font_name) {
         exit(1);
     }
 
+    error = FT_Set_Pixel_Sizes(face, 0, pixel_size); // Set pixel size for the loaded font face
+    if (error) {
+        fprintf(stderr, "ERROR: Could not set pixel size to %u\n", pixel_size);
+        return NULL; // or handle the error in a different way
+    }
+
     return face;
 }
 
-
-
-
-
 void prev_font(FT_Library library) {
-    if (current_font_index > 0) {
-        current_font_index--;
-    } else {
-        current_font_index = font_count - 1;  // wrap around to the last font
+    if (current_font_index == 0) {
+        // Already at the first font, don't do anything.
+        return;
     }
-
-    FT_Face face = load_font_face(library, fonts[current_font_index]);
+    current_font_index--;
+    FT_Face face = load_font_face(library, fonts[current_font_index], FREE_GLYPH_FONT_SIZE);
     // TODO: Apply the face to your text rendering system
 }
 
 void next_font(FT_Library library) {
-    if (current_font_index < font_count - 1) {
-        current_font_index++;
-    } else {
-        current_font_index = 0;  // wrap around to the first font
+    if (current_font_index == font_count - 1) {
+        // Already at the last font, don't do anything.
+        return;
     }
-
-    FT_Face face = load_font_face(library, fonts[current_font_index]);
+    current_font_index++;
+    FT_Face face = load_font_face(library, fonts[current_font_index], FREE_GLYPH_FONT_SIZE);
     // TODO: Apply the face to your text rendering system
 }
-
 
 
 void populate_font_list() {
@@ -151,14 +152,15 @@ void populate_font_list() {
 
 
 
-
 void switch_to_font(FT_Library library, FT_Face *currentFace, Free_Glyph_Atlas *atlas, int direction) {
     if (direction > 0) {
         next_font(library);
     } else {
         prev_font(library);
     }
-    *currentFace = load_font_face(library, fonts[current_font_index]);
+    /* *currentFace = load_font_face(library, fonts[current_font_index]); */
+    *currentFace = load_font_face(library, fonts[current_font_index], FREE_GLYPH_FONT_SIZE);
+
 
     // Dispose the old texture
     /* glDeleteTextures(1, &atlas->glyphs_texture); */
@@ -224,7 +226,9 @@ int main(int argc, char **argv)
       }
     }
 
-    FT_Face face = load_font_face(library, fonts[current_font_index]);
+    /* FT_Face face = load_font_face(library, fonts[current_font_index]); */
+    FT_Face face = load_font_face(library, fonts[current_font_index], FREE_GLYPH_FONT_SIZE);
+
 
 
 
@@ -532,10 +536,6 @@ int main(int argc, char **argv)
                       /* redraw_screen(); */
                     }
                     break;
-
-
-
-
 
 
                     case SDLK_TAB: {
