@@ -58,8 +58,8 @@ typedef struct {
     bool in_array;   // to remember if we are inside an array
 } Lexer;
 
-/* Lexer lexer_new(Free_Glyph_Atlas *atlas, const char *content, size_t content_len); */
-Lexer lexer_new(Free_Glyph_Atlas *atlas, const char *content, size_t content_len, String_Builder file_path);
+Lexer lexer_new(Free_Glyph_Atlas *atlas, const char *content, size_t content_len);
+/* Lexer lexer_new(Free_Glyph_Atlas *atlas, const char *content, size_t content_len, String_Builder file_path); */
 Token lexer_next(Lexer *l);
 
 #endif // LEXER_H_

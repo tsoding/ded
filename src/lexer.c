@@ -114,27 +114,27 @@ const char *token_kind_name(Token_Kind kind)
 }
 
 // ORIGINAL
-/* Lexer lexer_new(Free_Glyph_Atlas *atlas, const char *content, size_t content_len) */
-/* { */
-/*     Lexer l = {0}; */
-/*     l.atlas = atlas; */
-/*     l.content = content; */
-/*     l.content_len = content_len; */
-/*     return l; */
-/* } */
-
-Lexer lexer_new(Free_Glyph_Atlas *atlas, const char *content, size_t content_len, String_Builder file_path)
+Lexer lexer_new(Free_Glyph_Atlas *atlas, const char *content, size_t content_len)
 {
     Lexer l = {0};
     l.atlas = atlas;
     l.content = content;
     l.content_len = content_len;
-    if (file_path.items != NULL) {
-        l.file_path.items = (char*) malloc(sizeof(char*) * (strlen(file_path.items) + 1));
-        strcpy(l.file_path.items, file_path.items);
-    }
     return l;
 }
+
+/* Lexer lexer_new(Free_Glyph_Atlas *atlas, const char *content, size_t content_len, String_Builder file_path) */
+/* { */
+/*     Lexer l = {0}; */
+/*     l.atlas = atlas; */
+/*     l.content = content; */
+/*     l.content_len = content_len; */
+/*     if (file_path.items != NULL) { */
+/*         l.file_path.items = (char*) malloc(sizeof(char*) * (strlen(file_path.items) + 1)); */
+/*         strcpy(l.file_path.items, file_path.items); */
+/*     } */
+/*     return l; */
+/* } */
 
 bool lexer_starts_with(Lexer *l, const char *prefix)
 {
@@ -411,6 +411,84 @@ Token lexer_next(Lexer *l)
         return token;
     }
 
+    /* if (is_symbol_start(l->content[l->cursor])) { */
+    /*     token.kind = TOKEN_SYMBOL; */
+    /*     while (l->cursor < l->content_len && is_symbol(l->content[l->cursor])) { */
+    /*         lexer_chop_char(l, 1); */
+    /*         token.text_len += 1; */
+    /*     } */
+
+    /*     if (l->file_path.items == NULL) */
+    /*         return token; */
+
+    /*     const char* file_ext; */
+    /*     const char* filename = l->file_path.items; */
+    /*     const char *dot = strrchr(filename, '.'); */
+    /*     if(!dot || dot == filename) */
+    /*         file_ext = ""; */
+    /*     else */
+    /*         file_ext = dot + 1; */
+
+/*         /\* for (size_t i = 0; i < cKeywords_count; ++i) { *\/ */
+/*         /\*     size_t keyword_len = strlen(cKeywords[i]); *\/ */
+/*         /\*     if (keyword_len == token.text_len && memcmp(cKeywords[i], token.text, keyword_len) == 0) { *\/ */
+/*         /\*         token.kind = TOKEN_KEYWORD; *\/ */
+/*         /\*         break; *\/ */
+
+/*         if (strcmp(file_ext, "java") == 0) { */
+/*             for (size_t i = 0; i < jKeywords_count; ++i) { */
+/*                 size_t keyword_len = strlen(jKeywords[i]); */
+/*                 if (keyword_len == token.text_len && memcmp(jKeywords[i], token.text, keyword_len) == 0) { */
+/*                     token.kind = TOKEN_KEYWORD; */
+/*                     break; */
+/*                 } */
+/*             } */
+/*         } else if (strcmp(file_ext, "py") == 0) { */
+/*             for (size_t i = 0; i < pyKeywords_count; ++i) { */
+/*                 size_t keyword_len = strlen(pyKeywords[i]); */
+/*                 if (keyword_len == token.text_len && memcmp(pyKeywords[i], token.text, keyword_len) == 0) { */
+/*                     token.kind = TOKEN_KEYWORD; */
+/*                     break; */
+/*                 } */
+/*             } */
+/*         } else if (strcmp(file_ext, "c") == 0) { */
+/*             for (size_t i = 0; i < cKeywords_count; ++i) { */
+/*                 size_t keyword_len = strlen(cKeywords[i]); */
+/*                 if (keyword_len == token.text_len && memcmp(cKeywords[i], token.text, keyword_len) == 0) { */
+/*                     token.kind = TOKEN_KEYWORD; */
+/*                     break; */
+/*                 } */
+/*             } */
+/*         } else { */
+/*             for (size_t i = 0; i < cKeywords_count; ++i) { */
+/*                 size_t keyword_len = strlen(cKeywords[i]); */
+/*                 if (keyword_len == token.text_len && memcmp(cKeywords[i], token.text, keyword_len) == 0) { */
+/*                     token.kind = TOKEN_KEYWORD; */
+/*                     break; */
+/*                 } */
+/*             } */
+/*         } */
+/*         return token; */
+/*     } */
+
+/*     lexer_chop_char(l, 1); */
+/*     token.kind = TOKEN_INVALID; */
+/*     token.text_len = 1; */
+/*     return token; */
+/* } */
+
+
+     for (size_t i = 0; i < literal_tokens_count; ++i) {
+        if (lexer_starts_with(l, literal_tokens[i].text)) {
+            // NOTE: this code assumes that there is no newlines in literal_tokens[i].text
+            size_t text_len = strlen(literal_tokens[i].text);
+            token.kind = literal_tokens[i].kind;
+            token.text_len = text_len;
+            lexer_chop_char(l, text_len);
+            return token;
+        }
+    }
+
     if (is_symbol_start(l->content[l->cursor])) {
         token.kind = TOKEN_SYMBOL;
         while (l->cursor < l->content_len && is_symbol(l->content[l->cursor])) {
@@ -418,56 +496,14 @@ Token lexer_next(Lexer *l)
             token.text_len += 1;
         }
 
-        if (l->file_path.items == NULL)
-            return token;
-
-        const char* file_ext;
-        const char* filename = l->file_path.items;
-        const char *dot = strrchr(filename, '.');
-        if(!dot || dot == filename)
-            file_ext = "";
-        else
-            file_ext = dot + 1;
-
-        /* for (size_t i = 0; i < keywords_count; ++i) { */
-        /*     size_t keyword_len = strlen(keywords[i]); */
-        /*     if (keyword_len == token.text_len && memcmp(keywords[i], token.text, keyword_len) == 0) { */
-        /*         token.kind = TOKEN_KEYWORD; */
-        /*         break; */
-
-        if (strcmp(file_ext, "java") == 0) {
-            for (size_t i = 0; i < jKeywords_count; ++i) {
-                size_t keyword_len = strlen(jKeywords[i]);
-                if (keyword_len == token.text_len && memcmp(jKeywords[i], token.text, keyword_len) == 0) {
-                    token.kind = TOKEN_KEYWORD;
-                    break;
-                }
-            }
-        } else if (strcmp(file_ext, "py") == 0) {
-            for (size_t i = 0; i < pyKeywords_count; ++i) {
-                size_t keyword_len = strlen(pyKeywords[i]);
-                if (keyword_len == token.text_len && memcmp(pyKeywords[i], token.text, keyword_len) == 0) {
-                    token.kind = TOKEN_KEYWORD;
-                    break;
-                }
-            }
-        } else if (strcmp(file_ext, "c") == 0) {
-            for (size_t i = 0; i < cKeywords_count; ++i) {
-                size_t keyword_len = strlen(cKeywords[i]);
-                if (keyword_len == token.text_len && memcmp(cKeywords[i], token.text, keyword_len) == 0) {
-                    token.kind = TOKEN_KEYWORD;
-                    break;
-                }
-            }
-        } else {
-            for (size_t i = 0; i < cKeywords_count; ++i) {
-                size_t keyword_len = strlen(cKeywords[i]);
-                if (keyword_len == token.text_len && memcmp(cKeywords[i], token.text, keyword_len) == 0) {
-                    token.kind = TOKEN_KEYWORD;
-                    break;
-                }
+        for (size_t i = 0; i < cKeywords_count; ++i) {
+            size_t keyword_len = strlen(cKeywords[i]);
+            if (keyword_len == token.text_len && memcmp(cKeywords[i], token.text, keyword_len) == 0) {
+                token.kind = TOKEN_KEYWORD;
+                break;
             }
         }
+
         return token;
     }
 
