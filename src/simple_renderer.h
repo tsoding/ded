@@ -62,6 +62,8 @@ typedef struct {
     Vec2f camera_vel;
 } Simple_Renderer;
 
+extern const char *vert_shader_file_path;
+
 void simple_renderer_init(Simple_Renderer *sr);
 
 void simple_renderer_reload_shaders(Simple_Renderer *sr);
@@ -82,5 +84,7 @@ void simple_renderer_image_rect(Simple_Renderer *sr, Vec2f p, Vec2f s, Vec2f uvp
 void simple_renderer_flush(Simple_Renderer *sr);
 void simple_renderer_sync(Simple_Renderer *sr);
 void simple_renderer_draw(Simple_Renderer *sr);
+
+/* const char *resolve_shader_path(const char *shader_file_name); */
 
 #endif  // SIMPLE_RENDERER_H_

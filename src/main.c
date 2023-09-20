@@ -181,6 +181,7 @@ int main(int argc, char **argv)
 {
 
   initialize_themes();
+  /* resolve_shader_path(); */
 
     Errno err;
 

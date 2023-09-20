@@ -8,6 +8,9 @@
 #include "./common.h"
 #include "./editor.h"
 
+#include <dirent.h>
+
+// hardocded
 #define vert_shader_file_path "./shaders/simple.vert"
 
 static_assert(COUNT_SIMPLE_SHADERS == 4, "The amount of fragment shaders has changed");
@@ -17,6 +20,36 @@ const char *frag_shader_file_paths[COUNT_SIMPLE_SHADERS] = {
     [SHADER_FOR_TEXT] = "./shaders/simple_text.frag",
     [SHADER_FOR_EPICNESS] = "./shaders/simple_epic.frag",
 };
+
+
+
+// TODO
+/* #define COUNT_SIMPLE_SHADERS 4 */
+/* static_assert(COUNT_SIMPLE_SHADERS == 4, "The amount of fragment shaders has changed"); */
+
+/* const char *resolve_shader_path(const char *shader_file_name) { */
+/*     static char resolved_path[512]; */
+/*     const char* home_dir = getenv("HOME"); */
+/*     if (!home_dir) { */
+/*         fprintf(stderr, "Error: HOME environment variable not set\n"); */
+/*         exit(EXIT_FAILURE); // Exit if HOME is not found */
+/*     } */
+/*     snprintf(resolved_path, sizeof(resolved_path), "%s/.config/ded/shaders/%s", home_dir, shader_file_name); */
+/*     return resolved_path; */
+/* } */
+
+/* const char *vert_shader_file_path = resolve_shader_path("simple.vert"); */
+/* const char *frag_shader_file_paths[COUNT_SIMPLE_SHADERS] = { */
+/*     [SHADER_FOR_COLOR] = resolve_shader_path("simple_color.frag"), */
+/*     [SHADER_FOR_IMAGE] = resolve_shader_path("simple_image.frag"), */
+/*     [SHADER_FOR_TEXT] = resolve_shader_path("simple_text.frag"), */
+/*     [SHADER_FOR_EPICNESS] = resolve_shader_path("simple_epic.frag"), */
+/* }; */
+
+
+
+
+
 
 static const char *shader_type_as_cstr(GLuint shader)
 {
