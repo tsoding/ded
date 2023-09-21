@@ -36,8 +36,8 @@
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 #define FONT_DIR "~/.config/ded/fonts/"
-/* #define DEFAULT_FONT "jet-extra-bold.ttf" */
-#define DEFAULT_FONT "Letters.ttf"
+#define DEFAULT_FONT "jet-extra-bold.ttf"
+/* #define DEFAULT_FONT "Letters.ttf" */
 #define MAX_FONTS 100
 #define MAX_PATH_SIZE 1024
 

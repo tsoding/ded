@@ -10,7 +10,6 @@
 
 EvilMode current_mode = NORMAL;
 float zoom_factor = 5.0f;
-Theme themes[10];
 bool showLineNumbers = false;  // This is the actual definition and initialization
 bool is_animated = true;  // or false, depending on your initial requirement
 
@@ -18,13 +17,152 @@ bool highlight_current_line = true;
 bool relative_line_numbers = true;
 
 
-int currentThemeIndex = 0;
 
+
+int currentThemeIndex = 0;
+Theme themes[6];
 
 void initialize_themes() {
 
-    // Catppuccin
     themes[0] = (Theme) {
+        .cursor = hex_to_vec4f(0x80D4FFFF), // Purple Cursor from --color-primary
+        .text = hex_to_vec4f(0xFFFFFFFF), // Main text color, based on --color-foreground for dark mode
+        .background = hex_to_vec4f(0x0D0D0DFF), // Background, from --color-background for dark mode
+        .comment = hex_to_vec4f(0x808080FF), // Comments with muted foreground, from --color-foreground-muted for dark mode
+        .hashtag = hex_to_vec4f(0xD6EBFFFF), // Using the hover link color for hashtags
+        .logic = hex_to_vec4f(0x80D4FFFF), // Logic color same as --color-links for dark mode
+        .string = hex_to_vec4f(0x2E2E2EFF), // Border color for strings
+        .selection = hex_to_vec4f(0x1A1A1AFF), // Selection using the muted border color
+        .search = hex_to_vec4f(0x808080FF), // Search color similar to comments
+        .marks = hex_to_vec4f(0x171717FF), // Marks using the raised background
+        .todo = hex_to_vec4f(0x1E1E1EFF), // Todos with slightly more visible background
+        .line_numbers = hex_to_vec4f(0x808080FF), // Muted line numbers
+        .fixme = hex_to_vec4f(0xCCD6F5FF), // Slightly brighter color for emphasis on FIXMEs
+        .note = hex_to_vec4f(0x808080FF), // Notes with muted foreground
+        .bug = hex_to_vec4f(0xF5F5F5FF), // Bugs with bright foreground
+        .not_equals = hex_to_vec4f(0x80D4FFFF), // Using links color for not equals
+        .exclamation = hex_to_vec4f(0xCCD6F5FF), // Slight emphasis for exclamation
+        .equals = hex_to_vec4f(0x808080FF), // Muted equals color
+        .equals_equals = hex_to_vec4f(0x808080FF), // Muted equals_equals color
+        .greater_than = hex_to_vec4f(0x80D4FFFF), // Links color for greater_than
+        .less_than = hex_to_vec4f(0x80D4FFFF), // Links color for less_than
+        .plus = hex_to_vec4f(0x80D4FFFF), // Links color for plus
+        .minus = hex_to_vec4f(0xCCD6F5FF), // Slight emphasis for minus
+        .truee = hex_to_vec4f(0x80D4FFFF), // Links color for true
+        .falsee = hex_to_vec4f(0xCCD6F5FF), // Emphasis for false
+        .arrow = hex_to_vec4f(0x808080FF), // Muted arrows
+        .open_square = hex_to_vec4f(0x80D4FFFF), // Links color for open brackets
+        .close_square = hex_to_vec4f(0x80D4FFFF), // Links color for close brackets
+        .current_line_number = hex_to_vec4f(0x80D4FFFF), // Highlight current line number with links color
+        .array_content = hex_to_vec4f(0x808080FF) // Muted array content
+    };
+
+    // Base2Tone
+    themes[2] = (Theme) {
+        .cursor = hex_to_vec4f(0x4183c4FF), // Link Color
+        .text = hex_to_vec4f(0x111111FF), // Primary Text Color
+        .background = hex_to_vec4f(0x00000026), // Base Background Color
+        .comment = hex_to_vec4f(0x222222FF), // Heading Colors
+        .hashtag = hex_to_vec4f(0x3ca555FF), // List Bullet Color
+        .logic = hex_to_vec4f(0x06f06fFF), // Button Focus Box Shadow
+        .string = hex_to_vec4f(0xc0c0c0FF), // Fieldset Border Color
+        .selection = hex_to_vec4f(0x999999FF), // Button Active Border Color
+        .search = hex_to_vec4f(0xcccCCCFF), // Various Elements Border Color
+        .todo = hex_to_vec4f(0xf8f8f8FF), // Pre Background Color
+        .line_numbers = hex_to_vec4f(0x9399b2FF), // As per example
+        .fixme = hex_to_vec4f(0xf7f7f7FF), // Blockquote Background
+        .note = hex_to_vec4f(0x666666FF), // Blockquote Text Color
+        .bug = hex_to_vec4f(0x4183c4FF), // Link Color
+        .not_equals = hex_to_vec4f(0x06f06fFF), // Button Focus Box Shadow
+        .exclamation = hex_to_vec4f(0x666666FF), // Blockquote Text Color
+        .equals = hex_to_vec4f(0x3ca555FF), // List Bullet Color
+        .equals_equals = hex_to_vec4f(0x3ca555FF), // List Bullet Color
+        .greater_than = hex_to_vec4f(0x06f06fFF), // Button Focus Box Shadow
+        .less_than = hex_to_vec4f(0x4183c4FF), // Link Color
+        .marks = hex_to_vec4f(0x06f06fFF), // Button Focus Box Shadow
+        .fb_selection = hex_to_vec4f(0xdddDDDFF), // Various Elements Border Color
+        .plus = hex_to_vec4f(0x3ca555FF), // List Bullet Color
+        .minus = hex_to_vec4f(0x4183c4FF), // Link Color
+        .truee = hex_to_vec4f(0x3ca555FF), // List Bullet Color
+        .falsee = hex_to_vec4f(0x4183c4FF), // Link Color
+        .arrow = hex_to_vec4f(0x666666FF), // Blockquote Text Color
+        .open_square = hex_to_vec4f(0x4183c4FF), // Link Color
+        .close_square = hex_to_vec4f(0x4183c4FF), // Link Color
+        .current_line_number = hex_to_vec4f(0x3ca555FF), // List Bullet Color
+        .array_content = hex_to_vec4f(0xdddDDDFF), // Various Elements Border Color
+    };
+
+    // Base2Tone Extended Pink & Purple
+    themes[3] = (Theme) {
+        .cursor = hex_to_vec4f(0x912D56FF),            // Darker Pink for Cursor
+        .text = hex_to_vec4f(0xEEEDF7FF),              // Very Light Lavender for Text
+        .background = hex_to_vec4f(0x1E001380),        // Deep Purple Transparent Background
+        .comment = hex_to_vec4f(0x554455FF),           // Muted Dark Purple for Comments
+        .hashtag = hex_to_vec4f(0xB34688FF),           // Magenta-ish for Hashtags
+        .logic = hex_to_vec4f(0xA22882FF),             // Rich Purple for Logic Operations
+        .string = hex_to_vec4f(0x995D99FF),            // Purple for Strings
+        .selection = hex_to_vec4f(0x4B004B80),         // Transparent Mid-Purple for Selection
+        .search = hex_to_vec4f(0xDF88DFFF),            // Pink-Purple for Search Highlights
+        .todo = hex_to_vec4f(0xEDE2F2FF),              // Light Lavender for TODOs
+        .line_numbers = hex_to_vec4f(0x7A507AFF),      // Purple-Gray for Line Numbers
+        .fixme = hex_to_vec4f(0xE8CFE8FF),             // Soft Lavender for FIXME Background
+        .note = hex_to_vec4f(0x774877FF),              // Dark Lavender for Notes
+        .bug = hex_to_vec4f(0xD2146BFF),               // Bright Magenta for Bugs
+        .not_equals = hex_to_vec4f(0xA22882FF),        // Rich Purple for Inequality
+        .exclamation = hex_to_vec4f(0xC23F91FF),       // Pink-Purple for Exclamation
+        .equals = hex_to_vec4f(0x8E558E),              // Mid Purple for Equality
+        .equals_equals = hex_to_vec4f(0x8E558E),       // Mid Purple for Double Equality
+        .greater_than = hex_to_vec4f(0xA22882FF),      // Rich Purple for Greater Than
+        .less_than = hex_to_vec4f(0x912D56FF),         // Darker Pink for Less Than
+        .marks = hex_to_vec4f(0xC91C7EFF),             // Magenta for Marks
+        .fb_selection = hex_to_vec4f(0xD49FD4FF),      // Muted Pink for Fallback Selections
+        .plus = hex_to_vec4f(0x995D99FF),              // Purple for Addition
+        .minus = hex_to_vec4f(0xB34688FF),             // Magenta-ish for Subtraction
+        .truee = hex_to_vec4f(0x774877FF),             // Dark Lavender for True
+        .falsee = hex_to_vec4f(0xA22882FF),            // Rich Purple for False
+        .arrow = hex_to_vec4f(0x7A507AFF),             // Purple-Gray for Arrows
+        .open_square = hex_to_vec4f(0x995D99FF),       // Purple for Open Brackets
+        .close_square = hex_to_vec4f(0x995D99FF),      // Purple for Close Brackets
+        .current_line_number = hex_to_vec4f(0xB34688FF), // Magenta-ish for Current Line Number
+        .array_content = hex_to_vec4f(0xD49FD4FF)      // Muted Pink for Array Content
+    };
+
+    /* // Monokai Expanded */
+    themes[4] = (Theme) {
+        .cursor = hex_to_vec4f(0xF8F8F0FF),       // Off-white for Cursor
+        .text = hex_to_vec4f(0xF8F8F2FF),         // Primary Text Color
+        .background = hex_to_vec4f(0x272822FF),   // Base Background Color
+        .comment = hex_to_vec4f(0x75715EFF),      // Grayish for Comments
+        .hashtag = hex_to_vec4f(0xA6E22EFF),      // Emerald for Hashtags
+        .logic = hex_to_vec4f(0xF92672FF),        // Pink for Logic Operations
+        .string = hex_to_vec4f(0xE6DB74FF),       // Yellow for Strings
+        .selection = hex_to_vec4f(0x49483EFF),    // Darker Gray for Selection
+        .search = hex_to_vec4f(0x66D9EFFF),       // Cyan for Search Highlights
+        .todo = hex_to_vec4f(0xFD971FFF),         // Orange-red for TODO markers
+        .line_numbers = hex_to_vec4f(0x8F908AFF),// Muted Gray for Line Numbers
+        .fixme = hex_to_vec4f(0xFF0000FF),        // Red for FIXME markers
+        .note = hex_to_vec4f(0x66D9EFFF),         // Cyan for Notes
+        .bug = hex_to_vec4f(0xFD5F00FF),          // Orange for Bugs
+        .not_equals = hex_to_vec4f(0xA6E22EFF),   // Emerald for Inequality
+        .exclamation = hex_to_vec4f(0xF92672FF),  // Pink for Exclamation
+        .equals = hex_to_vec4f(0x66D9EFFF),       // Cyan for Equality
+        .greater_than = hex_to_vec4f(0xF92672FF), // Pink for Comparison Operators
+        .less_than = hex_to_vec4f(0xA6E22EFF),    // Emerald for Comparison Operators
+        .marks = hex_to_vec4f(0xFD971FFF),        // Orange-red for Marks
+        .fb_selection = hex_to_vec4f(0x3E3D32FF), // Darker Shade for Fallback Selections
+        .plus = hex_to_vec4f(0x66D9EFFF),         // Cyan for Addition
+        .minus = hex_to_vec4f(0xF92672FF),        // Pink for Subtraction
+        .truee = hex_to_vec4f(0xA6E22EFF),        // Emerald for True
+        .falsee = hex_to_vec4f(0xF92672FF),       // Pink for False
+        .arrow = hex_to_vec4f(0xE6DB74FF),        // Yellow for Arrows
+        .open_square = hex_to_vec4f(0xE6DB74FF),  // Yellow for Open Brackets
+        .close_square = hex_to_vec4f(0xE6DB74FF), // Yellow for Close Brackets
+        .current_line_number = hex_to_vec4f(0x66D9EFFF), // Cyan for Current Line
+        .array_content = hex_to_vec4f(0x3E3D32FF) // Darker Shade for Array Content
+    };
+
+    // Catppuccin
+    themes[5] = (Theme) {
         .cursor = hex_to_vec4f(0xf38ba8FF), // Red
         .text = hex_to_vec4f(0xcdd6f4FF), // Text
         .background = hex_to_vec4f(0x1e1e2eFF), // Base
@@ -57,146 +195,68 @@ void initialize_themes() {
         .current_line_number = hex_to_vec4f(0x89b4faFF), // Blue
         .array_content = hex_to_vec4f(0x74c7ecFF), // Sapphire
     };
+    /* // Solarized dark */
+    /* themes[4] = (Theme) { */
+    /*     .cursor = hex_to_vec4f(0x93A1A1FF), */
+    /*     .text = hex_to_vec4f(0x839496FF), */
+    /*     .background = hex_to_vec4f(0x002B36FF), */
+    /*     .comment = hex_to_vec4f(0x586E75FF), */
+    /*     .hashtag = hex_to_vec4f(0x859900FF), */
+    /*     .logic = hex_to_vec4f(0xB58900FF), */
+    /*     .string = hex_to_vec4f(0x2AA198FF), */
+    /*     .selection = hex_to_vec4f(0x073642FF), */
+    /*     .search = hex_to_vec4f(0xDC322FFF), */
+    /*     .marks = hex_to_vec4f(0xD33682FF), */
+    /*     .fb_selection = hex_to_vec4f(0x073642FF) */
+    /* }; */
 
+    /* // Nord */
+    /* themes[5] = (Theme) { */
+    /*     .cursor = hex_to_vec4f(0xECEFF4FF), */
+    /*     .text = hex_to_vec4f(0xE5E9F0FF), */
+    /*     .background = hex_to_vec4f(0x2E3440FF), */
+    /*     .comment = hex_to_vec4f(0x4C566AFF), */
+    /*     .hashtag = hex_to_vec4f(0x8FBCBBFF), */
+    /*     .logic = hex_to_vec4f(0x81A1C1FF), */
+    /*     .string = hex_to_vec4f(0xA3BE8CFF), */
+    /*     .selection = hex_to_vec4f(0x3B4252FF), */
+    /*     .search = hex_to_vec4f(0xBF616AFF), */
+    /*     .marks = hex_to_vec4f(0xB48EADFF), */
+    /*     .fb_selection = hex_to_vec4f(0x3B4252FF) */
+    /* }; */
 
-    // Dracula
-    themes[1] = (Theme) {
-        .cursor = hex_to_vec4f(0xFF79C6FF),
-        .text = hex_to_vec4f(0xF8F8F2FF),
-        .logic = hex_to_vec4f(0x50FA7BFF),
-        .background = hex_to_vec4f(0x282A36FF),
-        .comment = hex_to_vec4f(0x6272A4FF),
-        .hashtag = hex_to_vec4f(0x8BE9FDFF),
-        .string = hex_to_vec4f(0xF1FA8CFF),
-        .selection = hex_to_vec4f(0x00000000),
-        .search = hex_to_vec4f(0xFF5555FF),
-        .todo = hex_to_vec4f(0xBD93F9FF),
-        .marks = hex_to_vec4f(0xBD93F9FF),
-        .fb_selection = hex_to_vec4f(0x44475AFF)
-    };
-
-
-    // Palenight
-    themes[2] = (Theme) {
-        .cursor = hex_to_vec4f(0xC792EAFF),
-        .text = hex_to_vec4f(0xA6ACCDFF),
-        .logic = hex_to_vec4f(0x89DDFFFF),
-        .background = hex_to_vec4f(0x292D3EFF),
-        .comment = hex_to_vec4f(0x676E95FF),
-        .hashtag = hex_to_vec4f(0xAB47BCFF),
-        .string = hex_to_vec4f(0xC3E88DFF),
-        .selection = hex_to_vec4f(0x00000000),
-        .fb_selection = hex_to_vec4f(0x00000000)
-    };
-
-    // Monokai
-    themes[3] = (Theme) {
-        .cursor = hex_to_vec4f(0xF8F8F0FF),
-        .text = hex_to_vec4f(0xF8F8F2FF),
-        .background = hex_to_vec4f(0x272822FF),
-        .comment = hex_to_vec4f(0x75715E),
-        .hashtag = hex_to_vec4f(0xA6E22EFF),
-        .logic = hex_to_vec4f(0xF92672FF),
-        .string = hex_to_vec4f(0xE6DB74FF),
-        .selection = hex_to_vec4f(0x49483EFF),
-        .search = hex_to_vec4f(0x66D9EFFF),
-        .marks = hex_to_vec4f(0xFD971FFF),
-        .fb_selection = hex_to_vec4f(0x3E3D32FF)
-    };
-
-    // Solarized dark
-    themes[4] = (Theme) {
-        .cursor = hex_to_vec4f(0x93A1A1FF),
-        .text = hex_to_vec4f(0x839496FF),
-        .background = hex_to_vec4f(0x002B36FF),
-        .comment = hex_to_vec4f(0x586E75FF),
-        .hashtag = hex_to_vec4f(0x859900FF),
-        .logic = hex_to_vec4f(0xB58900FF),
-        .string = hex_to_vec4f(0x2AA198FF),
-        .selection = hex_to_vec4f(0x073642FF),
-        .search = hex_to_vec4f(0xDC322FFF),
-        .marks = hex_to_vec4f(0xD33682FF),
-        .fb_selection = hex_to_vec4f(0x073642FF)
-    };
-
-    // Nord
-    themes[5] = (Theme) {
-        .cursor = hex_to_vec4f(0xECEFF4FF),
-        .text = hex_to_vec4f(0xE5E9F0FF),
-        .background = hex_to_vec4f(0x2E3440FF),
-        .comment = hex_to_vec4f(0x4C566AFF),
-        .hashtag = hex_to_vec4f(0x8FBCBBFF),
-        .logic = hex_to_vec4f(0x81A1C1FF),
-        .string = hex_to_vec4f(0xA3BE8CFF),
-        .selection = hex_to_vec4f(0x3B4252FF),
-        .search = hex_to_vec4f(0xBF616AFF),
-        .marks = hex_to_vec4f(0xB48EADFF),
-        .fb_selection = hex_to_vec4f(0x3B4252FF)
-    };
-
-    // Modus Operandi Inspired 1
-    themes[6] = (Theme) {
-        .cursor = hex_to_vec4f(0x000f0eff),
-        .text = hex_to_vec4f(0x000f0eff),
-        .logic = hex_to_vec4f(0x0090a1ff),
-        .background = hex_to_vec4f(0xfafafaff),
-        .comment = hex_to_vec4f(0x52676fff),
-        .hashtag = hex_to_vec4f(0xa070c0ff),
-        .string = hex_to_vec4f(0x7a5eafff),
-        .selection = hex_to_vec4f(0xd0d0e0ff),
-        .search = hex_to_vec4f(0xffc9c0ff),
-        .marks = hex_to_vec4f(0x9058d7ff),
-        .fb_selection = hex_to_vec4f(0xc0c0d8ff)
-    };
-
-    // Wildcherry Theme
-    themes[7] = (Theme) {
-        .background = hex_to_vec4f(0x000507FF),
-        .cursor = hex_to_vec4f(0xAA6F99FF),
-        .text = hex_to_vec4f(0xacbbc7FF),
-        .logic = hex_to_vec4f(0x6E5F95FF),
-        .comment = hex_to_vec4f(0x78828bFF),
-        .hashtag = hex_to_vec4f(0x7B6DA9FF),
-        .string = hex_to_vec4f(0xAA6F99FF),
-        .selection = hex_to_vec4f(0x8370AFFF),
-        .search = hex_to_vec4f(0xB375A8FF),
-        .marks = hex_to_vec4f(0x66578AFF),
-        .fb_selection = hex_to_vec4f(0x6E5F95FF)
-    };
-
-    // Rose-Pine
-    themes[8] = (Theme) {
-        .cursor = hex_to_vec4f(0xeb6f92FF), // Love (Pinkish)
-        .text = hex_to_vec4f(0xe0def4FF), // Text
-        .background = hex_to_vec4f(0x191724FF), // Base
-        .comment = hex_to_vec4f(0x6e6a86FF), // Muted
-        .hashtag = hex_to_vec4f(0x31748fFF), // Pine (Bluish)
-        .logic = hex_to_vec4f(0x908caaFF), // Subtle (Purple-ish)
-        .string = hex_to_vec4f(0xf6c177FF), // Gold (Yellow)
-        .selection = hex_to_vec4f(0x26233aFF), // Overlay
-        .search = hex_to_vec4f(0xc4a7e7FF), // Iris (Light Purple)
-        .marks = hex_to_vec4f(0xebbcbaFF), // Rose (Light Pink)
-        .fb_selection = hex_to_vec4f(0x9ccfd8FF) // Foam (Cyan)
-    };
+    /* // Modus Operandi Inspired 1 */
+    /* themes[6] = (Theme) { */
+    /*     .cursor = hex_to_vec4f(0x000f0eff), */
+    /*     .text = hex_to_vec4f(0x000f0eff), */
+    /*     .logic = hex_to_vec4f(0x0090a1ff), */
+    /*     .background = hex_to_vec4f(0xfafafaff), */
+    /*     .comment = hex_to_vec4f(0x52676fff), */
+    /*     .hashtag = hex_to_vec4f(0xa070c0ff), */
+    /*     .string = hex_to_vec4f(0x7a5eafff), */
+    /*     .selection = hex_to_vec4f(0xd0d0e0ff), */
+    /*     .search = hex_to_vec4f(0xffc9c0ff), */
+    /*     .marks = hex_to_vec4f(0x9058d7ff), */
+    /*     .fb_selection = hex_to_vec4f(0xc0c0d8ff) */
+    /* }; */
 
     // Best theme ever
-    themes[9] = (Theme) {
-        .cursor = hex_to_vec4f(0xFFFFFFFF),          // White cursor
-        .text = hex_to_vec4f(0xFFFFFFFF),
-        .background = hex_to_vec4f(0x181818FF),
-        .comment = hex_to_vec4f(0xCC8C3CFF),
-        .hashtag = hex_to_vec4f(0x95A99FFF),
-        .logic = hex_to_vec4f(0xFFDD33FF),
-        .string = hex_to_vec4f(0x73c936ff),
-        .selection = hex_to_vec4f(0x00000000),
-        .search = hex_to_vec4f(0xFFDD33FF),
-        .marks = hex_to_vec4f(0xFFDD33FF),
-        .fb_selection = hex_to_vec4f(0x00000000)
-    };
+    /* themes[9] = (Theme) { */
+    /*     .cursor = hex_to_vec4f(0xFFFFFFFF),          // White cursor */
+    /*     .text = hex_to_vec4f(0xFFFFFFFF), */
+    /*     .background = hex_to_vec4f(0x181818FF), */
+    /*     .comment = hex_to_vec4f(0xCC8C3CFF), */
+    /*     .hashtag = hex_to_vec4f(0x95A99FFF), */
+    /*     .logic = hex_to_vec4f(0xFFDD33FF), */
+    /*     .string = hex_to_vec4f(0x73c936ff), */
+    /*     .selection = hex_to_vec4f(0x00000000), */
+    /*     .search = hex_to_vec4f(0xFFDD33FF), */
+    /*     .marks = hex_to_vec4f(0xFFDD33FF), */
+    /*     .fb_selection = hex_to_vec4f(0x00000000) */
+    /* }; */
 }
 
 void theme_next(int *currentThemeIndex) {
-    // Assuming themes is globally defined with a known size
     const int themeCount = sizeof(themes) / sizeof(themes[0]);
     *currentThemeIndex += 1;
     if (*currentThemeIndex >= themeCount) {
@@ -207,35 +267,10 @@ void theme_next(int *currentThemeIndex) {
 void theme_previous(int *currentThemeIndex) {
     *currentThemeIndex -= 1;
     if (*currentThemeIndex < 0) {
-        // Assuming themes is globally defined with a known size
         const int themeCount = sizeof(themes) / sizeof(themes[0]);
         *currentThemeIndex = themeCount - 1;  // wrap around to the last theme
     }
 }
-
-
-/* void editor_backspace(Editor *e) */
-/* { */
-/*     if (e->searching) { */
-/*         if (e->search.count > 0) { */
-/*             e->search.count -= 1; */
-/*         } */
-/*     } else { */
-/*         if (e->cursor > e->data.count) { */
-/*             e->cursor = e->data.count; */
-/*         } */
-/*         if (e->cursor == 0) return; */
-
-/*         memmove( */
-/*             &e->data.items[e->cursor - 1], */
-/*             &e->data.items[e->cursor], */
-/*             e->data.count - e->cursor */
-/*         ); */
-/*         e->cursor -= 1; */
-/*         e->data.count -= 1; */
-/*         editor_retokenize(e); */
-/*     } */
-/* } */
 
 // Smart Parenthesis
 void editor_backspace(Editor *e)
@@ -1061,55 +1096,44 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
             sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME)));
             sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME;
-        // original
-        } else {
-            static bool hasShifted = false;  // This will ensure the code inside the if-block runs once
-            sr->camera_scale = 0.24f;  // Set the zoom level to 0.5
 
-            if (!hasShifted) {
+        } else {
+            sr->camera_scale = 0.24f;  // Set the zoom level to 0.24
+
+            // Static flag to ensure initial camera position is set only once
+            static bool hasSetInitialPosition = false;
+
+            // If the initial position hasn't been set, set it now
+            if (!hasSetInitialPosition) {
                 sr->camera_pos.x = 3850.0f;  // Set the x-position
                 sr->camera_pos.y = -2000.0f;  // Set the initial y-position
-                /* hasShifted = true;  // Mark as shifted */
+                hasSetInitialPosition = true;
             } else {
-                // Determine the height of a line
-                Vec2f pos = {0.0f, 0.0f};
-                const char *sampleText = "Sample text to measure.";
-                free_glyph_atlas_measure_line_sized(atlas, sampleText, strlen(sampleText), &pos);
-                float lineHeight = pos.y;
-
-                // Check the current cursor line position and adjust camera's Y-position if necessary
+                // Calculate the vertical position of the cursor in world coordinates.
                 int currentLine = editor_cursor_row(editor);
-                if (currentLine > 66) {
-                    sr->camera_pos.y = -2000.0f - (lineHeight * (currentLine - 66));
+                float cursorPosY = -((float)currentLine + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE;
+
+                // Define the top and bottom edges of the current camera view.
+                float cameraTopEdge = sr->camera_pos.y - (h/2.0f) / sr->camera_scale;
+                float cameraBottomEdge = sr->camera_pos.y + (h/2.0f) / sr->camera_scale;
+
+                // Adjust the camera's Y position if the cursor is outside the viewport.
+                if (cursorPosY > cameraBottomEdge) {
+                    sr->camera_pos.y += cursorPosY - cameraBottomEdge;  // Move camera down just enough
+                } else if (cursorPosY < cameraTopEdge) {
+                    sr->camera_pos.y -= cameraTopEdge - cursorPosY;  // Move camera up just enough
                 }
+
+                // Keeping the x-position fixed as per the previous logic
+                sr->camera_pos.x = 3850.0f;
             }
         }
 
-        /* } else { */
-        /*     static bool hasShifted = false;  // This will ensure the code inside the if-block runs once */
-        /*     sr->camera_scale = 0.24f * zoom_factor;  // Adjust the zoom based on zoom_factor. */
 
-        /*     if (!hasShifted) { */
-        /*         sr->camera_pos.x = 3850.0f;  // Set the x-position */
-        /*         sr->camera_pos.y = -2000.0f;  // Set the initial y-position */
 
-        /*         /\* Apply a shift factor based on zoom. *\/ */
-        /*         sr->camera_pos.x *= zoom_factor; */
-        /*         sr->camera_pos.y *= zoom_factor; */
-        /*     } else { */
-        /*         // Determine the height of a line */
-        /*         Vec2f pos = {0.0f, 0.0f}; */
-        /*         const char *sampleText = "Sample text to measure."; */
-        /*         free_glyph_atlas_measure_line_sized(atlas, sampleText, strlen(sampleText), &pos); */
-        /*         float lineHeight = pos.y; */
 
-        /*         // Check the current cursor line position and adjust camera's Y-position if necessary */
-        /*         int currentLine = editor_cursor_row(editor); */
-        /*         if (currentLine > 66) { */
-        /*             sr->camera_pos.y = (-2000.0f * zoom_factor) - (lineHeight * (currentLine - 66)); */
-        /*         } */
-        /*     } */
-        /* } */
+
+
     }
 }
 
