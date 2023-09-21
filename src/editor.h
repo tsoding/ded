@@ -70,6 +70,7 @@ typedef struct {
     Vec4f open_square;
     Vec4f close_square;
     Vec4f array_content;
+    Vec4f current_line_number;
     Vec4f marks;
     Vec4f fb_selection;
 } Theme;

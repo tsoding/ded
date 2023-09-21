@@ -1,0 +1,40 @@
+#+title: Todo
+
+
+* TODO
+every function defined in the code should be callable while the app is running
+add dwm like configuration files so the user could extend the editor
+in those files everyy function could be redefined
+** Mouse support
+clickable links
+ctrl click for documentation on the thing
+mouse scroll
+ctrl scroll should scroll more
+** Evil Mode
+splits   []
+5k should work []
+shift + 8 []
+** Modeline
+show the current EvilMode file name info and cool icons
+** Minibuffer
+to get user input for anything and everything
+
+** Minimap
+code minimap based on https://github.com/Ivoah/minimap
+
+
+
+
+** Lexer
+syntax highlighting for : | || & &&
+different shader per token
+different font per token
+
+** Dinamic cursor
+adjust syze based on overed glyph
+
+** Font
+changing font more times than the total number of font you have inside =~/.config/ded/fonts= should not crash
+
+** Camera
+ when animation are false move the camera like in emacs or vim

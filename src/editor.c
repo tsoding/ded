@@ -14,6 +14,9 @@ Theme themes[10];
 bool showLineNumbers = false;  // This is the actual definition and initialization
 bool is_animated = true;  // or false, depending on your initial requirement
 
+bool highlight_current_line = true;
+bool relative_line_numbers = true;
+
 
 int currentThemeIndex = 0;
 
@@ -51,6 +54,7 @@ void initialize_themes() {
         .arrow = hex_to_vec4f(0xf9e2afFF), // Yellow
         .open_square = hex_to_vec4f(0x89b4faFF), // Blue
         .close_square = hex_to_vec4f(0x89b4faFF), // Blue
+        .current_line_number = hex_to_vec4f(0x89b4faFF), // Blue
         .array_content = hex_to_vec4f(0x74c7ecFF), // Sapphire
     };
 
@@ -674,9 +678,14 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         simple_renderer_flush(sr);
     }
 
+
+
     /* if (showLineNumbers) { */
     /*     // Render line numbers */
     /*     simple_renderer_set_shader(sr, SHADER_FOR_TEXT); */
+
+    /*     // Get the color for line numbers from the current theme */
+    /*     Vec4f color = themes[currentThemeIndex].line_numbers; */
 
     /*     // Calculate the width for the line numbers, say every line number takes up to 5 characters of space */
 
@@ -688,7 +697,8 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     /*         pos.x = 0;  // Start from the left edge of the window */
     /*         pos.y = -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE; */
 
-    /*         free_glyph_atlas_render_line_sized(atlas, sr, lineNumberStr, strlen(lineNumberStr), &pos, lineNumberColor); */
+    /*         // Use the theme color for line numbers */
+    /*         free_glyph_atlas_render_line_sized(atlas, sr, lineNumberStr, strlen(lineNumberStr), &pos, color); */
     /*     } */
 
     /*     simple_renderer_flush(sr); */
@@ -696,28 +706,84 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
 
     if (showLineNumbers) {
-        // Render line numbers
         simple_renderer_set_shader(sr, SHADER_FOR_TEXT);
 
-        // Get the color for line numbers from the current theme
-        Vec4f color = themes[currentThemeIndex].line_numbers;
+        // Determine the current line number using the provided function
+        size_t currentLineNumber = editor_cursor_row(editor);
 
-        // Calculate the width for the line numbers, say every line number takes up to 5 characters of space
+        // Different colors for line numbers
+        Vec4f defaultColor = themes[currentThemeIndex].line_numbers;
+        Vec4f currentLineColor = themes[currentThemeIndex].current_line_number;
 
         for (size_t i = 0; i < editor->lines.count; ++i) {
-            char lineNumberStr[10];  // Buffer for line number string
-            snprintf(lineNumberStr, sizeof(lineNumberStr), "%zu", i + 1);  // Convert line number to string
+            char lineNumberStr[10];
 
-            Vec2f pos;
-            pos.x = 0;  // Start from the left edge of the window
-            pos.y = -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE;
+            // Calculate display line number based on relative number setting
+            size_t displayLineNumber;
+            if (relative_line_numbers) {
+                // Show the distance from the current line instead of the absolute line number
+                displayLineNumber = (i >= currentLineNumber) ? i - currentLineNumber : currentLineNumber - i;
+            } else {
+                displayLineNumber = i + 1;
+            }
+            snprintf(lineNumberStr, sizeof(lineNumberStr), "%zu", displayLineNumber);
 
-            // Use the theme color for line numbers
-            free_glyph_atlas_render_line_sized(atlas, sr, lineNumberStr, strlen(lineNumberStr), &pos, color);
+            Vec2f pos = {0, -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE};
+
+            // Decide on the color to use
+            Vec4f colorToUse = defaultColor;
+            if (highlight_current_line && i == currentLineNumber) {
+                colorToUse = currentLineColor;
+            }
+
+            free_glyph_atlas_render_line_sized(atlas, sr, lineNumberStr, strlen(lineNumberStr), &pos, colorToUse);
         }
 
         simple_renderer_flush(sr);
     }
+
+
+
+
+
+
+
+
+
+    // chain
+    /* if (showLineNumbers) { */
+    /*     simple_renderer_set_shader(sr, SHADER_FOR_TEXT); */
+
+    /*     size_t currentLineNumber = editor_cursor_row(editor); */
+
+    /*     Vec4f defaultColor = themes[currentThemeIndex].line_numbers; */
+    /*     Vec4f currentLineColor = themes[currentThemeIndex].current_line_number; */
+
+    /*     char lineNumberStr[10]; */
+    /*     Vec2f pos = {0, 0}; */
+
+    /*     for (size_t i = 0; i < editor->lines.count; ++i) { */
+    /*         // Calculate display line number based on relative number setting */
+    /*         size_t displayLineNumber = relative_line_numbers */
+    /*             ? (i >= currentLineNumber) ? i - currentLineNumber : currentLineNumber - i */
+    /*             : i + 1; */
+
+    /*         snprintf(lineNumberStr, sizeof(lineNumberStr), "%zu", displayLineNumber); */
+
+    /*         pos.y = -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE; */
+
+    /*         Vec4f* colorToUse = &defaultColor;  // Use a pointer to avoid copying the whole struct */
+    /*         if (highlight_current_line && i == currentLineNumber) { */
+    /*             colorToUse = &currentLineColor; */
+    /*         } */
+
+    /*         free_glyph_atlas_render_line_sized(atlas, sr, lineNumberStr, strlen(lineNumberStr), &pos, *colorToUse); */
+    /*     } */
+
+    /*     simple_renderer_flush(sr); */
+    /* } */
+
+
 
 
     // Render text
