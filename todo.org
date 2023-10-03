@@ -1,0 +1,46 @@
+#+title: Todo
+
+
+* TODO
+every function defined in the code should be callable while the app is running M-x []
+
+dwm like configuration file so the user could extend the editor []
+in those files every function could be redefined
+** Mouse support
+clickable links with both cursor and mouse []
+ctrl click for documentation on the thing or enter in normal mode []
+mouse scroll []
+ctrl scroll should scroll more []
+** Evil Mode
+splits   []
+5k should work []
+shift + 8 []
+better than vim macros []
+** Modeline
+show the current EvilMode, file name, info and cool icons
+** Minibuffer
+to get user input for anything and everything popups are for loosers
+
+** Minimap
+code minimap based on https://github.com/Ivoah/minimap
+
+
+** Lexer
+syntax highlighting for : | || & && []
+different shader per token []
+different font per token []
+** Dinamic cursor
+adjust syze based on overed glyph []
+** Font
+changing font more times than the total number of font you have inside =~/.config/ded/fonts= should not crash
+** Camera
+ when animation are false move the camera like in emacs or vim [x]
+
+** Shaders
+use shaders from =~/.config/ded/shaders= instead [x]
+** Editor
+if editor->has_mark make the cursor trasparent [x]
+support multiple marks not just one []
+highlight links []
+render wavy or normal line under text for errors or whatever []
+use window hight and width dinamicly instead of fixed position when animations are off []

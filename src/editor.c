@@ -960,6 +960,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     /*     return;  // Skip the cursor rendering */
     /* } */
 
+
     // Adjust cursor position if line numbers are shown
     if (showLineNumbers) {
         cursor_pos.x += lineNumberWidth;
@@ -976,6 +977,13 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     Vec4f INNER_COLOR = vec4f(CURSOR_COLOR.x, CURSOR_COLOR.y, CURSOR_COLOR.z, 0.3); // Same color but with reduced alpha
 
     sr->verticies_count = 0;
+
+
+    // If editor has a mark, make the cursor transparent
+    if (editor->has_mark) {
+        CURSOR_COLOR.w = 0.0f;  // Set alpha to 0 (fully transparent)
+    }
+
 
     // Rendering based on mode
     switch (current_mode) {
