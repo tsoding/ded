@@ -39,6 +39,7 @@ typedef enum {
     SHADER_FOR_COLOR = 0,
     SHADER_FOR_IMAGE,
     SHADER_FOR_TEXT,
+    SHADER_FOR_GLOW,
     SHADER_FOR_EPICNESS, // This is the one that does that cool rainbowish animation
     COUNT_SIMPLE_SHADERS,
 } Simple_Shader;
@@ -62,7 +63,17 @@ typedef struct {
     Vec2f camera_vel;
 } Simple_Renderer;
 
-extern const char *vert_shader_file_path;
+
+// old
+/* extern const char *vert_shader_file_path; */
+
+
+#define MAX_SHADER_PATH_LENGTH 256
+extern char vert_shader_file_path[MAX_SHADER_PATH_LENGTH];
+
+
+
+
 
 void simple_renderer_init(Simple_Renderer *sr);
 

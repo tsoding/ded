@@ -142,6 +142,8 @@ void editor_stop_search_and_mark(Editor *e);
 void editor_search_next(Editor *e);
 void editor_search_previous(Editor *e);
 void editor_clear_mark(Editor *editor);
+void move_camera(Simple_Renderer *sr, const char* direction, float amount);
+
 
 extern float zoom_factor;
 extern bool showLineNumbers;

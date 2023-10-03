@@ -11,41 +11,39 @@
 #include <dirent.h>
 
 // hardocded
-#define vert_shader_file_path "./shaders/simple.vert"
+/* #define vert_shader_file_path "./shaders/simple.vert" */
 
-static_assert(COUNT_SIMPLE_SHADERS == 4, "The amount of fragment shaders has changed");
-const char *frag_shader_file_paths[COUNT_SIMPLE_SHADERS] = {
-    [SHADER_FOR_COLOR] = "./shaders/simple_color.frag",
-    [SHADER_FOR_IMAGE] = "./shaders/simple_image.frag",
-    [SHADER_FOR_TEXT] = "./shaders/simple_text.frag",
-    [SHADER_FOR_EPICNESS] = "./shaders/simple_epic.frag",
-};
-
-
-
-// TODO
-/* #define COUNT_SIMPLE_SHADERS 4 */
-/* static_assert(COUNT_SIMPLE_SHADERS == 4, "The amount of fragment shaders has changed"); */
-
-/* const char *resolve_shader_path(const char *shader_file_name) { */
-/*     static char resolved_path[512]; */
-/*     const char* home_dir = getenv("HOME"); */
-/*     if (!home_dir) { */
-/*         fprintf(stderr, "Error: HOME environment variable not set\n"); */
-/*         exit(EXIT_FAILURE); // Exit if HOME is not found */
-/*     } */
-/*     snprintf(resolved_path, sizeof(resolved_path), "%s/.config/ded/shaders/%s", home_dir, shader_file_name); */
-/*     return resolved_path; */
-/* } */
-
-/* const char *vert_shader_file_path = resolve_shader_path("simple.vert"); */
+/* static_assert(COUNT_SIMPLE_SHADERS == 5, "The amount of fragment shaders has changed"); */
 /* const char *frag_shader_file_paths[COUNT_SIMPLE_SHADERS] = { */
-/*     [SHADER_FOR_COLOR] = resolve_shader_path("simple_color.frag"), */
-/*     [SHADER_FOR_IMAGE] = resolve_shader_path("simple_image.frag"), */
-/*     [SHADER_FOR_TEXT] = resolve_shader_path("simple_text.frag"), */
-/*     [SHADER_FOR_EPICNESS] = resolve_shader_path("simple_epic.frag"), */
+/*     [SHADER_FOR_COLOR] = "./shaders/simple_color.frag", */
+/*     [SHADER_FOR_IMAGE] = "./shaders/simple_image.frag", */
+/*     [SHADER_FOR_TEXT] = "./shaders/simple_text.frag", */
+/*     [SHADER_FOR_EPICNESS] = "./shaders/simple_epic.frag", */
+/*     [SHADER_FOR_GLOW] = "./shaders/simple_glow.frag", */
 /* }; */
 
+
+
+// still hardcoded but ~/.config is cool
+char vert_shader_file_path[MAX_SHADER_PATH_LENGTH];
+char frag_shader_file_paths[COUNT_SIMPLE_SHADERS][MAX_SHADER_PATH_LENGTH];
+
+void set_shader_path(char* buffer, const char* shaderName) {
+    const char* home = getenv("HOME");
+    snprintf(buffer, MAX_SHADER_PATH_LENGTH, "%s/.config/ded/shaders/%s", home, shaderName);
+}
+
+void initialize_shader_paths() {
+    set_shader_path(vert_shader_file_path, "simple.vert");
+
+    set_shader_path(frag_shader_file_paths[SHADER_FOR_COLOR], "simple_color.frag");
+    set_shader_path(frag_shader_file_paths[SHADER_FOR_IMAGE], "simple_image.frag");
+    set_shader_path(frag_shader_file_paths[SHADER_FOR_TEXT], "simple_text.frag");
+    set_shader_path(frag_shader_file_paths[SHADER_FOR_EPICNESS], "simple_epic.frag");
+    set_shader_path(frag_shader_file_paths[SHADER_FOR_GLOW], "simple_glow.frag");
+}
+
+// Call initialize_shader_paths() early in your program.
 
 
 

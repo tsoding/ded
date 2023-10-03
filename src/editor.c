@@ -6,7 +6,8 @@
 #include "./editor.h"
 #include "./common.h"
 #include "./free_glyph.h"
-
+#include "./file_browser.h"
+#include <ctype.h> // For isalnum
 
 EvilMode current_mode = NORMAL;
 float zoom_factor = 5.0f;
@@ -19,8 +20,69 @@ bool relative_line_numbers = true;
 
 
 
+// TODO bad implementation
+bool extractWordUnderCursor(Editor *editor, char *word) {
+    // Make a copy of cursor position to avoid modifying the actual cursor
+    int cursor = editor->cursor;
+
+    // Move left to find the start of the word.
+    while (cursor > 0 && isalnum(editor->data.items[cursor - 1])) {
+        cursor--;
+    }
+
+    // Check if the cursor is on a word or on whitespace/special character.
+    if (!isalnum(editor->data.items[cursor])) return false;
+
+    int start = cursor;
+
+    // Move right to find the end of the word.
+    while (cursor < editor->data.count && isalnum(editor->data.items[cursor])) {
+        cursor++;
+    }
+
+    int end = cursor;
+
+    // Copy the word to the provided buffer.
+    // Make sure not to overflow the buffer and null-terminate the string.
+    int length = end - start;
+    strncpy(word, &editor->data.items[start], length);
+    word[length] = '\0';
+
+    // Debugging print
+    printf("Extracted word: %s\n", word);
+
+    return true;
+}
+
+
+
+
+void move_camera(Simple_Renderer *sr, const char* direction, float amount) {
+    if(sr == NULL) return; // check if the SimpleRenderer pointer is valid
+
+    // Check the direction and adjust the camera position accordingly.
+    if(strcmp(direction, "up") == 0) {
+        sr->camera_pos.y -= amount;
+    } else if(strcmp(direction, "down") == 0) {
+        sr->camera_pos.y += amount;
+    } else if(strcmp(direction, "left") == 0) {
+        sr->camera_pos.x -= amount;
+    } else if(strcmp(direction, "right") == 0) {
+        sr->camera_pos.x += amount;
+    } else {
+        printf("Invalid direction '%s'\n", direction);
+    }
+}
+
+
+
+
+
+
+
+
 int currentThemeIndex = 0;
-Theme themes[6];
+Theme themes[5];
 
 void initialize_themes() {
 
@@ -58,7 +120,7 @@ void initialize_themes() {
     };
 
     // Base2Tone
-    themes[2] = (Theme) {
+    themes[1] = (Theme) {
         .cursor = hex_to_vec4f(0x4183c4FF), // Link Color
         .text = hex_to_vec4f(0x111111FF), // Primary Text Color
         .background = hex_to_vec4f(0x00000026), // Base Background Color
@@ -93,7 +155,7 @@ void initialize_themes() {
     };
 
     // Base2Tone Extended Pink & Purple
-    themes[3] = (Theme) {
+    themes[2] = (Theme) {
         .cursor = hex_to_vec4f(0x912D56FF),            // Darker Pink for Cursor
         .text = hex_to_vec4f(0xEEEDF7FF),              // Very Light Lavender for Text
         .background = hex_to_vec4f(0x1E001380),        // Deep Purple Transparent Background
@@ -128,7 +190,7 @@ void initialize_themes() {
     };
 
     /* // Monokai Expanded */
-    themes[4] = (Theme) {
+    themes[3] = (Theme) {
         .cursor = hex_to_vec4f(0xF8F8F0FF),       // Off-white for Cursor
         .text = hex_to_vec4f(0xF8F8F2FF),         // Primary Text Color
         .background = hex_to_vec4f(0x272822FF),   // Base Background Color
@@ -162,7 +224,7 @@ void initialize_themes() {
     };
 
     // Catppuccin
-    themes[5] = (Theme) {
+    themes[4] = (Theme) {
         .cursor = hex_to_vec4f(0xf38ba8FF), // Red
         .text = hex_to_vec4f(0xcdd6f4FF), // Text
         .background = hex_to_vec4f(0x1e1e2eFF), // Base
@@ -195,66 +257,7 @@ void initialize_themes() {
         .current_line_number = hex_to_vec4f(0x89b4faFF), // Blue
         .array_content = hex_to_vec4f(0x74c7ecFF), // Sapphire
     };
-    /* // Solarized dark */
-    /* themes[4] = (Theme) { */
-    /*     .cursor = hex_to_vec4f(0x93A1A1FF), */
-    /*     .text = hex_to_vec4f(0x839496FF), */
-    /*     .background = hex_to_vec4f(0x002B36FF), */
-    /*     .comment = hex_to_vec4f(0x586E75FF), */
-    /*     .hashtag = hex_to_vec4f(0x859900FF), */
-    /*     .logic = hex_to_vec4f(0xB58900FF), */
-    /*     .string = hex_to_vec4f(0x2AA198FF), */
-    /*     .selection = hex_to_vec4f(0x073642FF), */
-    /*     .search = hex_to_vec4f(0xDC322FFF), */
-    /*     .marks = hex_to_vec4f(0xD33682FF), */
-    /*     .fb_selection = hex_to_vec4f(0x073642FF) */
-    /* }; */
-
-    /* // Nord */
-    /* themes[5] = (Theme) { */
-    /*     .cursor = hex_to_vec4f(0xECEFF4FF), */
-    /*     .text = hex_to_vec4f(0xE5E9F0FF), */
-    /*     .background = hex_to_vec4f(0x2E3440FF), */
-    /*     .comment = hex_to_vec4f(0x4C566AFF), */
-    /*     .hashtag = hex_to_vec4f(0x8FBCBBFF), */
-    /*     .logic = hex_to_vec4f(0x81A1C1FF), */
-    /*     .string = hex_to_vec4f(0xA3BE8CFF), */
-    /*     .selection = hex_to_vec4f(0x3B4252FF), */
-    /*     .search = hex_to_vec4f(0xBF616AFF), */
-    /*     .marks = hex_to_vec4f(0xB48EADFF), */
-    /*     .fb_selection = hex_to_vec4f(0x3B4252FF) */
-    /* }; */
-
-    /* // Modus Operandi Inspired 1 */
-    /* themes[6] = (Theme) { */
-    /*     .cursor = hex_to_vec4f(0x000f0eff), */
-    /*     .text = hex_to_vec4f(0x000f0eff), */
-    /*     .logic = hex_to_vec4f(0x0090a1ff), */
-    /*     .background = hex_to_vec4f(0xfafafaff), */
-    /*     .comment = hex_to_vec4f(0x52676fff), */
-    /*     .hashtag = hex_to_vec4f(0xa070c0ff), */
-    /*     .string = hex_to_vec4f(0x7a5eafff), */
-    /*     .selection = hex_to_vec4f(0xd0d0e0ff), */
-    /*     .search = hex_to_vec4f(0xffc9c0ff), */
-    /*     .marks = hex_to_vec4f(0x9058d7ff), */
-    /*     .fb_selection = hex_to_vec4f(0xc0c0d8ff) */
-    /* }; */
-
-    // Best theme ever
-    /* themes[9] = (Theme) { */
-    /*     .cursor = hex_to_vec4f(0xFFFFFFFF),          // White cursor */
-    /*     .text = hex_to_vec4f(0xFFFFFFFF), */
-    /*     .background = hex_to_vec4f(0x181818FF), */
-    /*     .comment = hex_to_vec4f(0xCC8C3CFF), */
-    /*     .hashtag = hex_to_vec4f(0x95A99FFF), */
-    /*     .logic = hex_to_vec4f(0xFFDD33FF), */
-    /*     .string = hex_to_vec4f(0x73c936ff), */
-    /*     .selection = hex_to_vec4f(0x00000000), */
-    /*     .search = hex_to_vec4f(0xFFDD33FF), */
-    /*     .marks = hex_to_vec4f(0xFFDD33FF), */
-    /*     .fb_selection = hex_to_vec4f(0x00000000) */
-    /* }; */
-}
+ }
 
 void theme_next(int *currentThemeIndex) {
     const int themeCount = sizeof(themes) / sizeof(themes[0]);
@@ -587,6 +590,9 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     /* Vec4f lineNumberColor = vec4f(0.5, 0.5, 0.5, 1);  // A lighter color for line numbers, adjust as needed */
 
 
+
+
+    
     // Render selection
     {
         simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
@@ -714,32 +720,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     }
 
 
-
-    /* if (showLineNumbers) { */
-    /*     // Render line numbers */
-    /*     simple_renderer_set_shader(sr, SHADER_FOR_TEXT); */
-
-    /*     // Get the color for line numbers from the current theme */
-    /*     Vec4f color = themes[currentThemeIndex].line_numbers; */
-
-    /*     // Calculate the width for the line numbers, say every line number takes up to 5 characters of space */
-
-    /*     for (size_t i = 0; i < editor->lines.count; ++i) { */
-    /*         char lineNumberStr[10];  // Buffer for line number string */
-    /*         snprintf(lineNumberStr, sizeof(lineNumberStr), "%zu", i + 1);  // Convert line number to string */
-
-    /*         Vec2f pos; */
-    /*         pos.x = 0;  // Start from the left edge of the window */
-    /*         pos.y = -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE; */
-
-    /*         // Use the theme color for line numbers */
-    /*         free_glyph_atlas_render_line_sized(atlas, sr, lineNumberStr, strlen(lineNumberStr), &pos, color); */
-    /*     } */
-
-    /*     simple_renderer_flush(sr); */
-    /* } */
-
-
+    /* current line number */
     if (showLineNumbers) {
         simple_renderer_set_shader(sr, SHADER_FOR_TEXT);
 
@@ -756,11 +737,17 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             // Calculate display line number based on relative number setting
             size_t displayLineNumber;
             if (relative_line_numbers) {
-                // Show the distance from the current line instead of the absolute line number
-                displayLineNumber = (i >= currentLineNumber) ? i - currentLineNumber : currentLineNumber - i;
+                if (i == currentLineNumber) {
+                    // Display the actual line number for the current line
+                    displayLineNumber = currentLineNumber + 1;
+                } else {
+                    // Show the distance from the current line for other lines
+                    displayLineNumber = (i > currentLineNumber) ? i - currentLineNumber : currentLineNumber - i;
+                }
             } else {
                 displayLineNumber = i + 1;
             }
+
             snprintf(lineNumberStr, sizeof(lineNumberStr), "%zu", displayLineNumber);
 
             Vec2f pos = {0, -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE};
@@ -776,49 +763,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
         simple_renderer_flush(sr);
     }
-
-
-
-
-
-
-
-
-
-    // chain
-    /* if (showLineNumbers) { */
-    /*     simple_renderer_set_shader(sr, SHADER_FOR_TEXT); */
-
-    /*     size_t currentLineNumber = editor_cursor_row(editor); */
-
-    /*     Vec4f defaultColor = themes[currentThemeIndex].line_numbers; */
-    /*     Vec4f currentLineColor = themes[currentThemeIndex].current_line_number; */
-
-    /*     char lineNumberStr[10]; */
-    /*     Vec2f pos = {0, 0}; */
-
-    /*     for (size_t i = 0; i < editor->lines.count; ++i) { */
-    /*         // Calculate display line number based on relative number setting */
-    /*         size_t displayLineNumber = relative_line_numbers */
-    /*             ? (i >= currentLineNumber) ? i - currentLineNumber : currentLineNumber - i */
-    /*             : i + 1; */
-
-    /*         snprintf(lineNumberStr, sizeof(lineNumberStr), "%zu", displayLineNumber); */
-
-    /*         pos.y = -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE; */
-
-    /*         Vec4f* colorToUse = &defaultColor;  // Use a pointer to avoid copying the whole struct */
-    /*         if (highlight_current_line && i == currentLineNumber) { */
-    /*             colorToUse = &currentLineColor; */
-    /*         } */
-
-    /*         free_glyph_atlas_render_line_sized(atlas, sr, lineNumberStr, strlen(lineNumberStr), &pos, *colorToUse); */
-    /*     } */
-
-    /*     simple_renderer_flush(sr); */
-    /* } */
-
-
 
 
     // Render text
@@ -864,7 +808,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             case TOKEN_KEYWORD:
                 /* color = hex_to_vec4f(0xFFDD33FF); */
                 color = themes[currentThemeIndex].logic;
-
                 break;
 
             case TOKEN_COMMENT:
@@ -982,7 +925,9 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             case TOKEN_ARRAY_CONTENT:
                 color = themes[currentThemeIndex].array_content;
                 break;
-
+            case TOKEN_BAD_SPELLCHECK:
+                color = themes[currentThemeIndex].bug;
+                break;
             case TOKEN_STRING:
                 /* color = hex_to_vec4f(0x73c936ff); */
                 color = themes[currentThemeIndex].string;
@@ -1007,7 +952,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
 
     // Render cursor
-    simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
+    simple_renderer_set_shader(sr, SHADER_FOR_EPICNESS);
 
     // Exit early if the editor has a mark and should not render the cursor
     // since the camera follow the cursor i cant do it or i dont know how
@@ -1128,12 +1073,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 sr->camera_pos.x = 3850.0f;
             }
         }
-
-
-
-
-
-
     }
 }
 

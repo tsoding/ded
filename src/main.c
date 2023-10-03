@@ -36,9 +36,10 @@
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 #define FONT_DIR "~/.config/ded/fonts/"
-#define DEFAULT_FONT "jet-extra-bold.ttf"
+  /* #define DEFAULT_FONT "jet-extra-bold.ttf" */
 /* #define DEFAULT_FONT "Letters.ttf" */
-#define MAX_FONTS 100
+#define DEFAULT_FONT "designer.otf"
+#define MAX_FONTS 20
 #define MAX_PATH_SIZE 1024
 
 char *fonts[MAX_FONTS];
@@ -181,8 +182,7 @@ int main(int argc, char **argv)
 {
 
   initialize_themes();
-  /* resolve_shader_path(); */
-
+  initialize_shader_paths();
     Errno err;
 
     FT_Library library = {0};
@@ -327,9 +327,12 @@ int main(int argc, char **argv)
 
 
 
+
+
     bool quit = false;
-    bool file_browser = false;
     bool repl = false;
+    bool file_browser = false;
+
     static bool file_creation_mode = false;    // To track if we're in "file creation mode"
     static char new_filename[PATH_MAX] = "";   // To accumulate filename
     static size_t filename_cursor = 0;         // Cursor for where we're writing in new_filename
@@ -514,12 +517,48 @@ int main(int argc, char **argv)
                   switch (event.key.keysym.sym) {
                     SDL_Event tmpEvent; // Declare once at the beginning of the switch block
 
+
+                  case SDLK_RETURN: {
+                    if (editor.searching) {
+                      editor_stop_search_and_mark(&editor);
+                      current_mode = NORMAL;
+                    } else {
+                      printf("Return key pressed\n");  // Debug print to check if the case is executed
+                      // Allocate a buffer to hold the extracted word. Assuming the maximum word length is 255 characters.
+                      char word[256];
+
+                      // If the word is successfully extracted, print it to the debug output.
+                      if (extractWordUnderCursor(&editor, word)) {
+                        printf("Extracted word: %s\n", word); // Debug print
+                      } else {
+                        printf("No word under cursor\n"); // Debug print when there is no word under the cursor
+                      }
+                    }
+                  }
+                    break;
+
+
+
+
                   case SDLK_ESCAPE: {
                     editor_clear_mark(&editor);
                     editor_stop_search(&editor);
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                   }
                     break;
+
+                  case SDL_MOUSEWHEEL:
+                    if (event.wheel.y > 0) { // Scroll up
+                      printf("Scroll Up event captured\n"); // Debug print
+                      move_camera(&sr, "up", 20.0f); // Notice &sr, passed the address of sr
+                    } else if (event.wheel.y < 0) { // Scroll down
+                      printf("Scroll Down event captured\n"); // Debug print
+                      move_camera(&sr, "down", 20.0f); // Notice &sr, passed the address of sr
+                    }
+                    break;
+
+
+
 
 
                   case SDLK_LEFTBRACKET:
@@ -751,7 +790,9 @@ int main(int argc, char **argv)
 
                   case SDLK_j:  // Down
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                    if (event.key.keysym.mod & KMOD_CTRL) {
+                    if ((event.key.keysym.mod & KMOD_ALT) && !is_animated) {
+                      move_camera(&sr, "down", 50.0f);
+                    } else if (event.key.keysym.mod & KMOD_CTRL) {
                       editor_move_paragraph_down(&editor);
                     } else {
                       editor_move_line_down(&editor);
@@ -761,13 +802,17 @@ int main(int argc, char **argv)
 
                   case SDLK_k:  // Up
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                    if (event.key.keysym.mod & KMOD_CTRL) {
+                    if ((event.key.keysym.mod & KMOD_ALT) && !is_animated) {
+                      move_camera(&sr, "up", 50.0f);
+                    } else if (event.key.keysym.mod & KMOD_CTRL) {
                       editor_move_paragraph_up(&editor);
                     } else {
                       editor_move_line_up(&editor);
                     }
                     editor.last_stroke = SDL_GetTicks();
                     break;
+
+
 
                   case SDLK_l:  // Right
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
@@ -968,6 +1013,9 @@ int main(int argc, char **argv)
                        }
                    }
                    break;
+
+
+
 
                     case SDLK_f: {
                         if (event.key.keysym.mod & KMOD_CTRL) {
@@ -1218,8 +1266,13 @@ int main(int argc, char **argv)
         SDL_GetWindowSize(window, &w, &h);
         glViewport(0, 0, w, h);
         Vec4f bg = themes[currentThemeIndex].background;
+
         glClearColor(bg.x, bg.y, bg.z, bg.w);
         glClear(GL_COLOR_BUFFER_BIT);
+
+
+
+
 
         /* if (file_browser) { */
         /*     fb_render(&fb, window, &atlas, &sr); */

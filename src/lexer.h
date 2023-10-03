@@ -34,6 +34,7 @@ typedef enum {
     TOKEN_OPEN_SQUARE,
     TOKEN_CLOSE_SQUARE,
     TOKEN_ARRAY_CONTENT,
+    TOKEN_BAD_SPELLCHECK,
   } Token_Kind;
 
 const char *token_kind_name(Token_Kind kind);

@@ -94,6 +94,8 @@ const char *token_kind_name(Token_Kind kind)
         return "open_square";
     case TOKEN_CLOSE_SQUARE:
         return "close_square";
+    case TOKEN_BAD_SPELLCHECK:
+        return "bad_spellcheck";
     default:
         UNREACHABLE("token_kind_name");
     }
@@ -243,6 +245,39 @@ Token lexer_next(Lexer *l)
 
         }
     }
+
+
+
+
+
+    /* // all bad spell */
+    /* if (l->cursor < l->content_len) { */
+    /*     // Check for other words or identifiers here */
+    /*     // Example: */
+    /*     if (isalpha(l->content[l->cursor])) { */
+    /*         size_t potential_length = 0; */
+
+    /*         // Count the potential word length */
+    /*         while (l->cursor + potential_length < l->content_len && isalnum(l->content[l->cursor + potential_length])) { */
+    /*             potential_length++; */
+    /*         } */
+
+    /*         // If potential word was detected and not empty */
+    /*         if (potential_length > 0) { */
+    /*             // Mark all words as TOKEN_BAD_SPELLCHECK */
+    /*             token.kind = TOKEN_BAD_SPELLCHECK; */
+    /*             token.text_len = potential_length; */
+    /*             lexer_chop_char(l, potential_length); */
+    /*             return token; */
+    /*         } */
+    /*     } */
+    /* } */
+
+
+
+
+
+
 
     // Check for arrays
     if (l->cursor < l->content_len) {
