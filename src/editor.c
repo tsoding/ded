@@ -1018,6 +1018,19 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         simple_renderer_solid_rect(sr, vec2f(cursor_pos.x + VISUAL_CURSOR_WIDTH - BORDER_THICKNESS, cursor_pos.y), vec2f(BORDER_THICKNESS, FREE_GLYPH_FONT_SIZE), CURSOR_COLOR);
 
         break;
+
+    case VISUAL_LINE:
+        // Set the cursor width to cover the entire height of the line
+        CURSOR_WIDTH = FREE_GLYPH_FONT_SIZE;
+
+        // Adjust cursor color for visual distinction. For instance, make it slightly transparent
+        Vec4f TRANSPARENT_CURSOR_COLOR = vec4f(CURSOR_COLOR.x, CURSOR_COLOR.y, CURSOR_COLOR.z, 0.5f);  // 50% transparency
+
+        // Render the cursor for the entire line
+        simple_renderer_solid_rect(sr, cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE), TRANSPARENT_CURSOR_COLOR);
+
+        // If you'd like to add additional visual cues, consider adding a border or some other distinguishing feature.
+        break;
     }
 
     // Update camera
