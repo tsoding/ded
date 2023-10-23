@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -23,7 +24,7 @@ bool relative_line_numbers = true;
 // TODO bad implementation
 bool extractWordUnderCursor(Editor *editor, char *word) {
     // Make a copy of cursor position to avoid modifying the actual cursor
-    int cursor = editor->cursor;
+    size_t cursor = editor->cursor;
 
     // Move left to find the start of the word.
     while (cursor > 0 && isalnum(editor->data.items[cursor - 1])) {
@@ -47,9 +48,6 @@ bool extractWordUnderCursor(Editor *editor, char *word) {
     int length = end - start;
     strncpy(word, &editor->data.items[start], length);
     word[length] = '\0';
-
-    // Debugging print
-    printf("Extracted word: %s\n", word);
 
     return true;
 }
@@ -806,7 +804,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 break;
 
             case TOKEN_KEYWORD:
-                /* color = hex_to_vec4f(0xFFDD33FF); */
                 color = themes[currentThemeIndex].logic;
                 break;
 
@@ -816,12 +813,14 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
                     // Checking for TODOOOO...
                     char* todoLoc = strstr(token.text, "TODO");
-                    if (todoLoc && (todoLoc - token.text + 3) < token.text_len) {
+                    if (todoLoc && (size_t)(todoLoc - token.text + 3) < token.text_len) {
+
                         size_t numOs = 0;
                         char* ptr = todoLoc + 4; // Start right after "TODO"
 
                         // Count 'O's without crossing token boundary
-                        while ((ptr - token.text) < token.text_len && (*ptr == 'O' || *ptr == 'o')) {
+                        while ((size_t)(ptr - token.text) < token.text_len && (*ptr == 'O' || *ptr == 'o')) {
+
                             numOs++;
                             ptr++;
                         }
@@ -837,12 +836,14 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
                     // Checking for FIXMEEEE...
                     char* fixmeLoc = strstr(token.text, "FIXME");
-                    if (fixmeLoc && (fixmeLoc - token.text + 4) < token.text_len) {
+                    if (fixmeLoc && (size_t)(fixmeLoc - token.text + 4) < token.text_len) {
+
                         size_t numEs = 0;
                         char* ptr = fixmeLoc + 5; // Start right after "FIXME"
 
                         // Count 'E's without crossing token boundary
-                        while ((ptr - token.text) < token.text_len && (*ptr == 'E' || *ptr == 'e')) {
+                        while ((size_t)(ptr - token.text) < token.text_len && (*ptr == 'E' || *ptr == 'e')) {
+
                             numEs++;
                             ptr++;
                         }
@@ -858,14 +859,16 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
                     // Checking for BUG...
                     char* bugLoc = strstr(token.text, "BUG");
-                    if (bugLoc && (bugLoc - token.text + 2) < token.text_len) {
+                    if (bugLoc && (size_t)(bugLoc - token.text + 2) < token.text_len) {
+
                         color = themes[currentThemeIndex].bug;
                     }
 
 
                     // Checking for NOTE...
                     char* noteLoc = strstr(token.text, "NOTE");
-                    if (noteLoc && (noteLoc - token.text + 3) < token.text_len) {
+                    if (noteLoc && (size_t)(noteLoc - token.text + 3) < token.text_len) {
+
                         color = themes[currentThemeIndex].note;
                     }
 

@@ -36,9 +36,9 @@
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 #define FONT_DIR "~/.config/ded/fonts/"
-  /* #define DEFAULT_FONT "jet-extra-bold.ttf" */
+#define DEFAULT_FONT "jet-extra-bold.ttf"
 /* #define DEFAULT_FONT "Letters.ttf" */
-#define DEFAULT_FONT "designer.otf"
+/* #define DEFAULT_FONT "designer.otf" */
 #define MAX_FONTS 20
 #define MAX_PATH_SIZE 1024
 
@@ -76,7 +76,6 @@ static Free_Glyph_Atlas atlas = {0};
 static Simple_Renderer sr = {0};
 static Editor editor = {0};
 static File_Browser fb = {0};
-static Repl repl = {0};
 
 
 FT_Face load_font_face(FT_Library library, const char *font_name, FT_UInt pixel_size) {
@@ -104,24 +103,20 @@ FT_Face load_font_face(FT_Library library, const char *font_name, FT_UInt pixel_
     return face;
 }
 
-void prev_font(FT_Library library) {
+void prev_font() {
     if (current_font_index == 0) {
         // Already at the first font, don't do anything.
         return;
     }
     current_font_index--;
-    FT_Face face = load_font_face(library, fonts[current_font_index], FREE_GLYPH_FONT_SIZE);
-    // TODO: Apply the face to your text rendering system
 }
 
-void next_font(FT_Library library) {
+void next_font() {
     if (current_font_index == font_count - 1) {
         // Already at the last font, don't do anything.
         return;
     }
     current_font_index++;
-    FT_Face face = load_font_face(library, fonts[current_font_index], FREE_GLYPH_FONT_SIZE);
-    // TODO: Apply the face to your text rendering system
 }
 
 
@@ -155,9 +150,9 @@ void populate_font_list() {
 
 void switch_to_font(FT_Library library, FT_Face *currentFace, Free_Glyph_Atlas *atlas, int direction) {
     if (direction > 0) {
-        next_font(library);
+        next_font();
     } else {
-        prev_font(library);
+        prev_font();
     }
     /* *currentFace = load_font_face(library, fonts[current_font_index]); */
     *currentFace = load_font_face(library, fonts[current_font_index], FREE_GLYPH_FONT_SIZE);
@@ -330,12 +325,7 @@ int main(int argc, char **argv)
 
 
     bool quit = false;
-    bool repl = false;
     bool file_browser = false;
-
-    static bool file_creation_mode = false;    // To track if we're in "file creation mode"
-    static char new_filename[PATH_MAX] = "";   // To accumulate filename
-    static size_t filename_cursor = 0;         // Cursor for where we're writing in new_filename
 
     while (!quit) {
         const Uint32 start = SDL_GetTicks();
@@ -427,16 +417,6 @@ int main(int argc, char **argv)
                   }
                 } break;
 
-                // TODO
-                /* case SDLK_t: { */
-                /*   if (!file_creation_mode) { */
-                /*     file_creation_mode = true; */
-                /*     memset(new_filename, 0, sizeof(new_filename));  // Reset filename buffer */
-                /*     filename_cursor = 0; */
-                /*   } */
-                /* } break; */
-
-
                 case SDLK_t: {
                   if (SDL_GetModState() & KMOD_CTRL) {
                     is_animated = !is_animated;  // Toggle the state
@@ -462,27 +442,6 @@ int main(int argc, char **argv)
                                       file_path, strerror(err));
                         }
                       } break;
-
-                      // WARNING
-                      case SDLK_RETURN: {
-                        if (file_creation_mode) {
-                          // Create the new file with name in new_filename buffer in the current directory
-                          char full_path[PATH_MAX];
-                          snprintf(full_path, sizeof(full_path), "%s/%s", fb.dir_path.items, new_filename);
-
-                          FILE *new_file = fopen(full_path, "w");
-                          if (new_file) {
-                            fclose(new_file);
-                            file_creation_mode = false;  // Exit file creation mode after creating file
-                            // Optional: Refresh the file browser to show the new file
-                          } else {
-                            flash_error("Failed to create file %s: %s", full_path, strerror(errno));
-                          }
-                        } else {
-                          // Whatever behavior you want for RETURN key when not in file_creation_mode
-                        }
-                      } break;
-
 
                       case FT_REGULAR: {
                         // TODO: before opening a new file make sure you don't
@@ -523,8 +482,8 @@ int main(int argc, char **argv)
                       editor_stop_search_and_mark(&editor);
                       current_mode = NORMAL;
                     } else {
-                      printf("Return key pressed\n");  // Debug print to check if the case is executed
-                      // Allocate a buffer to hold the extracted word. Assuming the maximum word length is 255 characters.
+                      // buffer to hold the extracted word.
+                      // Assuming the maximum word length is 255 characters.
                       char word[256];
 
                       // If the word is successfully extracted, print it to the debug output.
@@ -610,15 +569,6 @@ int main(int argc, char **argv)
                     case SDLK_F5: {
                         simple_renderer_reload_shaders(&sr);
                     }
-                    break;
-
-                  case SDLK_COLON: // Assuming SDLK_COLON is the correct enum value for ':', adjust if not
-                    current_mode = COMMAND;
-
-                    // Move cursor to the bottom left
-                    // You would replace this with actual code to move your cursor.
-                    // move_cursor_to_bottom_left();
-
                     break;
 
                   case SDLK_y:
@@ -735,10 +685,6 @@ int main(int argc, char **argv)
                       }
                       break;
 
-                  /* case SDLK_x: */
-                  /*   editor_cut_char_under_cursor(&editor); */
-                  /*   break; */
-
                   case SDLK_x:
                     if (editor.selection) {
                       editor_clipboard_copy(&editor);
@@ -750,7 +696,6 @@ int main(int argc, char **argv)
                     }
                     break;
 
-
                   case SDLK_p:
                     editor_clipboard_paste(&editor);
                     break;
@@ -759,14 +704,9 @@ int main(int argc, char **argv)
                     editor_move_to_line_begin(&editor);
                     break;
 
-                  case SDLK_F1:
-                    repl = true;
-                    break;
-
                   case SDLK_F3:
                     file_browser = true;
                     break;
-
 
                   case SDLK_r:
                     if (event.key.keysym.mod & KMOD_CTRL) {
@@ -811,8 +751,6 @@ int main(int argc, char **argv)
                     }
                     editor.last_stroke = SDL_GetTicks();
                     break;
-
-
 
                   case SDLK_l:  // Right
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
@@ -1181,11 +1119,6 @@ int main(int argc, char **argv)
                   break;
 
                     // Add additional VISUAL mode keybinds here...
-                  }
-                  break;
-
-                }
-              break;
 
             case VISUAL_LINE:
               switch (event.key.keysym.sym) {
@@ -1241,9 +1174,10 @@ int main(int argc, char **argv)
 
               // More cases for other modes can follow here...
               // ...
+                }
+                break;
+              }
               break;
-
-
 
 
             case SDL_TEXTINPUT:
@@ -1270,27 +1204,11 @@ int main(int argc, char **argv)
         glClearColor(bg.x, bg.y, bg.z, bg.w);
         glClear(GL_COLOR_BUFFER_BIT);
 
-
-
-
-
-        /* if (file_browser) { */
-        /*     fb_render(&fb, window, &atlas, &sr); */
-        /* } else { */
-        /*     editor_render(window, &atlas, &sr, &editor); */
-        /* } */
-
-
         if (file_browser) {
-          fb_render(&fb, window, &atlas, &sr);
-        } else if (repl) {
-          repl_render(&repl, window, &atlas, &sr);  // Add the &atlas parameter here
+            fb_render(&fb, window, &atlas, &sr);
         } else {
-          editor_render(window, &atlas, &sr, &editor);
+            editor_render(window, &atlas, &sr, &editor);
         }
-
-
-
 
         SDL_GL_SwapWindow(window);
         const Uint32 duration = SDL_GetTicks() - start;

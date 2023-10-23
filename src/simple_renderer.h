@@ -96,6 +96,11 @@ void simple_renderer_flush(Simple_Renderer *sr);
 void simple_renderer_sync(Simple_Renderer *sr);
 void simple_renderer_draw(Simple_Renderer *sr);
 
+// ADDED
+void initialize_shader_paths();
+
+
+
 /* const char *resolve_shader_path(const char *shader_file_name); */
 
 #endif  // SIMPLE_RENDERER_H_

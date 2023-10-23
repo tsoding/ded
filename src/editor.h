@@ -35,8 +35,6 @@ typedef enum {
     INSERT,
     VISUAL,
     VISUAL_LINE,
-    COMMAND,
-    CHORDING
 } EvilMode;
 
 extern EvilMode current_mode;
@@ -143,6 +141,10 @@ void editor_search_next(Editor *e);
 void editor_search_previous(Editor *e);
 void editor_clear_mark(Editor *editor);
 void move_camera(Simple_Renderer *sr, const char* direction, float amount);
+bool extractWordUnderCursor(Editor *editor, char *word);
+void editor_start_visual_selection(Editor *e);
+void editor_start_visual_line_selection(Editor *e);
+void editor_cut_char_under_cursor(Editor *e);
 
 
 extern float zoom_factor;
