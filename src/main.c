@@ -30,13 +30,12 @@
 #include <libgen.h>
 #include <limits.h>
 #include <stdbool.h>
-#include <stdbool.h>
-#include "keychords.h"
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 #define FONT_DIR "~/.config/ded/fonts/"
-#define DEFAULT_FONT "jet-extra-bold.ttf"
+/* #define DEFAULT_FONT "jet-extra-bold.ttf" */
+#define DEFAULT_FONT "radon.otf"
 /* #define DEFAULT_FONT "Letters.ttf" */
 /* #define DEFAULT_FONT "designer.otf" */
 #define MAX_FONTS 20
@@ -169,8 +168,6 @@ void switch_to_font(FT_Library library, FT_Face *currentFace, Free_Glyph_Atlas *
 
 // TODO: display errors reported via flash_error right in the text editor window somehow
 #define flash_error(...) do { fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); } while(0)
-
-KeySequence currentSequence = {0};  // This initializes a zero-length sequence
 
 
 int main(int argc, char **argv)
@@ -349,6 +346,10 @@ int main(int argc, char **argv)
                     printf("Changed theme to %d\n", currentThemeIndex); // Logging the theme change for debugging
                   } else if (SDL_GetModState() & KMOD_CTRL) {  // Check if CTRL is pressed
                     zoom_factor -= 0.8f;
+
+                    if (zoom_factor < min_zoom_factor) {
+                      zoom_factor = min_zoom_factor;
+                    }
                   }
                 } break;
 
@@ -358,7 +359,10 @@ int main(int argc, char **argv)
                     printf("Changed theme back to %d\n", currentThemeIndex); // Logging the theme change for debugging
                   } else if (SDL_GetModState() & KMOD_CTRL) {  // Check if CTRL is pressed
                     zoom_factor += 0.8f;
-                    if (zoom_factor < 1.0f) zoom_factor = 1.0f;  // Ensure zoom_factor doesn't drop below a threshold
+
+                    if (zoom_factor > max_zoom_factor) {
+                      zoom_factor = max_zoom_factor;
+                    }
                   }
                 } break;
 
@@ -609,7 +613,10 @@ int main(int argc, char **argv)
                       theme_next(&currentThemeIndex);
                       printf("Changed theme to %d\n", currentThemeIndex); // Logging the theme change for debugging
                     } else if (SDL_GetModState() & KMOD_CTRL) {  // Check if CTRL is pressed
-                      zoom_factor -= 0.8f;
+                      zoom_factor -= 1.0f;
+                      if (zoom_factor < min_zoom_factor) {
+                        zoom_factor = min_zoom_factor;
+                      }
                     }
                   } break;
 
@@ -618,8 +625,10 @@ int main(int argc, char **argv)
                       theme_previous(&currentThemeIndex);
                       printf("Changed theme back to %d\n", currentThemeIndex); // Logging the theme change for debugging
                     } else if (SDL_GetModState() & KMOD_CTRL) {  // Check if CTRL is pressed
-                      zoom_factor += 0.8f;
-                      if (zoom_factor < 1.0f) zoom_factor = 1.0f;  // Ensure zoom_factor doesn't drop below a threshold
+                      zoom_factor += 1.0f;
+                      if (zoom_factor > max_zoom_factor) {
+                        zoom_factor = max_zoom_factor;
+                      }
                     }
                   } break;
 
@@ -636,7 +645,8 @@ int main(int argc, char **argv)
                     case SDLK_i:
                       current_mode = INSERT;
 
-
+                      // Reset the blink timer
+                      editor.last_stroke = SDL_GetTicks();
                       /* is_animated = true;  // TODO make this an option and smooth */
 
                       // Eat up the next SDL_TEXTINPUT event for 'i'
@@ -818,12 +828,14 @@ int main(int argc, char **argv)
 
                   case SDLK_MINUS:
                     if (SDL_GetModState() & KMOD_CTRL) {
-                      zoom_factor -= 2;
+                      zoom_factor += 1.0f;
 
-                      if (zoom_factor < 1.0f) {
-                        zoom_factor = 1.0f;
+
+                      if (zoom_factor > max_zoom_factor) {
+                        zoom_factor = max_zoom_factor;
                       }
 
+                      printf("zoom_factor = %f\n", zoom_factor);
                       // Consume the next SDL_TEXTINPUT event for '-'
                       SDL_Event tmpEvent;
                       SDL_PollEvent(&tmpEvent);
@@ -835,7 +847,13 @@ int main(int argc, char **argv)
 
                   case SDLK_EQUALS:
                     if (SDL_GetModState() & KMOD_CTRL) {
-                      zoom_factor += 2;  // Increase by a factor of 0.2
+                      zoom_factor -= 1.0f;
+
+                      printf("zoom_factor = %f\n", zoom_factor);
+
+                      if (zoom_factor < min_zoom_factor) {
+                        zoom_factor = min_zoom_factor;
+                      }
 
                       // Consume the next SDL_TEXTINPUT event for '='
                       SDL_Event tmpEvent;
@@ -1218,7 +1236,7 @@ int main(int argc, char **argv)
         }
     }
     return 0;
-    }
+}
 
 // TODO: ability to search within file browser
 // Very useful when you have a lot of files

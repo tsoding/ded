@@ -8,10 +8,13 @@
 #include "./common.h"
 #include "./free_glyph.h"
 #include "./file_browser.h"
+#include "simple_renderer.h"
 #include <ctype.h> // For isalnum
 
 EvilMode current_mode = NORMAL;
-float zoom_factor = 5.0f;
+float zoom_factor = 3.0f;
+float min_zoom_factor = 1.0;
+float max_zoom_factor = 10.0;
 bool showLineNumbers = false;  // This is the actual definition and initialization
 bool is_animated = true;  // or false, depending on your initial requirement
 
@@ -957,13 +960,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     // Render cursor
     simple_renderer_set_shader(sr, SHADER_FOR_EPICNESS);
 
-    // Exit early if the editor has a mark and should not render the cursor
-    // since the camera follow the cursor i cant do it or i dont know how
-    /* if (editor->has_mark) { */
-    /*     return;  // Skip the cursor rendering */
-    /* } */
-
-
     // Adjust cursor position if line numbers are shown
     if (showLineNumbers) {
         cursor_pos.x += lineNumberWidth;
@@ -1005,7 +1001,10 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
     case VISUAL:
         // Draw inner rectangle with reduced alpha
+        if (t < CURSOR_BLINK_THRESHOLD || (t / CURSOR_BLINK_PERIOD) % 2 != 0) {
         simple_renderer_solid_rect(sr, cursor_pos, vec2f(VISUAL_CURSOR_WIDTH - 2 * BORDER_THICKNESS, FREE_GLYPH_FONT_SIZE - 2 * BORDER_THICKNESS), INNER_COLOR);
+        }
+        /* simple_renderer_solid_rect(sr, cursor_pos, vec2f(VISUAL_CURSOR_WIDTH - 2 * BORDER_THICKNESS, FREE_GLYPH_FONT_SIZE - 2 * BORDER_THICKNESS), INNER_COLOR); */
 
         // Draw the outline (borders) using the theme's cursor color
         // Top border

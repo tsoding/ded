@@ -148,6 +148,8 @@ void editor_cut_char_under_cursor(Editor *e);
 
 
 extern float zoom_factor;
+extern float min_zoom_factor;
+extern float max_zoom_factor;
 extern bool showLineNumbers;
 
 // THEME
