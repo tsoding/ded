@@ -38,6 +38,9 @@ make the text disappear []
 ** Shaders
 use shaders from =~/.config/ded/shaders= instead [x]
 ** Editor
+keep a list of opened files to quickly
+go to the previous or next "buffer" or kill them []
+search should not be case sensitive []
 mismatched cut and selection []
 if editor->has_mark make the cursor trasparent [x]
 support multiple marks not just one []

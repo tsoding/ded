@@ -283,9 +283,9 @@ Token lexer_next(Lexer *l)
             return token;
 
         case '*':
-            // If either the previous or next character is whitespace, treat it
-            // as multiplication. Otherwise, treat it as a pointer.
-            if (isspace(prev_char) || isspace(next_char)) {
+            // If there's a space both before and after '*', treat it as
+            // multiplication. In all other cases, treat it as a pointer.
+            if (isspace(prev_char) && isspace(next_char)) {
                 token.kind = TOKEN_MULTIPLICATION;
             } else {
                 token.kind = TOKEN_POINTER;

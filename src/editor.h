@@ -159,6 +159,7 @@ extern float min_zoom_factor;
 extern float max_zoom_factor;
 extern bool showLineNumbers;
 
+
 // THEME
 extern Theme themes[];
 extern int currentThemeIndex;

@@ -168,6 +168,90 @@ void switch_to_font(FT_Library library, FT_Face *currentFace, Free_Glyph_Atlas *
 
 
 
+// TODO tomove
+bool extractLine(Editor *editor, size_t cursor, char *line, size_t max_length) {
+    size_t start = cursor;
+    while (start > 0 && editor->data.items[start - 1] != '\n') {
+        start--;
+    }
+
+    size_t end = start;
+    while (end < editor->data.count && editor->data.items[end] != '\n') {
+        end++;
+    }
+
+    size_t length = end - start;
+    if (length < max_length) {
+        strncpy(line, &editor->data.items[start], length);
+        line[length] = '\0';
+        return true;
+    }
+
+    return false;
+}
+
+bool extractLocalIncludePath(Editor *editor, char *includePath) {
+    char line[512]; // Adjust size as needed
+    if (!extractLine(editor, editor->cursor, line, sizeof(line))) {
+        return false;
+    }
+
+    if (strncmp(line, "#include \"", 10) == 0) {
+        char *start = strchr(line, '\"') + 1;
+        char *end = strrchr(line, '\"');
+        if (start && end && start < end) {
+            size_t length = end - start;
+            strncpy(includePath, start, length);
+            includePath[length] = '\0';
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void getDirectoryFromFilePath(const char *filePath, char *directory) {
+    strcpy(directory, filePath);
+    char *lastSlash = strrchr(directory, '/');
+    if (lastSlash != NULL) {
+        *lastSlash = '\0'; // Null-terminate at the last slash
+    } else {
+        // Handle the case where there is no slash in the path
+        strcpy(directory, ".");
+    }
+}
+
+// Function to open a local include file
+Errno openLocalIncludeFile(Editor *editor, const char *includePath) {
+    char fullPath[512]; // Buffer for the full path
+    char directory[256]; // Buffer for the directory
+
+    // Get the directory of the current file
+    getDirectoryFromFilePath(editor->file_path.items, directory);
+
+    // Construct the full path
+    snprintf(fullPath, sizeof(fullPath), "%s/%s", directory, includePath);
+
+    // Load the file using the full path
+    Errno load_err = editor_load_from_file(editor, fullPath);
+    if (load_err != 0) {
+        fprintf(stderr, "Error loading file %s: %s\n", fullPath, strerror(load_err));
+        return load_err;
+    }
+
+    printf("Opened file: %s\n", fullPath);
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
 // TODO: display errors reported via flash_error right in the text editor window somehow
 #define flash_error(...) do { fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); } while(0)
 
@@ -483,27 +567,36 @@ int main(int argc, char **argv)
                   switch (event.key.keysym.sym) {
                     SDL_Event tmpEvent; // Declare once at the beginning of the switch block
 
+                  /* case SDLK_RETURN: { */
+                  /*   if (editor.searching) { */
+                  /*     editor_stop_search_and_mark(&editor); */
+                  /*     current_mode = NORMAL; */
+                  /*   } else { */
+                  /*     // buffer to hold the extracted word. */
+                  /*     // Assuming the maximum word length is 255 characters. */
+                  /*     char word[256]; */
+
+                  /*     // If the word is successfully extracted, print it to the */
+                  /*     // debug output. */
+                  /*     if (extractWordUnderCursor(&editor, word)) { */
+                  /*       printf("Extracted word: %s\n", word); */
+                  /*     } else { */
+                  /*       printf("No word under cursor\n"); */
+                  /*     } */
+                  /*   } */
+                  /* } break; */
+
                   case SDLK_RETURN: {
                     if (editor.searching) {
                       editor_stop_search_and_mark(&editor);
                       current_mode = NORMAL;
                     } else {
-                      // buffer to hold the extracted word.
-                      // Assuming the maximum word length is 255 characters.
-                      char word[256];
-
-                      // If the word is successfully extracted, print it to the debug output.
-                      if (extractWordUnderCursor(&editor, word)) {
-                        printf("Extracted word: %s\n", word); // Debug print
-                      } else {
-                        printf("No word under cursor\n"); // Debug print when there is no word under the cursor
+                      char includePath[256];
+                      if (extractLocalIncludePath(&editor, includePath)) {
+                        openLocalIncludeFile(&editor, includePath);
                       }
                     }
-                  }
-                    break;
-
-
-
+                  } break;
 
                   case SDLK_ESCAPE: {
                     editor_clear_mark(&editor);
@@ -770,7 +863,7 @@ int main(int argc, char **argv)
                     editor.last_stroke = SDL_GetTicks();
                     break;
 
-                  case SDLK_k:  // Up
+                  case SDLK_k:
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                     if ((event.key.keysym.mod & KMOD_ALT) && !isAnimated) {
                       move_camera(&sr, "up", 50.0f);
@@ -782,7 +875,7 @@ int main(int argc, char **argv)
                     editor.last_stroke = SDL_GetTicks();
                     break;
 
-                  case SDLK_l:  // Right
+                  case SDLK_l:
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                     if (event.key.keysym.mod & KMOD_CTRL) {
                       editor_move_word_right(&editor);
@@ -792,10 +885,13 @@ int main(int argc, char **argv)
                     editor.last_stroke = SDL_GetTicks();
                     break;
 
-                    // Add additional NORMAL mode keybinds here...
-                  }
-                  break;
+                  case SDLK_w:
+                    editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                    editor_move_word_right(&editor);
+                    break;
 
+                    // Add additional NORMAL mode keybinds here...
+                  } break;
 
                 case INSERT:
                   switch (event.key.keysym.sym) {

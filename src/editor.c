@@ -58,7 +58,7 @@ bool extractWordUnderCursor(Editor *editor, char *word) {
 
 
 
-
+// TODO
 void move_camera(Simple_Renderer *sr, const char* direction, float amount) {
     if(sr == NULL) return; // check if the SimpleRenderer pointer is valid
 
@@ -82,8 +82,7 @@ void move_camera(Simple_Renderer *sr, const char* direction, float amount) {
 
 
 
-
-int currentThemeIndex = 4;
+int currentThemeIndex = 0;
 Theme themes[5];
 
 void initialize_themes() {
