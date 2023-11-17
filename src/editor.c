@@ -8,6 +8,7 @@
 #include "./common.h"
 #include "./free_glyph.h"
 #include "./file_browser.h"
+#include "lexer.h"
 #include "simple_renderer.h"
 #include <ctype.h> // For isalnum
 
@@ -15,11 +16,11 @@ EvilMode current_mode = NORMAL;
 float zoom_factor = 3.0f;
 float min_zoom_factor = 1.0;
 float max_zoom_factor = 10.0;
-bool showLineNumbers = false;  // This is the actual definition and initialization
-bool is_animated = true;  // or false, depending on your initial requirement
+bool showLineNumbers = false;
+bool isAnimated = true;
 
-bool highlight_current_line = true;
-bool relative_line_numbers = true;
+bool highlightCurrentLineNumber = true;
+bool relativeLineNumbers = false;
 
 
 
@@ -82,42 +83,43 @@ void move_camera(Simple_Renderer *sr, const char* direction, float amount) {
 
 
 
-int currentThemeIndex = 0;
+int currentThemeIndex = 4;
 Theme themes[5];
 
 void initialize_themes() {
 
     themes[0] = (Theme) {
-        .cursor = hex_to_vec4f(0x80D4FFFF), // Purple Cursor from --color-primary
-        .text = hex_to_vec4f(0xFFFFFFFF), // Main text color, based on --color-foreground for dark mode
-        .background = hex_to_vec4f(0x0D0D0DFF), // Background, from --color-background for dark mode
-        .comment = hex_to_vec4f(0x808080FF), // Comments with muted foreground, from --color-foreground-muted for dark mode
-        .hashtag = hex_to_vec4f(0xD6EBFFFF), // Using the hover link color for hashtags
-        .logic = hex_to_vec4f(0x80D4FFFF), // Logic color same as --color-links for dark mode
-        .string = hex_to_vec4f(0x2E2E2EFF), // Border color for strings
-        .selection = hex_to_vec4f(0x1A1A1AFF), // Selection using the muted border color
-        .search = hex_to_vec4f(0x808080FF), // Search color similar to comments
-        .marks = hex_to_vec4f(0x171717FF), // Marks using the raised background
-        .todo = hex_to_vec4f(0x1E1E1EFF), // Todos with slightly more visible background
-        .line_numbers = hex_to_vec4f(0x808080FF), // Muted line numbers
-        .fixme = hex_to_vec4f(0xCCD6F5FF), // Slightly brighter color for emphasis on FIXMEs
-        .note = hex_to_vec4f(0x808080FF), // Notes with muted foreground
-        .bug = hex_to_vec4f(0xF5F5F5FF), // Bugs with bright foreground
-        .not_equals = hex_to_vec4f(0x80D4FFFF), // Using links color for not equals
-        .exclamation = hex_to_vec4f(0xCCD6F5FF), // Slight emphasis for exclamation
-        .equals = hex_to_vec4f(0x808080FF), // Muted equals color
-        .equals_equals = hex_to_vec4f(0x808080FF), // Muted equals_equals color
-        .greater_than = hex_to_vec4f(0x80D4FFFF), // Links color for greater_than
-        .less_than = hex_to_vec4f(0x80D4FFFF), // Links color for less_than
-        .plus = hex_to_vec4f(0x80D4FFFF), // Links color for plus
-        .minus = hex_to_vec4f(0xCCD6F5FF), // Slight emphasis for minus
-        .truee = hex_to_vec4f(0x80D4FFFF), // Links color for true
-        .falsee = hex_to_vec4f(0xCCD6F5FF), // Emphasis for false
-        .arrow = hex_to_vec4f(0x808080FF), // Muted arrows
-        .open_square = hex_to_vec4f(0x80D4FFFF), // Links color for open brackets
-        .close_square = hex_to_vec4f(0x80D4FFFF), // Links color for close brackets
-        .current_line_number = hex_to_vec4f(0x80D4FFFF), // Highlight current line number with links color
-        .array_content = hex_to_vec4f(0x808080FF) // Muted array content
+        .cursor = hex_to_vec4f(0x80D4FFFF),
+        .text = hex_to_vec4f(0xFFFFFFFF),
+        .background = hex_to_vec4f(0x0D0D0DFF),
+        .comment = hex_to_vec4f(0x808080FF),
+        .hashtag = hex_to_vec4f(0xD6EBFFFF),
+        .logic = hex_to_vec4f(0x80D4FFFF),
+        .string = hex_to_vec4f(0x2E2E2EFF),
+        .selection = hex_to_vec4f(0x1A1A1AFF),
+        .search = hex_to_vec4f(0x808080FF),
+        .marks = hex_to_vec4f(0x171717FF),
+        .todo = hex_to_vec4f(0x1E1E1EFF),
+        .line_numbers = hex_to_vec4f(0x808080FF),
+        .fixme = hex_to_vec4f(0xCCD6F5FF),
+        .note = hex_to_vec4f(0x808080FF),
+        .bug = hex_to_vec4f(0xF5F5F5FF),
+        .not_equals = hex_to_vec4f(0x80D4FFFF),
+        .exclamation = hex_to_vec4f(0xCCD6F5FF),
+        .equals = hex_to_vec4f(0x808080FF),
+        .equals_equals = hex_to_vec4f(0x808080FF),
+        .greater_than = hex_to_vec4f(0x80D4FFFF),
+        .less_than = hex_to_vec4f(0x80D4FFFF),
+        .plus = hex_to_vec4f(0x80D4FFFF),
+        .minus = hex_to_vec4f(0xCCD6F5FF),
+        .truee = hex_to_vec4f(0x80D4FFFF),
+        .falsee = hex_to_vec4f(0xCCD6F5FF),
+        .arrow = hex_to_vec4f(0x808080FF),
+        .open_square = hex_to_vec4f(0x80D4FFFF),
+        .close_square = hex_to_vec4f(0x80D4FFFF),
+        .current_line_number = hex_to_vec4f(0x80D4FFFF),
+        .array_content = hex_to_vec4f(0x808080FF),
+        .link = hex_to_vec4f(0x89b4faFF), // Blue
     };
 
     // Base2Tone
@@ -153,75 +155,78 @@ void initialize_themes() {
         .close_square = hex_to_vec4f(0x4183c4FF), // Link Color
         .current_line_number = hex_to_vec4f(0x3ca555FF), // List Bullet Color
         .array_content = hex_to_vec4f(0xdddDDDFF), // Various Elements Border Color
+        .link = hex_to_vec4f(0x89b4faFF), // Blue
     };
 
     // Base2Tone Extended Pink & Purple
     themes[2] = (Theme) {
-        .cursor = hex_to_vec4f(0x912D56FF),            // Darker Pink for Cursor
-        .text = hex_to_vec4f(0xEEEDF7FF),              // Very Light Lavender for Text
-        .background = hex_to_vec4f(0x1E001380),        // Deep Purple Transparent Background
-        .comment = hex_to_vec4f(0x554455FF),           // Muted Dark Purple for Comments
-        .hashtag = hex_to_vec4f(0xB34688FF),           // Magenta-ish for Hashtags
-        .logic = hex_to_vec4f(0xA22882FF),             // Rich Purple for Logic Operations
-        .string = hex_to_vec4f(0x995D99FF),            // Purple for Strings
-        .selection = hex_to_vec4f(0x4B004B80),         // Transparent Mid-Purple for Selection
-        .search = hex_to_vec4f(0xDF88DFFF),            // Pink-Purple for Search Highlights
-        .todo = hex_to_vec4f(0xEDE2F2FF),              // Light Lavender for TODOs
-        .line_numbers = hex_to_vec4f(0x7A507AFF),      // Purple-Gray for Line Numbers
-        .fixme = hex_to_vec4f(0xE8CFE8FF),             // Soft Lavender for FIXME Background
-        .note = hex_to_vec4f(0x774877FF),              // Dark Lavender for Notes
-        .bug = hex_to_vec4f(0xD2146BFF),               // Bright Magenta for Bugs
-        .not_equals = hex_to_vec4f(0xA22882FF),        // Rich Purple for Inequality
-        .exclamation = hex_to_vec4f(0xC23F91FF),       // Pink-Purple for Exclamation
-        .equals = hex_to_vec4f(0x8E558E),              // Mid Purple for Equality
-        .equals_equals = hex_to_vec4f(0x8E558E),       // Mid Purple for Double Equality
-        .greater_than = hex_to_vec4f(0xA22882FF),      // Rich Purple for Greater Than
-        .less_than = hex_to_vec4f(0x912D56FF),         // Darker Pink for Less Than
-        .marks = hex_to_vec4f(0xC91C7EFF),             // Magenta for Marks
-        .fb_selection = hex_to_vec4f(0xD49FD4FF),      // Muted Pink for Fallback Selections
-        .plus = hex_to_vec4f(0x995D99FF),              // Purple for Addition
-        .minus = hex_to_vec4f(0xB34688FF),             // Magenta-ish for Subtraction
-        .truee = hex_to_vec4f(0x774877FF),             // Dark Lavender for True
-        .falsee = hex_to_vec4f(0xA22882FF),            // Rich Purple for False
-        .arrow = hex_to_vec4f(0x7A507AFF),             // Purple-Gray for Arrows
-        .open_square = hex_to_vec4f(0x995D99FF),       // Purple for Open Brackets
-        .close_square = hex_to_vec4f(0x995D99FF),      // Purple for Close Brackets
-        .current_line_number = hex_to_vec4f(0xB34688FF), // Magenta-ish for Current Line Number
-        .array_content = hex_to_vec4f(0xD49FD4FF)      // Muted Pink for Array Content
+        .cursor = hex_to_vec4f(0x912D56FF),
+        .text = hex_to_vec4f(0xEEEDF7FF),
+        .background = hex_to_vec4f(0x1E001380),
+        .comment = hex_to_vec4f(0x554455FF),
+        .hashtag = hex_to_vec4f(0xB34688FF),
+        .logic = hex_to_vec4f(0xA22882FF),
+        .string = hex_to_vec4f(0x995D99FF),
+        .selection = hex_to_vec4f(0x4B004B80),
+        .search = hex_to_vec4f(0xDF88DFFF),
+        .todo = hex_to_vec4f(0xEDE2F2FF),
+        .line_numbers = hex_to_vec4f(0x7A507AFF),
+        .fixme = hex_to_vec4f(0xE8CFE8FF),
+        .note = hex_to_vec4f(0x774877FF),
+        .bug = hex_to_vec4f(0xD2146BFF),
+        .not_equals = hex_to_vec4f(0xA22882FF),
+        .exclamation = hex_to_vec4f(0xC23F91FF),
+        .equals = hex_to_vec4f(0x8E558E),
+        .equals_equals = hex_to_vec4f(0x8E558E),
+        .greater_than = hex_to_vec4f(0xA22882FF),
+        .less_than = hex_to_vec4f(0x912D56FF),
+        .marks = hex_to_vec4f(0xC91C7EFF),
+        .fb_selection = hex_to_vec4f(0xD49FD4FF),
+        .plus = hex_to_vec4f(0x995D99FF),
+        .minus = hex_to_vec4f(0xB34688FF),
+        .truee = hex_to_vec4f(0x774877FF),
+        .falsee = hex_to_vec4f(0xA22882FF),
+        .arrow = hex_to_vec4f(0x7A507AFF),
+        .open_square = hex_to_vec4f(0x995D99FF),
+        .close_square = hex_to_vec4f(0x995D99FF),
+        .current_line_number = hex_to_vec4f(0xB34688FF),
+        .array_content = hex_to_vec4f(0xD49FD4FF),
+        .link = hex_to_vec4f(0x89b4faFF), // Blue
     };
 
-    /* // Monokai Expanded */
+    // Monokai Expanded
     themes[3] = (Theme) {
-        .cursor = hex_to_vec4f(0xF8F8F0FF),       // Off-white for Cursor
-        .text = hex_to_vec4f(0xF8F8F2FF),         // Primary Text Color
-        .background = hex_to_vec4f(0x272822FF),   // Base Background Color
-        .comment = hex_to_vec4f(0x75715EFF),      // Grayish for Comments
-        .hashtag = hex_to_vec4f(0xA6E22EFF),      // Emerald for Hashtags
-        .logic = hex_to_vec4f(0xF92672FF),        // Pink for Logic Operations
-        .string = hex_to_vec4f(0xE6DB74FF),       // Yellow for Strings
-        .selection = hex_to_vec4f(0x49483EFF),    // Darker Gray for Selection
-        .search = hex_to_vec4f(0x66D9EFFF),       // Cyan for Search Highlights
-        .todo = hex_to_vec4f(0xFD971FFF),         // Orange-red for TODO markers
-        .line_numbers = hex_to_vec4f(0x8F908AFF),// Muted Gray for Line Numbers
-        .fixme = hex_to_vec4f(0xFF0000FF),        // Red for FIXME markers
-        .note = hex_to_vec4f(0x66D9EFFF),         // Cyan for Notes
-        .bug = hex_to_vec4f(0xFD5F00FF),          // Orange for Bugs
-        .not_equals = hex_to_vec4f(0xA6E22EFF),   // Emerald for Inequality
-        .exclamation = hex_to_vec4f(0xF92672FF),  // Pink for Exclamation
-        .equals = hex_to_vec4f(0x66D9EFFF),       // Cyan for Equality
-        .greater_than = hex_to_vec4f(0xF92672FF), // Pink for Comparison Operators
-        .less_than = hex_to_vec4f(0xA6E22EFF),    // Emerald for Comparison Operators
-        .marks = hex_to_vec4f(0xFD971FFF),        // Orange-red for Marks
-        .fb_selection = hex_to_vec4f(0x3E3D32FF), // Darker Shade for Fallback Selections
-        .plus = hex_to_vec4f(0x66D9EFFF),         // Cyan for Addition
-        .minus = hex_to_vec4f(0xF92672FF),        // Pink for Subtraction
-        .truee = hex_to_vec4f(0xA6E22EFF),        // Emerald for True
-        .falsee = hex_to_vec4f(0xF92672FF),       // Pink for False
-        .arrow = hex_to_vec4f(0xE6DB74FF),        // Yellow for Arrows
-        .open_square = hex_to_vec4f(0xE6DB74FF),  // Yellow for Open Brackets
-        .close_square = hex_to_vec4f(0xE6DB74FF), // Yellow for Close Brackets
-        .current_line_number = hex_to_vec4f(0x66D9EFFF), // Cyan for Current Line
-        .array_content = hex_to_vec4f(0x3E3D32FF) // Darker Shade for Array Content
+        .cursor = hex_to_vec4f(0xF8F8F0FF),
+        .text = hex_to_vec4f(0xF8F8F2FF),
+        .background = hex_to_vec4f(0x272822FF),
+        .comment = hex_to_vec4f(0x75715EFF),
+        .hashtag = hex_to_vec4f(0xA6E22EFF),
+        .logic = hex_to_vec4f(0xF92672FF),
+        .string = hex_to_vec4f(0xE6DB74FF),
+        .selection = hex_to_vec4f(0x49483EFF),
+        .search = hex_to_vec4f(0x66D9EFFF),
+        .todo = hex_to_vec4f(0xFD971FFF),
+        .line_numbers = hex_to_vec4f(0x8F908AFF),
+        .fixme = hex_to_vec4f(0xFF0000FF),
+        .note = hex_to_vec4f(0x66D9EFFF),
+        .bug = hex_to_vec4f(0xFD5F00FF),
+        .not_equals = hex_to_vec4f(0xA6E22EFF),
+        .exclamation = hex_to_vec4f(0xF92672FF),
+        .equals = hex_to_vec4f(0x66D9EFFF),
+        .greater_than = hex_to_vec4f(0xF92672FF),
+        .less_than = hex_to_vec4f(0xA6E22EFF),
+        .marks = hex_to_vec4f(0xFD971FFF),
+        .fb_selection = hex_to_vec4f(0x3E3D32FF),
+        .plus = hex_to_vec4f(0x66D9EFFF),
+        .minus = hex_to_vec4f(0xF92672FF),
+        .truee = hex_to_vec4f(0xA6E22EFF),
+        .falsee = hex_to_vec4f(0xF92672FF),
+        .arrow = hex_to_vec4f(0xE6DB74FF),
+        .open_square = hex_to_vec4f(0xE6DB74FF),
+        .close_square = hex_to_vec4f(0xE6DB74FF),
+        .current_line_number = hex_to_vec4f(0x66D9EFFF),
+        .array_content = hex_to_vec4f(0x3E3D32FF),
+        .link = hex_to_vec4f(0x89b4faFF), // Blue
     };
 
     // Catppuccin
@@ -257,6 +262,13 @@ void initialize_themes() {
         .close_square = hex_to_vec4f(0x89b4faFF), // Blue
         .current_line_number = hex_to_vec4f(0x89b4faFF), // Blue
         .array_content = hex_to_vec4f(0x74c7ecFF), // Sapphire
+        .link = hex_to_vec4f(0x89b4faFF), // Blue
+        .logic_or = hex_to_vec4f(0xf38ba8FF), // Red
+        .pipe = hex_to_vec4f(0xa6e3a1FF), // Green
+        .ampersand = hex_to_vec4f(0xb4befeFF), // Lavender
+        .logic_and = hex_to_vec4f(0xa6e3a1FF), // Green
+        .pointer = hex_to_vec4f(0xf5c2e7FF), // Pink
+        .multiplication = hex_to_vec4f(0xFAB387FF), // Peach
     };
  }
 
@@ -264,7 +276,7 @@ void theme_next(int *currentThemeIndex) {
     const int themeCount = sizeof(themes) / sizeof(themes[0]);
     *currentThemeIndex += 1;
     if (*currentThemeIndex >= themeCount) {
-        *currentThemeIndex = 0;  // wrap around if we've gone past the last theme
+        *currentThemeIndex = 0;  // wrap around
     }
 }
 
@@ -276,7 +288,7 @@ void theme_previous(int *currentThemeIndex) {
     }
 }
 
-// Smart Parenthesis
+// Smart parentheses
 void editor_backspace(Editor *e)
 {
     if (e->searching) {
@@ -737,7 +749,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
             // Calculate display line number based on relative number setting
             size_t displayLineNumber;
-            if (relative_line_numbers) {
+            if (relativeLineNumbers) {
                 if (i == currentLineNumber) {
                     // Display the actual line number for the current line
                     displayLineNumber = currentLineNumber + 1;
@@ -755,7 +767,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
             // Decide on the color to use
             Vec4f colorToUse = defaultColor;
-            if (highlight_current_line && i == currentLineNumber) {
+            if (highlightCurrentLineNumber && i == currentLineNumber) {
                 colorToUse = currentLineColor;
             }
 
@@ -808,6 +820,34 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
             case TOKEN_KEYWORD:
                 color = themes[currentThemeIndex].logic;
+                break;
+
+            case TOKEN_LINK:
+                color = themes[currentThemeIndex].link;
+                break;
+
+            case TOKEN_OR:
+                color = themes[currentThemeIndex].logic_or;
+                break;
+
+            case TOKEN_PIPE:
+                color = themes[currentThemeIndex].pipe;
+                break;
+
+            case TOKEN_AND:
+                color = themes[currentThemeIndex].logic_and;
+                break;
+
+            case TOKEN_AMPERSAND:
+                color = themes[currentThemeIndex].ampersand;
+                break;
+
+            case TOKEN_POINTER:
+                color = themes[currentThemeIndex].pointer;
+                break;
+
+            case TOKEN_MULTIPLICATION:
+                color = themes[currentThemeIndex].multiplication;
                 break;
 
             case TOKEN_COMMENT:
@@ -1037,7 +1077,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
     // Update camera
     {
-        if (is_animated) {
+        if (isAnimated) {
             // Your current camera update logic for animated behavior
 
             if (max_line_len > 1000.0f) {

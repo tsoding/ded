@@ -1,3 +1,5 @@
+#include <SDL2/SDL_keyboard.h>
+#include <SDL2/SDL_keycode.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -366,6 +368,7 @@ int main(int argc, char **argv)
                   }
                 } break;
 
+                case SDLK_q:
                 case SDLK_ESCAPE: {
                   file_browser = false;
                 } break;
@@ -423,7 +426,7 @@ int main(int argc, char **argv)
 
                 case SDLK_t: {
                   if (SDL_GetModState() & KMOD_CTRL) {
-                    is_animated = !is_animated;  // Toggle the state
+                    isAnimated = !isAnimated;  // Toggle the state
                   }
                 }
                   break;
@@ -479,7 +482,6 @@ int main(int argc, char **argv)
                 case NORMAL:
                   switch (event.key.keysym.sym) {
                     SDL_Event tmpEvent; // Declare once at the beginning of the switch block
-
 
                   case SDLK_RETURN: {
                     if (editor.searching) {
@@ -564,7 +566,7 @@ int main(int argc, char **argv)
 
                   case SDLK_t: {
                     if (SDL_GetModState() & KMOD_CTRL) {
-                      is_animated = !is_animated;  // Toggle the state
+                      isAnimated = !isAnimated;  // Toggle the state
                     }
                   }
                     break;
@@ -602,11 +604,33 @@ int main(int argc, char **argv)
                   case SDLK_n: {
                     if (SDL_GetModState() & KMOD_SHIFT) {
                       editor_search_previous(&editor);
-                    } else {
+                    } else if(editor.has_mark){
                       editor_search_next(&editor);
+                    }
+                    if (SDL_GetModState() & KMOD_CTRL) {
+                      editor_move_line_down(&editor);
                     }
                   } break;
 
+                  case SDLK_p:
+                    if (SDL_GetModState() & KMOD_CTRL){
+                      editor_move_line_up(&editor);
+                    } else {
+                      editor_clipboard_paste(&editor);
+                    }
+                    break;
+
+                  case SDLK_b:
+                    if (SDL_GetModState() & KMOD_CTRL){
+                      editor_move_char_left(&editor);
+                    }
+                    break;
+
+                  case SDLK_f:
+                    if (SDL_GetModState() & KMOD_CTRL){
+                      editor_move_char_right(&editor);
+                    }
+                    break;
 
                   case SDLK_EQUALS: {
                     if (SDL_GetModState() & KMOD_ALT) {  // Check if ALT is pressed
@@ -706,10 +730,6 @@ int main(int argc, char **argv)
                     }
                     break;
 
-                  case SDLK_p:
-                    editor_clipboard_paste(&editor);
-                    break;
-
                   case SDLK_0:
                     editor_move_to_line_begin(&editor);
                     break;
@@ -740,7 +760,7 @@ int main(int argc, char **argv)
 
                   case SDLK_j:  // Down
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                    if ((event.key.keysym.mod & KMOD_ALT) && !is_animated) {
+                    if ((event.key.keysym.mod & KMOD_ALT) && !isAnimated) {
                       move_camera(&sr, "down", 50.0f);
                     } else if (event.key.keysym.mod & KMOD_CTRL) {
                       editor_move_paragraph_down(&editor);
@@ -752,7 +772,7 @@ int main(int argc, char **argv)
 
                   case SDLK_k:  // Up
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                    if ((event.key.keysym.mod & KMOD_ALT) && !is_animated) {
+                    if ((event.key.keysym.mod & KMOD_ALT) && !isAnimated) {
                       move_camera(&sr, "up", 50.0f);
                     } else if (event.key.keysym.mod & KMOD_CTRL) {
                       editor_move_paragraph_up(&editor);
@@ -1223,9 +1243,9 @@ int main(int argc, char **argv)
         glClear(GL_COLOR_BUFFER_BIT);
 
         if (file_browser) {
-            fb_render(&fb, window, &atlas, &sr);
+          fb_render(&fb, window, &atlas, &sr);
         } else {
-            editor_render(window, &atlas, &sr, &editor);
+          editor_render(window, &atlas, &sr, &editor);
         }
 
         SDL_GL_SwapWindow(window);

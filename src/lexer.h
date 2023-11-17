@@ -35,6 +35,13 @@ typedef enum {
     TOKEN_CLOSE_SQUARE,
     TOKEN_ARRAY_CONTENT,
     TOKEN_BAD_SPELLCHECK,
+    TOKEN_LINK,
+    TOKEN_OR,
+    TOKEN_PIPE,
+    TOKEN_AND,
+    TOKEN_AMPERSAND,
+    TOKEN_MULTIPLICATION,
+    TOKEN_POINTER,
   } Token_Kind;
 
 const char *token_kind_name(Token_Kind kind);

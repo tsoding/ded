@@ -94,6 +94,20 @@ const char *token_kind_name(Token_Kind kind)
         return "open_square";
     case TOKEN_CLOSE_SQUARE:
         return "close_square";
+    case TOKEN_LINK:
+        return "link";
+    case TOKEN_OR:
+        return "logic_or";
+    case TOKEN_PIPE:
+        return "pipe";
+    case TOKEN_AND:
+        return "logic_and";
+    case TOKEN_AMPERSAND:
+        return "ampersand";
+    case TOKEN_MULTIPLICATION:
+        return "multiplication";
+    case TOKEN_POINTER:
+        return "pointer";
     case TOKEN_BAD_SPELLCHECK:
         return "bad_spellcheck";
     default:
@@ -187,6 +201,7 @@ Token lexer_next(Lexer *l)
     if (l->cursor < l->content_len) {
         char current_char = l->content[l->cursor];
         char next_char = (l->cursor + 1 < l->content_len) ? l->content[l->cursor + 1] : '\0';
+        char prev_char = (l->cursor > 0) ? l->content[l->cursor - 1] : '\0'; // added for *
 
         switch (current_char) {
         case '=':
@@ -243,12 +258,68 @@ Token lexer_next(Lexer *l)
             lexer_chop_char(l, 1);
             return token;
 
+        case '|':
+            if (next_char == '|') {
+                token.kind = TOKEN_OR;
+                token.text_len = 2;
+                lexer_chop_char(l, 2);
+            } else {
+                token.kind = TOKEN_PIPE;
+                token.text_len = 1;
+                lexer_chop_char(l, 1);
+            }
+            return token;
+
+        case '&':
+            if (next_char == '&') {
+                token.kind = TOKEN_AND;
+                token.text_len = 2;
+                lexer_chop_char(l, 2);
+            } else {
+                token.kind = TOKEN_AMPERSAND;
+                token.text_len = 1;
+                lexer_chop_char(l, 1);
+            }
+            return token;
+
+        case '*':
+            // If either the previous or next character is whitespace, treat it
+            // as multiplication. Otherwise, treat it as a pointer.
+            if (isspace(prev_char) || isspace(next_char)) {
+                token.kind = TOKEN_MULTIPLICATION;
+            } else {
+                token.kind = TOKEN_POINTER;
+            }
+            token.text_len = 1;
+            lexer_chop_char(l, 1);
+            return token;
         }
     }
 
+    // Check for links
+    if ((l->cursor + 6 < l->content_len &&
+         strncmp(&l->content[l->cursor], "http://", 7) == 0) ||
+        (l->cursor + 7 < l->content_len &&
+         strncmp(&l->content[l->cursor], "https://", 8) == 0) ||
+        (l->cursor + 3 < l->content_len &&
+         strncmp(&l->content[l->cursor], "www.", 4) == 0)) {
 
+        size_t potential_length = 0;
+        while (l->cursor + potential_length < l->content_len &&
+               !isspace(l->content[l->cursor + potential_length]) &&
+               l->content[l->cursor + potential_length] != '\n' &&
+               l->content[l->cursor + potential_length] !=
+                   ')') { // Exclude closing parenthesis
+            potential_length++;
+        }
 
-
+        if (potential_length > 0) {
+            token.kind = TOKEN_LINK;
+            token.text_len = potential_length;
+            lexer_chop_char(l, potential_length);
+            return token;
+        }
+    }
 
     /* // all bad spell */
     /* if (l->cursor < l->content_len) { */
@@ -386,7 +457,7 @@ Token lexer_next(Lexer *l)
             token.text_len = &l->content[l->cursor] - token.text;
             return token;
         } else {
-            // Your existing handling for # as a preprocessor directive
+            // # as a preprocessor directive
             token.kind = TOKEN_PREPROC;
             while (l->cursor < l->content_len && l->content[l->cursor] != '\n') {
                 lexer_chop_char(l, 1);

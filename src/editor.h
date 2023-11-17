@@ -12,7 +12,7 @@
 #include <SDL2/SDL.h>
 
 
-extern bool is_animated;
+extern bool isAnimated;
 typedef struct {
     size_t begin;
     size_t end;
@@ -71,6 +71,13 @@ typedef struct {
     Vec4f current_line_number;
     Vec4f marks;
     Vec4f fb_selection;
+    Vec4f link;
+    Vec4f logic_or;
+    Vec4f pipe;
+    Vec4f logic_and;
+    Vec4f ampersand;
+    Vec4f multiplication;
+    Vec4f pointer;
 } Theme;
 
 
