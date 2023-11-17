@@ -119,7 +119,14 @@ void initialize_themes() {
         .close_square = hex_to_vec4f(0x80D4FFFF),
         .current_line_number = hex_to_vec4f(0x80D4FFFF),
         .array_content = hex_to_vec4f(0x808080FF),
-        .link = hex_to_vec4f(0x89b4faFF), // Blue
+        .link = hex_to_vec4f(0x80D4FFFF),
+        .logic_or = hex_to_vec4f(0xCCD6F5FF),
+        .pipe = hex_to_vec4f(0x80D4FFFF),
+        .ampersand = hex_to_vec4f(0xCCD6F5FF),
+        .logic_and = hex_to_vec4f(0x80D4FFFF),
+        .pointer = hex_to_vec4f(0xCCD6F5FF),
+        .multiplication = hex_to_vec4f(0x80D4FFFF),
+
     };
 
     // Base2Tone
@@ -155,7 +162,6 @@ void initialize_themes() {
         .close_square = hex_to_vec4f(0x4183c4FF), // Link Color
         .current_line_number = hex_to_vec4f(0x3ca555FF), // List Bullet Color
         .array_content = hex_to_vec4f(0xdddDDDFF), // Various Elements Border Color
-        .link = hex_to_vec4f(0x89b4faFF), // Blue
     };
 
     // Base2Tone Extended Pink & Purple
