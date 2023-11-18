@@ -1,4 +1,11 @@
-#!/bin/sh
+#!/bin/bash
+
+
+if [ ! -d "$HOME/.config/ded" ]; then
+    cp -r ./config/ded "$HOME/.config/"
+else
+    echo "Config already exists."
+fi
 
 set -xe
 
@@ -14,3 +21,6 @@ if [ `uname` = "Darwin" ]; then
 fi
 
 $CC $CFLAGS `pkg-config --cflags $PKGS` -o ded $SRC $LIBS `pkg-config --libs $PKGS`
+
+
+

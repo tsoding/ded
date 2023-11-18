@@ -785,6 +785,7 @@ int main(int argc, char **argv)
 
 
                   case SDLK_a:
+                    editor.last_stroke = SDL_GetTicks();
                     if (SDL_GetModState() & KMOD_SHIFT) { // Check if shift is being held
                       editor_move_to_line_end(&editor);
                     } else {
@@ -1072,6 +1073,7 @@ int main(int argc, char **argv)
 
                   case SDLK_BACKSPACE:
                     editor_backspace(&editor);
+                    editor.last_stroke = SDL_GetTicks();
                     break;
 
                   case SDLK_RETURN: {
