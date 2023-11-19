@@ -598,12 +598,33 @@ int main(int argc, char **argv)
                     }
                   } break;
 
+
                   case SDLK_ESCAPE: {
                     editor_clear_mark(&editor);
                     editor_stop_search(&editor);
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                   }
                     break;
+
+
+                    case SDLK_o:
+                      if (SDL_GetModState() & KMOD_SHIFT) {
+                        editor_new_line_up(&editor);
+                      } else {
+                        editor_new_line_down(&editor);
+                      }
+
+                      current_mode = INSERT;
+                      editor.last_stroke = SDL_GetTicks();
+
+                      // Eat up the next SDL_TEXTINPUT event for 'o' or 'O'
+                      SDL_PollEvent(&tmpEvent);
+                      if (tmpEvent.type != SDL_TEXTINPUT ||
+                          (tmpEvent.text.text[0] != 'o' && tmpEvent.text.text[0] != 'O')) {
+                        SDL_PushEvent(&tmpEvent); // Push it back to the event queue if it's not 'o' or 'O'
+                      }
+                      break;
+
 
                   case SDL_MOUSEWHEEL:
                     if (event.wheel.y > 0) { // Scroll up
@@ -614,9 +635,6 @@ int main(int argc, char **argv)
                       move_camera(&sr, "down", 20.0f); // Notice &sr, passed the address of sr
                     }
                     break;
-
-
-
 
 
                   case SDLK_LEFTBRACKET:
@@ -670,8 +688,36 @@ int main(int argc, char **argv)
                     }
                     break;
 
+                  // TODO the else should probably be in a function
+                  // like editor_clipboard_copy()
                   case SDLK_y:
-                    editor_clipboard_copy(&editor);
+                    if (editor.selection) {
+                      editor_clipboard_copy(&editor);
+                    } else {
+                      size_t start = editor.cursor;
+                      while (start > 0 &&
+                             editor.data.items[start - 1] != '\n') {
+                        start--;
+                      }
+
+                      size_t end = start;
+                      while (end < editor.data.count &&
+                             editor.data.items[end] != '\n') {
+                        end++;
+                      }
+
+                      if (start < end) {
+                        editor.clipboard.count = 0;
+                        sb_append_buf(&editor.clipboard,
+                                      &editor.data.items[start], end - start);
+                        sb_append_null(&editor.clipboard);
+
+                        if (SDL_SetClipboardText(editor.clipboard.items) < 0) {
+                          fprintf(stderr, "ERROR: SDL ERROR: %s\n",
+                                  SDL_GetError());
+                        }
+                      }
+                    }
                     break;
 
                   case SDLK_g: {
@@ -722,6 +768,14 @@ int main(int argc, char **argv)
                   case SDLK_f:
                     if (SDL_GetModState() & KMOD_CTRL){
                       editor_move_char_right(&editor);
+                    }
+                    break;
+
+                    case SDLK_s: {
+                      current_mode = INSERT;
+                      if (event.key.keysym.mod & KMOD_CTRL) {
+                        editor_start_search(&editor);
+                      }
                     }
                     break;
 
@@ -1188,11 +1242,11 @@ int main(int argc, char **argv)
                 case VISUAL:
                   switch (event.key.keysym.sym) {
 
-                  /* case SDLK_x: */
-                  /*     editor_delete_selection(&editor); */
-                  /*     editor.selection = false; */
-                  /*   break; */
-
+                  case SDLK_y:
+                    if (editor.selection) {
+                      editor_clipboard_copy(&editor);
+                    }
+                    break;
 
                   case SDLK_x:
                     if (editor.selection) {

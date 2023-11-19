@@ -152,6 +152,8 @@ bool extractWordUnderCursor(Editor *editor, char *word);
 void editor_start_visual_selection(Editor *e);
 void editor_start_visual_line_selection(Editor *e);
 void editor_cut_char_under_cursor(Editor *e);
+void editor_new_line_down(Editor *editor);
+void editor_new_line_up(Editor *editor);
 
 
 extern float zoom_factor;

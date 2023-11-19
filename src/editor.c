@@ -25,6 +25,18 @@ bool relativeLineNumbers = false;
 
 
 
+void editor_new_line_down(Editor *editor) {
+    editor_move_to_line_end(editor);
+    editor_insert_char(editor, '\n');
+}
+
+void editor_new_line_up(Editor *editor) {
+    editor_move_to_line_begin(editor);
+    editor_insert_char(editor, '\n');
+    editor_move_line_up(editor);
+}
+
+
 // TODO bad implementation
 bool extractWordUnderCursor(Editor *editor, char *word) {
     // Make a copy of cursor position to avoid modifying the actual cursor
