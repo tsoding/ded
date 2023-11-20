@@ -16,6 +16,8 @@
 #include "common.h"
 #define ARENA_IMPLEMENTATION
 #include "./arena.h"
+#define SV_IMPLEMENTATION
+#include "sv.h"
 
 static Arena temporary_arena = {0};
 
