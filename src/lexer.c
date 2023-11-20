@@ -21,9 +21,24 @@ Literal_Token literal_tokens[] = {
 #define literal_tokens_count (sizeof(literal_tokens)/sizeof(literal_tokens[0]))
 
 const char *jKeywords[] = {
-    "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native", "new", "package", "private", "protected", "public", "return", "short", "static", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile", "while", "non-sealed", "open", "opens", "permits", "provides", "record", "sealed", "to", "transitive", "uses", "var", "with", "yield", "true", "false", "null", "const", "goto", "strictfp", 
+    "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class",
+    "const", "continue", "default", "do", "double", "else", "enum", "extends", "final",
+    "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int",
+    "interface", "long", "native", "new", "package", "private", "protected", "public",
+    "return", "short", "static", "super", "switch", "synchronized", "this", "throw",
+    "throws", "transient", "try", "void", "volatile", "while", "non-sealed", "open",
+    "opens", "permits", "provides", "record", "sealed", "to", "transitive", "uses", "var",
+    "with", "yield", "true", "false", "null", "const", "goto", "strictfp", 
 };
 #define jKeywords_count (sizeof(jKeywords)/sizeof(jKeywords[0]))
+
+const char *ktKeywords[] = {
+    "abstract", "break", "catch", "class", "const", "continue", "else", "enum", "is", "as",
+    "when", "val", "var", "for", "if", "import", "interface", "data", "external", "inner",
+    "package", "private", "protected", "return", "super", "when",  "this", "throw",
+    "try", "while", "sealed", "open", "true", "false", "null", "fun", "typealias", 
+};
+#define ktKeywords_count (sizeof(ktKeywords)/sizeof(ktKeywords[0]))
 
 const char *cKeywords[] = {
     "auto", "break", "case", "char", "const", "continue", "default", "do", "double",
@@ -43,7 +58,10 @@ const char *cKeywords[] = {
 #define cKeywords_count (sizeof(cKeywords)/sizeof(cKeywords[0]))
 
 const char *pyKeywords[] = {
-    "False", "None", "True", "and", "as", "assert", "async", "await", "break", "class", "continue", "def", "del", "elif", "else", "except", "finally", "for", "from", "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try", "while", "with", "yield",
+    "False", "None", "True", "and", "as", "assert", "async", "await", "break", "class",
+    "continue", "def", "del", "elif", "else", "except", "finally", "for", "from", "global",
+    "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass", "raise",
+    "return", "try", "while", "with", "yield",
 };
 #define pyKeywords_count (sizeof(pyKeywords)/sizeof(pyKeywords[0]))
 
@@ -85,7 +103,29 @@ Lexer lexer_new(Free_Glyph_Atlas *atlas, const char *content, size_t content_len
     if (file_path.items != NULL) {
         l.file_path.items = (char*) malloc(sizeof(char*) * (strlen(file_path.items) + 1));
         strcpy(l.file_path.items, file_path.items);
+
+        File_Extension file_ext;
+        const char *filename = l.file_path.items;
+        const char *dot = strrchr(filename, '.');
+        if (!dot || dot == filename) {
+            file_ext = FEXT_CPP;
+        } else {
+            const char *file_ext_str = dot + 1;
+
+            if (strcmp(file_ext_str, "kt") == 0 || strcmp(file_ext_str, "kts") == 0) {
+                file_ext = FEXT_KOTLIN;
+            } else if (strcmp(file_ext_str, "py") == 0) {
+                file_ext = FEXT_PYTHON;
+            } else if (strcmp(file_ext_str, "java") == 0) {
+                file_ext = FEXT_JAVA;
+            } else {
+                file_ext = FEXT_CPP;
+            }
+        }
+
+        l.file_ext = file_ext;
     }
+
     return l;
 }
 
@@ -218,42 +258,38 @@ Token lexer_next(Lexer *l)
             token.text_len += 1;
         }
         
-        if (l->file_path.items == NULL)
-            return token;
+        const char **keywords;
+        size_t keywords_count;
+        switch (l->file_ext) {
+            case FEXT_JAVA:
+                keywords = jKeywords;
+                keywords_count = jKeywords_count;
+            break;
 
-        const char* file_ext;
-        const char* filename = l->file_path.items; 
-        const char *dot = strrchr(filename, '.');
-        if(!dot || dot == filename)
-            file_ext = "";
-        else 
-            file_ext = dot + 1;
+            case FEXT_KOTLIN:
+                keywords = ktKeywords;
+                keywords_count = ktKeywords_count;
+            break;
 
-        if (strcmp(file_ext, "java") == 0) {
-            for (size_t i = 0; i < jKeywords_count; ++i) {
-                size_t keyword_len = strlen(jKeywords[i]);
-                if (keyword_len == token.text_len && memcmp(jKeywords[i], token.text, keyword_len) == 0) {
-                    token.kind = TOKEN_KEYWORD;
-                    break;
-                }
-            }
-        } else if (strcmp(file_ext, "py") == 0) {
-            for (size_t i = 0; i < pyKeywords_count; ++i) {
-                size_t keyword_len = strlen(pyKeywords[i]);
-                if (keyword_len == token.text_len && memcmp(pyKeywords[i], token.text, keyword_len) == 0) {
-                    token.kind = TOKEN_KEYWORD;
-                    break;
-                }
-            }
-        } else {
-            for (size_t i = 0; i < cKeywords_count; ++i) {
-                size_t keyword_len = strlen(cKeywords[i]);
-                if (keyword_len == token.text_len && memcmp(cKeywords[i], token.text, keyword_len) == 0) {
-                    token.kind = TOKEN_KEYWORD;
-                    break;
-                }
+            case FEXT_PYTHON:
+                keywords = pyKeywords;
+                keywords_count = pyKeywords_count;
+            break;
+
+            default:
+                keywords = cKeywords;
+                keywords_count = cKeywords_count;
+        }
+        
+
+        for (size_t i = 0; i < keywords_count; ++i) {
+            size_t keyword_len = strlen(keywords[i]);
+            if (keyword_len == token.text_len && memcmp(keywords[i], token.text, keyword_len) == 0) {
+                token.kind = TOKEN_KEYWORD;
+                break;
             }
         }
+        
         return token;
     }
 
