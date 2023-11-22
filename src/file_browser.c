@@ -1,5 +1,6 @@
 #include <string.h>
 #include "file_browser.h"
+#include "simple_renderer.h"
 #include "sv.h"
 #include "editor.h" // only for zoom_factor maybe im bad at programming
 #include <stdbool.h>
@@ -146,7 +147,7 @@ void fb_render(const File_Browser *fb, SDL_Window *window, Free_Glyph_Atlas *atl
     sr->resolution = vec2f(w, h);
     sr->time = (float) SDL_GetTicks() / 1000.0f;
 
-    simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
+    simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
     if (fb->cursor < fb->files.count) {
         const Vec2f begin = vec2f(0, -((float)fb->cursor + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE);
         Vec2f end = begin;
@@ -159,7 +160,7 @@ void fb_render(const File_Browser *fb, SDL_Window *window, Free_Glyph_Atlas *atl
     }
     simple_renderer_flush(sr);
 
-    simple_renderer_set_shader(sr, SHADER_FOR_EPICNESS);
+    simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_EPICNESS);
     for (size_t row = 0; row < fb->files.count; ++row) {
         const Vec2f begin = vec2f(0, -(float)row * FREE_GLYPH_FONT_SIZE);
         Vec2f end = begin;

@@ -466,6 +466,7 @@ int main(int argc, char **argv)
 
 
                 case SDLK_F5: {
+                  initialize_shader_paths();
                   simple_renderer_reload_shaders(&sr);
                 }
                   break;
@@ -684,6 +685,7 @@ int main(int argc, char **argv)
 
 
                     case SDLK_F5: {
+                        initialize_shader_paths();
                         simple_renderer_reload_shaders(&sr);
                     }
                     break;
@@ -1182,6 +1184,7 @@ int main(int argc, char **argv)
                     break;
 
                     case SDLK_F5: {
+                        initialize_shader_paths();
                         simple_renderer_reload_shaders(&sr);
                     }
                     break;

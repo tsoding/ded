@@ -625,7 +625,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     
     // Render selection
     {
-        simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
+        simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
         if (editor->selection) {
             for (size_t row = 0; row < editor->lines.count; ++row) {
                 size_t select_begin_chr = editor->select_begin;
@@ -687,7 +687,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     // Render search
     {
         if (editor->searching) {
-            simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
+            simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
             Vec4f selection_color = themes[currentThemeIndex].search; // or .selection_color if that's what you named it in the struct.
 
             Vec2f p1 = cursor_pos;
@@ -708,7 +708,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
     // Render marked search result
     {
-        simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
+        simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
         if (editor->has_mark) {
             for (size_t row = 0; row < editor->lines.count; ++row) {
                 size_t mark_begin_chr = editor->mark_start;
@@ -753,7 +753,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
     // Render line numbers
     if (showLineNumbers) {
-        simple_renderer_set_shader(sr, SHADER_FOR_TEXT);
+        simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_TEXT);
 
         // Determine the current line number using the provided function
         size_t currentLineNumber = editor_cursor_row(editor);
@@ -798,7 +798,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
     // Render text
     {
-        simple_renderer_set_shader(sr, SHADER_FOR_TEXT);
+        simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_TEXT);
         for (size_t i = 0; i < editor->tokens.count; ++i) {
             Token token = editor->tokens.items[i];
             Vec2f pos = token.position;
@@ -1016,7 +1016,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
 
     // Render cursor
-    simple_renderer_set_shader(sr, SHADER_FOR_EPICNESS);
+    simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_EPICNESS);
 
     // Adjust cursor position if line numbers are shown
     if (showLineNumbers) {
@@ -1056,14 +1056,13 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 &next_char_pos);
             cursor_width = next_char_pos.x - cursor_pos.x;
         } else {
-            // Measure the width of a default character 'a' for empty lines or
-            // space
-            /* Vec2f next_char_pos = cursor_pos; */
-            /* free_glyph_atlas_measure_line_sized(atlas, "a", 1,
-             * &next_char_pos); */
-            /* cursor_width = next_char_pos.x - cursor_pos.x; */
+            // Measure the width of a default character ' '
+            Vec2f next_char_pos = cursor_pos;
+            free_glyph_atlas_measure_line_sized(atlas, " ", 1,
+            &next_char_pos);
+            cursor_width = next_char_pos.x - cursor_pos.x;
 
-            cursor_width = FREE_GLYPH_FONT_SIZE / 2.0f;
+            /* cursor_width = FREE_GLYPH_FONT_SIZE / 2.0f; */
         }
 
         simple_renderer_solid_rect(sr, cursor_pos,
