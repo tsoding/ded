@@ -466,7 +466,6 @@ int main(int argc, char **argv)
 
 
                 case SDLK_F5: {
-                  initialize_shader_paths();
                   simple_renderer_reload_shaders(&sr);
                 }
                   break;
@@ -685,7 +684,6 @@ int main(int argc, char **argv)
 
 
                     case SDLK_F5: {
-                        initialize_shader_paths();
                         simple_renderer_reload_shaders(&sr);
                     }
                     break;
@@ -732,6 +730,7 @@ int main(int argc, char **argv)
 
                   case SDLK_SLASH: {
                     current_mode = INSERT;
+                    editor.last_stroke = SDL_GetTicks();
                     editor_start_search(&editor);
 
                     // Consume the next SDL_TEXTINPUT event for '/'
@@ -943,8 +942,12 @@ int main(int argc, char **argv)
                     break;
 
                   case SDLK_w:
-                    editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                    editor_move_word_right(&editor);
+                    if (event.key.keysym.mod & KMOD_CTRL) {
+                      isWave = !isWave;
+                    }else{
+                      editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                      editor_move_word_right(&editor);
+                    }
                     break;
 
                     // Add additional NORMAL mode keybinds here...
@@ -1184,7 +1187,6 @@ int main(int argc, char **argv)
                     break;
 
                     case SDLK_F5: {
-                        initialize_shader_paths();
                         simple_renderer_reload_shaders(&sr);
                     }
                     break;

@@ -78,6 +78,8 @@ typedef struct {
     Vec4f ampersand;
     Vec4f multiplication;
     Vec4f pointer;
+    Vec4f modeline;
+    Vec4f minibuffer;
 } Theme;
 
 
@@ -160,6 +162,7 @@ extern float zoom_factor;
 extern float min_zoom_factor;
 extern float max_zoom_factor;
 extern bool showLineNumbers;
+extern bool isWave;
 
 
 // THEME
