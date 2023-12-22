@@ -912,6 +912,8 @@ int main(int argc, char **argv)
                     if ((event.key.keysym.mod & KMOD_ALT) && !isAnimated) {
                       move_camera(&sr, "down", 50.0f);
                     } else if (event.key.keysym.mod & KMOD_CTRL) {
+                      editor_new_line_down(&editor);
+                    } else if (event.key.keysym.mod & KMOD_ALT) {
                       editor_move_paragraph_down(&editor);
                     } else {
                       editor_move_line_down(&editor);
@@ -924,6 +926,8 @@ int main(int argc, char **argv)
                     if ((event.key.keysym.mod & KMOD_ALT) && !isAnimated) {
                       move_camera(&sr, "up", 50.0f);
                     } else if (event.key.keysym.mod & KMOD_CTRL) {
+                      editor_kill_line(&editor);
+                    } else if (event.key.keysym.mod & KMOD_ALT) {
                       editor_move_paragraph_up(&editor);
                     } else {
                       editor_move_line_up(&editor);
@@ -1135,21 +1139,67 @@ int main(int argc, char **argv)
                     editor.last_stroke = SDL_GetTicks();
                     break;
 
+                  /* case SDLK_RETURN: { */
+                  /*     if (editor.searching) { */
+                  /*          editor_stop_search_and_mark(&editor); */
+                  /*          current_mode = NORMAL; */
+
+                  /*      } else { */
+                  /*          editor_insert_char(&editor, '\n'); */
+                  /*          editor.last_stroke = SDL_GetTicks(); */
+                  /*      } */
+                  /*  } */
+                  /*  break; */
+
+
                   case SDLK_RETURN: {
-                      if (editor.searching) {
-                           editor_stop_search_and_mark(&editor);
-                           current_mode = NORMAL;
+                    if (editor.searching) {
+                      editor_stop_search_and_mark(&editor);
+                      current_mode = NORMAL;
+                    } else {
+                      size_t row = editor_cursor_row(&editor);
+                      size_t line_end = editor.lines.items[row].end;
 
-                       } else {
-                           editor_insert_char(&editor, '\n');
-                           editor.last_stroke = SDL_GetTicks();
-                       }
-                   }
-                   break;
-
-
-
-
+                      editor_insert_char(&editor, '\n');
+                      size_t line_begin = editor.lines.items[row].begin;
+                      bool inside_braces = false;
+                      
+                      // Check if the line contains an opening brace '{'
+                      for (size_t i = line_begin; i < line_end; ++i) {
+                        char c = editor.data.items[i];
+                        if (c == '{') {
+                          inside_braces = true;
+                          break;
+                        }
+                      }
+                      
+                      // Insert the same whitespace character
+                      for (size_t i = line_begin; i < line_end; ++i) {
+                        char c = editor.data.items[i];
+                        if (c == ' ' || c == '\t') {
+                          editor_insert_char(&editor, c);
+                        } else {
+                          break;
+                        }
+                      }
+                      
+                      // If inside braces, perform additional steps
+                      if (inside_braces) {
+                        editor_move_line_up(&editor);
+                        editor_move_to_line_end(&editor);
+                        editor_insert_char(&editor, '\n');
+                        
+                        // Add indentation
+                        for (size_t i = 0; i < indentation; ++i) {
+                          editor_insert_char(&editor, ' ');
+                        }
+                      }
+                      
+                      editor.last_stroke = SDL_GetTicks();
+                    }
+                  }
+                  break;
+                    
                     case SDLK_f: {
                         if (event.key.keysym.mod & KMOD_CTRL) {
                             editor_start_search(&editor);

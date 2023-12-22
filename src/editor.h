@@ -13,6 +13,8 @@
 
 
 extern bool isAnimated;
+extern int indentation;
+
 typedef struct {
     size_t begin;
     size_t end;
@@ -156,6 +158,7 @@ void editor_start_visual_line_selection(Editor *e);
 void editor_cut_char_under_cursor(Editor *e);
 void editor_new_line_down(Editor *editor);
 void editor_new_line_up(Editor *editor);
+void editor_kill_line(Editor *e);
 
 
 extern float zoom_factor;

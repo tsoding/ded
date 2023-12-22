@@ -19,6 +19,7 @@ float max_zoom_factor = 10.0;
 bool showLineNumbers = false;
 bool isAnimated = true;
 bool isWave = true;
+int indentation = 4;
 
 bool highlightCurrentLineNumber = true;
 bool relativeLineNumbers = false;
@@ -1463,6 +1464,8 @@ void editor_search_previous(Editor *e) {
 
 
 
+
+
 void editor_move_to_begin(Editor *e)
 {
     editor_stop_search(e);
@@ -1514,3 +1517,78 @@ void editor_move_paragraph_down(Editor *e)
     }
     e->cursor = e->lines.items[row].begin;
 }
+
+
+/* void editor_kill_line(Editor *e) { */
+/*     if (e->searching || e->cursor >= e->data.count) return; */
+
+/*     // Get the current row and the end of the line */
+/*     size_t row = editor_cursor_row(e); */
+/*     size_t end_of_line = e->lines.items[row].end; */
+
+/*     if (end_of_line <= e->cursor) { */
+/*         // Cursor is at or beyond the end of the line, nothing to kill */
+/*         return; */
+/*     } */
+
+/*     // Calculate the length of text to kill */
+/*     size_t length = end_of_line - e->cursor; */
+
+/*     // Copy to clipboard */
+/*     e->clipboard.count = 0; */
+/*     sb_append_buf(&e->clipboard, &e->data.items[e->cursor], length); */
+/*     sb_append_null(&e->clipboard); */
+/*     if (SDL_SetClipboardText(e->clipboard.items) < 0) { */
+/*         fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError()); */
+/*     } */
+
+/*     // Delete the range from the editor */
+/*     memmove(&e->data.items[e->cursor], &e->data.items[end_of_line], e->data.count - end_of_line); */
+/*     e->data.count -= length; */
+
+/*     editor_retokenize(e); */
+/* } */
+
+
+
+void editor_kill_line(Editor *e) {
+    if (e->searching || e->cursor >= e->data.count) return;
+
+    size_t row = editor_cursor_row(e);
+    size_t line_begin = e->lines.items[row].begin;
+    size_t line_end = e->lines.items[row].end;
+
+    // Check if the line is empty or if the cursor is at the end of the line
+    if (line_begin == line_end || e->cursor == line_end) {
+        // If the line is empty or the cursor is at the end of the line
+        // Remove the newline character if it's not the first line
+        if (row < e->lines.count - 1) {
+            memmove(&e->data.items[line_begin], &e->data.items[line_end + 1], e->data.count - line_end - 1);
+            e->data.count -= (line_end - line_begin + 1);
+        } else if (row > 0 && e->data.items[line_begin - 1] == '\n') {
+            // If it's the last line, remove the preceding newline character
+            e->data.count -= 1;
+            memmove(&e->data.items[line_begin - 1], &e->data.items[line_end], e->data.count - line_end);
+        }
+        // Update the lines array to reflect the removed line
+        // ... (Adjust the lines structure here)
+    } else {
+        // If the line is not empty, kill the text from the cursor to the end of the line
+        size_t length = line_end - e->cursor;
+
+        // Copy the text to be killed to the clipboard
+        e->clipboard.count = 0;
+        sb_append_buf(&e->clipboard, &e->data.items[e->cursor], length);
+        sb_append_null(&e->clipboard);
+        if (SDL_SetClipboardText(e->clipboard.items) < 0) {
+            fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
+        }
+
+        // Delete the range from the editor
+        memmove(&e->data.items[e->cursor], &e->data.items[line_end], e->data.count - line_end);
+        e->data.count -= length;
+    }
+
+    editor_retokenize(e);
+}
+
