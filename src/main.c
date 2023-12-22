@@ -893,11 +893,19 @@ int main(int argc, char **argv)
                     }
                     break;
 
-                  case SDLK_BACKSPACE:       //  yes you can delete in normal mode
-                    editor_backspace(&editor);
+                  case SDLK_BACKSPACE: //  yes you can delete in normal mode
+                    if (editor.selection) {
+                      editor_clipboard_copy(&editor);
+                      editor_delete_selection(&editor);
+                      editor.selection = false;
+                    } else if (event.key.keysym.mod & KMOD_CTRL) {
+                      editor_backward_kill_word(&editor);
+                    } else {
+                      editor_backspace(&editor);
+                    }
                     break;
 
-                  case SDLK_h:  // Left
+                  case SDLK_h:
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                     if (event.key.keysym.mod & KMOD_CTRL) {
                       editor_move_word_left(&editor);
@@ -907,7 +915,7 @@ int main(int argc, char **argv)
                     editor.last_stroke = SDL_GetTicks();
                     break;
 
-                  case SDLK_j:  // Down
+                  case SDLK_j:
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                     if ((event.key.keysym.mod & KMOD_ALT) && !isAnimated) {
                       move_camera(&sr, "down", 50.0f);
@@ -960,28 +968,28 @@ int main(int argc, char **argv)
                 case INSERT:
                   switch (event.key.keysym.sym) {
 
-                  case SDLK_h:  // Left
+                  case SDLK_h:
                     if (event.key.keysym.mod & KMOD_CTRL) {
                       editor_move_char_left(&editor);
                     }
                     editor.last_stroke = SDL_GetTicks();
                     break;
 
-                  case SDLK_j:  // Down
+                  case SDLK_j:
                     if (event.key.keysym.mod & KMOD_CTRL) {
                       editor_move_line_down(&editor);
                     }
                     editor.last_stroke = SDL_GetTicks();
                     break;
 
-                  case SDLK_k:  // Up
+                  case SDLK_k:
                     if (event.key.keysym.mod & KMOD_CTRL) {
                       editor_move_line_up(&editor);
                     }
                     editor.last_stroke = SDL_GetTicks();
                     break;
 
-                  case SDLK_l:  // Right
+                  case SDLK_l:
                     if (event.key.keysym.mod & KMOD_CTRL) {
                       editor_move_char_right(&editor);
                     }
@@ -993,10 +1001,10 @@ int main(int argc, char **argv)
                         // That is insert the spaces at the beginning of the line. Shift+TAB should
                         // do unindent, that is remove 4 spaces from the beginning of the line.
                         // TODO: customizable indentation style
-                        // - tabs/spaces
-                        // - tab width
+                        // - tabs/spaces [ ]
+                        // - tab width [x]
                         // - etc.
-                        for (size_t i = 0; i < 4; ++i) {
+                        for (size_t i = 0; i < indentation; ++i) {
                             editor_insert_char(&editor, ' ');
                         }
                     }
@@ -1135,8 +1143,13 @@ int main(int argc, char **argv)
                     break;
 
                   case SDLK_BACKSPACE:
-                    editor_backspace(&editor);
-                    editor.last_stroke = SDL_GetTicks();
+                    if (event.key.keysym.mod & KMOD_CTRL) {
+                      editor_backward_kill_word(&editor);
+                      editor.last_stroke = SDL_GetTicks();
+                    }else{
+                      editor_backspace(&editor);
+                      editor.last_stroke = SDL_GetTicks();
+                    }
                     break;
 
                   /* case SDLK_RETURN: { */

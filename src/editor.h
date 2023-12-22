@@ -159,6 +159,7 @@ void editor_cut_char_under_cursor(Editor *e);
 void editor_new_line_down(Editor *editor);
 void editor_new_line_up(Editor *editor);
 void editor_kill_line(Editor *e);
+void editor_backward_kill_word(Editor *e);
 
 
 extern float zoom_factor;

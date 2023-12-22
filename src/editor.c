@@ -1570,8 +1570,7 @@ void editor_kill_line(Editor *e) {
             e->data.count -= 1;
             memmove(&e->data.items[line_begin - 1], &e->data.items[line_end], e->data.count - line_end);
         }
-        // Update the lines array to reflect the removed line
-        // ... (Adjust the lines structure here)
+        // ... 
     } else {
         // If the line is not empty, kill the text from the cursor to the end of the line
         size_t length = line_end - e->cursor;
@@ -1591,4 +1590,41 @@ void editor_kill_line(Editor *e) {
 
     editor_retokenize(e);
 }
+
+void editor_backward_kill_word(Editor *e) {
+    editor_stop_search(e);
+
+    // Remember the start position of the deletion
+    size_t start_pos = e->cursor;
+
+    // Move cursor left to the start of the previous word
+    while (e->cursor > 0 && !isalnum(e->data.items[e->cursor - 1])) {
+        e->cursor -= 1;
+    }
+    while (e->cursor > 0 && isalnum(e->data.items[e->cursor - 1])) {
+        e->cursor -= 1;
+    }
+
+    // Remember the end position of the deletion
+    size_t end_pos = e->cursor;
+
+    // Check if there is anything to delete
+    if (start_pos > end_pos) {
+        // Copy the deleted text to clipboard
+        size_t length = start_pos - end_pos;
+        e->clipboard.count = 0;
+        sb_append_buf(&e->clipboard, &e->data.items[end_pos], length);
+        sb_append_null(&e->clipboard);
+        if (SDL_SetClipboardText(e->clipboard.items) < 0) {
+            fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
+        }
+
+        // Perform the deletion
+        memmove(&e->data.items[end_pos], &e->data.items[start_pos], e->data.count - start_pos);
+        e->data.count -= length;
+    }
+
+    editor_retokenize(e);
+}
+
 
