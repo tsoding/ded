@@ -43,6 +43,7 @@ extern EvilMode current_mode;
 
 typedef struct {
     Vec4f cursor;
+    Vec4f insert_cursor;
     Vec4f text;
     Vec4f background;
     Vec4f logic;
@@ -167,7 +168,7 @@ extern float min_zoom_factor;
 extern float max_zoom_factor;
 extern bool showLineNumbers;
 extern bool isWave;
-
+extern bool showWhitespaces;
 
 // THEME
 extern Theme themes[];

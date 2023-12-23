@@ -24,6 +24,7 @@ int indentation = 4;
 bool highlightCurrentLineNumber = true;
 bool relativeLineNumbers = false;
 
+bool showWhitespaces = true;
 
 
 
@@ -103,6 +104,7 @@ void initialize_themes() {
 
     themes[0] = (Theme) {
         .cursor = hex_to_vec4f(0x80D4FFFF),
+        .insert_cursor = hex_to_vec4f(0x80D4FFFF),
         .text = hex_to_vec4f(0xFFFFFFFF),
         .background = hex_to_vec4f(0x0D0D0DFF),
         .minibuffer = hex_to_vec4f(0x0A0A0AFF),
@@ -146,6 +148,7 @@ void initialize_themes() {
     // Base2Tone
     themes[1] = (Theme) {
         .cursor = hex_to_vec4f(0x4183c4FF), // Link Color
+        .insert_cursor = hex_to_vec4f(0x4183c4FF), // Link Color
         .text = hex_to_vec4f(0x111111FF), // Primary Text Color
         .background = hex_to_vec4f(0x00000026), // Base Background Color
         .comment = hex_to_vec4f(0x222222FF), // Heading Colors
@@ -181,6 +184,7 @@ void initialize_themes() {
     // Base2Tone Extended Pink & Purple
     themes[2] = (Theme) {
         .cursor = hex_to_vec4f(0x912D56FF),
+        .insert_cursor = hex_to_vec4f(0x912D56FF),
         .text = hex_to_vec4f(0xEEEDF7FF),
         .background = hex_to_vec4f(0x1E001380),
         .comment = hex_to_vec4f(0x554455FF),
@@ -217,6 +221,7 @@ void initialize_themes() {
     // Monokai Expanded
     themes[3] = (Theme) {
         .cursor = hex_to_vec4f(0xF8F8F0FF),
+        .insert_cursor = hex_to_vec4f(0xF8F8F0FF),
         .text = hex_to_vec4f(0xF8F8F2FF),
         .background = hex_to_vec4f(0x272822FF),
         .comment = hex_to_vec4f(0x75715EFF),
@@ -252,6 +257,7 @@ void initialize_themes() {
     // Catppuccin
     themes[4] = (Theme) {
         .cursor = hex_to_vec4f(0xf38ba8FF), // Red
+        .insert_cursor = hex_to_vec4f(0xf38ba8FF), // Red
         .text = hex_to_vec4f(0xcdd6f4FF), // Text
         .background = hex_to_vec4f(0x1e1e2eFF), // Base
         .comment = hex_to_vec4f(0x9399b2FF), // Overlay2
@@ -316,7 +322,7 @@ void editor_backspace(Editor *e)
             e->search.count -= 1;
         }
     } else {
-        if (e->cursor == 0) return; // Cursor at the beginning, nothing to delete
+        if (e->cursor == 0) return; // Cursor at the beginning, nothing to delete TODO also check for the beginning of line
 
         size_t cursor_pos = e->cursor;
 
@@ -807,7 +813,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         simple_renderer_flush(sr);
     }
 
-
     // Render text
     {
         if (isWave){
@@ -826,7 +831,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             if (showLineNumbers) {
                 pos.x += lineNumberWidth;
             }
-
+            
             switch (token.kind) {
             case TOKEN_PREPROC:
                 if (token.text_len >= 7 && token.text[0] == '#') { // Check if it's likely a hex color
@@ -1023,6 +1028,8 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             default:
                 {}
             }
+
+
             free_glyph_atlas_render_line_sized(atlas, sr, token.text, token.text_len, &pos, color);
             // TODO: the max_line_len should be calculated based on what's visible on the screen right now
             if (max_line_len < pos.x) max_line_len = pos.x;
@@ -1031,6 +1038,68 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     }
 
 
+    // WHITESPACES
+    {
+      if (showWhitespaces) {
+        if (isWave) {
+          simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_COLOR);
+        } else {
+          simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
+        }
+        
+        float squareSize = FREE_GLYPH_FONT_SIZE * 0.2;
+        
+        for (size_t i = 0; i < editor->lines.count; ++i) {
+          Line line = editor->lines.items[i];
+          Vec2f pos = { 0, -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE };
+          
+          if (showLineNumbers) {
+            pos.x += lineNumberWidth;
+          }
+          
+          for (size_t j = line.begin; j < line.end; ++j) {
+            if (editor->data.items[j] == ' ' || editor->data.items[j] == '\t') {
+              /* Vec4f whitespaceColor = vec4f(1, 0, 0, 1); // Red color for visibility */
+              
+              Vec4f backgroundColor = themes[currentThemeIndex].background;
+              Vec4f whitespaceColor;
+              
+              // Increase each RGB component by 70%, but not above 1
+              whitespaceColor.x = backgroundColor.x + 0.7 * (1 - backgroundColor.x);
+              whitespaceColor.y = backgroundColor.y + 0.7 * (1 - backgroundColor.y);
+              whitespaceColor.z = backgroundColor.z + 0.7 * (1 - backgroundColor.z);
+              
+              // Clamp values to max 1.0
+              whitespaceColor.x = whitespaceColor.x > 1 ? 1 : whitespaceColor.x;
+              whitespaceColor.y = whitespaceColor.y > 1 ? 1 : whitespaceColor.y;
+              whitespaceColor.z = whitespaceColor.z > 1 ? 1 : whitespaceColor.z;
+              
+              // Keep the alpha value the same
+              whitespaceColor.w = backgroundColor.w;
+              
+              
+
+            
+              // Measure the actual character width
+              Vec2f char_pos = pos;
+              char_pos.x += (j - line.begin) * squareSize; // Starting position for this character
+              free_glyph_atlas_measure_line_sized(atlas, editor->data.items + j, 1, &char_pos);
+              float char_width = char_pos.x - pos.x - (j - line.begin) * squareSize;
+              
+              Vec2f rectPos = {pos.x + (j - line.begin) * char_width + (char_width - squareSize) / 2, pos.y + (FREE_GLYPH_FONT_SIZE - squareSize) / 2};
+              simple_renderer_solid_rect(sr, rectPos, vec2f(squareSize, squareSize), whitespaceColor);
+            }
+          }
+        }
+        simple_renderer_flush(sr);
+        
+      }
+    }
+    
+    
+    
+    
+    
     // MODELINE
     simple_renderer_set_shader(sr, VERTEX_SHADER_FIXED, SHADER_FOR_COLOR);
     {
@@ -1059,12 +1128,9 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         const Uint32 CURSOR_BLINK_THRESHOLD = 500;
         const Uint32 CURSOR_BLINK_PERIOD = 1000;
         const Uint32 t = SDL_GetTicks() - editor->last_stroke;
-        Vec4f CURSOR_COLOR =
-            themes[currentThemeIndex].cursor; // Default cursor color
+        Vec4f CURSOR_COLOR = themes[currentThemeIndex].cursor;
         float BORDER_THICKNESS = 3.0f;
-        Vec4f INNER_COLOR =
-            vec4f(CURSOR_COLOR.x, CURSOR_COLOR.y, CURSOR_COLOR.z,
-                  0.3); // Same color but with reduced alpha
+        Vec4f INNER_COLOR = vec4f(CURSOR_COLOR.x, CURSOR_COLOR.y, CURSOR_COLOR.z, 0.3);
 
         sr->verticies_count = 0;
 
@@ -1103,6 +1169,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         } break;
 
         case INSERT:
+          CURSOR_COLOR = themes[currentThemeIndex].insert_cursor;
             CURSOR_WIDTH = 5.0f; // Thin vertical line for INSERT mode
             // Implement blinking for INSERT mode
             if (t < CURSOR_BLINK_THRESHOLD ||

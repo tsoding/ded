@@ -41,7 +41,6 @@ use shaders from =~/.config/ded/shaders= instead [x]
 Togglable visibility of whitespaces[]
 Togglable visibility of new lines[]
 Togglable indentation lines[]
-different cursor color based on the mode[]
 show characters under cursor with the same color as the bg[]
 evil join on shift + j []
 keep a list of opened files to quickly
@@ -53,5 +52,7 @@ render wavy or normal line under text for errors or whatever []
 most symple emacs style completition (ctrl + n in insert mode)[]
 use window hight and width dinamicly instead of fixed position when animations are off []
 
+
+different cursor color based on the mode[x]
 if editor->has_mark make the cursor trasparent [x]
 ctrl + backspace should delete an entire word [x]

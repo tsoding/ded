@@ -955,10 +955,16 @@ int main(int argc, char **argv)
 
                   case SDLK_w:
                     if (event.key.keysym.mod & KMOD_CTRL) {
-                      isWave = !isWave;
+                      showWhitespaces = !showWhitespaces;
                     }else{
                       editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                       editor_move_word_right(&editor);
+                    }
+                    break;
+
+                  case SDLK_e:
+                    if (event.key.keysym.mod & KMOD_CTRL) {
+                      isWave = !isWave;
                     }
                     break;
 
