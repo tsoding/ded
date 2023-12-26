@@ -33,6 +33,7 @@ typedef struct {
 } Tokens;
 
 typedef enum {
+    EMACS,
     NORMAL,
     INSERT,
     VISUAL,
@@ -44,6 +45,7 @@ extern EvilMode current_mode;
 typedef struct {
     Vec4f cursor;
     Vec4f insert_cursor;
+    Vec4f emacs_cursor;
     Vec4f text;
     Vec4f background;
     Vec4f logic;
@@ -161,6 +163,12 @@ void editor_new_line_down(Editor *editor);
 void editor_new_line_up(Editor *editor);
 void editor_kill_line(Editor *e);
 void editor_backward_kill_word(Editor *e);
+void editor_join_lines(Editor *e);
+bool editor_is_line_empty(Editor *e, size_t row);
+bool editor_is_line_whitespaced(Editor *e, size_t row);
+void editor_yank_line(Editor *editor);
+void editor_paste_line_after(Editor *editor);
+void editor_paste_line_before(Editor* editor);
 
 
 extern float zoom_factor;
@@ -169,6 +177,7 @@ extern float max_zoom_factor;
 extern bool showLineNumbers;
 extern bool isWave;
 extern bool showWhitespaces;
+extern bool copiedLine;
 
 // THEME
 extern Theme themes[];

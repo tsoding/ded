@@ -25,6 +25,7 @@ bool highlightCurrentLineNumber = true;
 bool relativeLineNumbers = false;
 
 bool showWhitespaces = true;
+bool copiedLine = false;
 
 
 
@@ -105,6 +106,7 @@ void initialize_themes() {
     themes[0] = (Theme) {
         .cursor = hex_to_vec4f(0x80D4FFFF),
         .insert_cursor = hex_to_vec4f(0x80D4FFFF),
+        .emacs_cursor = hex_to_vec4f(0x834EB6FF),
         .text = hex_to_vec4f(0xFFFFFFFF),
         .background = hex_to_vec4f(0x0D0D0DFF),
         .minibuffer = hex_to_vec4f(0x0A0A0AFF),
@@ -149,6 +151,7 @@ void initialize_themes() {
     themes[1] = (Theme) {
         .cursor = hex_to_vec4f(0x4183c4FF), // Link Color
         .insert_cursor = hex_to_vec4f(0x4183c4FF), // Link Color
+        .emacs_cursor = hex_to_vec4f(0x834EB6FF),
         .text = hex_to_vec4f(0x111111FF), // Primary Text Color
         .background = hex_to_vec4f(0x00000026), // Base Background Color
         .comment = hex_to_vec4f(0x222222FF), // Heading Colors
@@ -185,6 +188,7 @@ void initialize_themes() {
     themes[2] = (Theme) {
         .cursor = hex_to_vec4f(0x912D56FF),
         .insert_cursor = hex_to_vec4f(0x912D56FF),
+        .emacs_cursor = hex_to_vec4f(0x834EB6FF),
         .text = hex_to_vec4f(0xEEEDF7FF),
         .background = hex_to_vec4f(0x1E001380),
         .comment = hex_to_vec4f(0x554455FF),
@@ -222,6 +226,7 @@ void initialize_themes() {
     themes[3] = (Theme) {
         .cursor = hex_to_vec4f(0xF8F8F0FF),
         .insert_cursor = hex_to_vec4f(0xF8F8F0FF),
+        .emacs_cursor = hex_to_vec4f(0x834EB6FF),
         .text = hex_to_vec4f(0xF8F8F2FF),
         .background = hex_to_vec4f(0x272822FF),
         .comment = hex_to_vec4f(0x75715EFF),
@@ -258,6 +263,7 @@ void initialize_themes() {
     themes[4] = (Theme) {
         .cursor = hex_to_vec4f(0xf38ba8FF), // Red
         .insert_cursor = hex_to_vec4f(0xf38ba8FF), // Red
+        .emacs_cursor = hex_to_vec4f(0x834EB6FF),
         .text = hex_to_vec4f(0xcdd6f4FF), // Text
         .background = hex_to_vec4f(0x1e1e2eFF), // Base
         .comment = hex_to_vec4f(0x9399b2FF), // Overlay2
@@ -315,16 +321,58 @@ void theme_previous(int *currentThemeIndex) {
 }
 
 // Smart parentheses
-void editor_backspace(Editor *e)
-{
+/* void editor_backspace(Editor *e) */
+/* { */
+/*     if (e->searching) { */
+/*         if (e->search.count > 0) { */
+/*             e->search.count -= 1; */
+/*         } */
+/*     } else { */
+/*         if (e->cursor == 0) return; // Cursor at the beginning, nothing to delete TODO also check for the beginning of line */
+
+/*         size_t cursor_pos = e->cursor; */
+
+/*         if (cursor_pos > e->data.count) { */
+/*             cursor_pos = e->data.count; */
+/*         } */
+
+/*         // Determine the characters before and after the cursor */
+/*         char char_before_cursor = (cursor_pos > 0) ? e->data.items[cursor_pos - 1] : '\0'; */
+/*         char char_after_cursor = (cursor_pos < e->data.count) ? e->data.items[cursor_pos] : '\0'; */
+
+/*         if ((char_before_cursor == '(' && char_after_cursor == ')') || */
+/*             (char_before_cursor == '[' && char_after_cursor == ']') || */
+/*             (char_before_cursor == '{' && char_after_cursor == '}') || */
+/*             (char_before_cursor == '\'' && char_after_cursor == '\'') || */
+/*             (char_before_cursor == '"' && char_after_cursor == '"')) { */
+/*             // Delete both characters and move cursor left */
+/*             memmove(&e->data.items[cursor_pos - 1], &e->data.items[cursor_pos + 1], e->data.count - cursor_pos); */
+/*             e->cursor -= 1; */
+/*             e->data.count -= 2; */
+/*         } else { */
+/*             // Delete only the character before the cursor */
+/*             memmove(&e->data.items[cursor_pos - 1], &e->data.items[cursor_pos], e->data.count - cursor_pos); */
+/*             e->cursor -= 1; */
+/*             e->data.count -= 1; */
+/*         } */
+
+/*         editor_retokenize(e); */
+/*     } */
+/* } */
+
+
+void editor_backspace(Editor *e) {
+    // If in search mode, reduce the search query length
     if (e->searching) {
         if (e->search.count > 0) {
             e->search.count -= 1;
         }
     } else {
-        if (e->cursor == 0) return; // Cursor at the beginning, nothing to delete TODO also check for the beginning of line
+        // Check if the cursor is at the beginning or at the beginning of a line
+        if (e->cursor == 0) return; // Cursor at the beginning, nothing to delete
 
         size_t cursor_pos = e->cursor;
+        size_t row = editor_cursor_row(e);
 
         if (cursor_pos > e->data.count) {
             cursor_pos = e->data.count;
@@ -334,15 +382,39 @@ void editor_backspace(Editor *e)
         char char_before_cursor = (cursor_pos > 0) ? e->data.items[cursor_pos - 1] : '\0';
         char char_after_cursor = (cursor_pos < e->data.count) ? e->data.items[cursor_pos] : '\0';
 
+        // Smart parentheses: delete both characters if they match
         if ((char_before_cursor == '(' && char_after_cursor == ')') ||
             (char_before_cursor == '[' && char_after_cursor == ']') ||
             (char_before_cursor == '{' && char_after_cursor == '}') ||
             (char_before_cursor == '\'' && char_after_cursor == '\'') ||
             (char_before_cursor == '"' && char_after_cursor == '"')) {
-            // Delete both characters and move cursor left
             memmove(&e->data.items[cursor_pos - 1], &e->data.items[cursor_pos + 1], e->data.count - cursor_pos);
             e->cursor -= 1;
             e->data.count -= 2;
+        } else if (editor_is_line_empty(e, row)) {
+          if (row > 0) {
+            // If it's not the first line, delete the newline character from the previous line
+            size_t newline_pos = e->lines.items[row - 1].end; // Position of newline character
+            memmove(&e->data.items[newline_pos], &e->data.items[newline_pos + 1], e->data.count - newline_pos - 1);
+            e->cursor = newline_pos; // Move cursor to the end of the previous line
+            e->data.count -= 1;
+          } else if (e->lines.count > 1) {
+            // If it's the first line but there are more lines, delete the newline character at the end of this line
+            size_t newline_pos = e->lines.items[row].end; // Position of newline character
+            memmove(&e->data.items[newline_pos], &e->data.items[newline_pos + 1], e->data.count - newline_pos - 1);
+            e->data.count -= 1;
+            // Cursor stays at the beginning of the next line (which is now the first line)
+          }
+          // Handle completely empty line
+          // Logic to delete the line or move cursor to the previous line
+        } else if (editor_is_line_whitespaced(e, row)) {
+            // If the line is only whitespaces
+            size_t line_begin = e->lines.items[row].begin;
+            size_t delete_length = (cursor_pos - line_begin >= indentation) ? indentation : cursor_pos - line_begin;
+
+            memmove(&e->data.items[cursor_pos - delete_length], &e->data.items[cursor_pos], e->data.count - cursor_pos);
+            e->cursor -= delete_length;
+            e->data.count -= delete_length;
         } else {
             // Delete only the character before the cursor
             memmove(&e->data.items[cursor_pos - 1], &e->data.items[cursor_pos], e->data.count - cursor_pos);
@@ -350,9 +422,13 @@ void editor_backspace(Editor *e)
             e->data.count -= 1;
         }
 
+        // Retokenize the editor content
         editor_retokenize(e);
     }
 }
+
+
+
 
 void editor_delete(Editor *e)
 {
@@ -1168,8 +1244,37 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 CURSOR_COLOR);
         } break;
 
+        case EMACS: {
+            float cursor_width;
+            CURSOR_COLOR = themes[currentThemeIndex].emacs_cursor;
+            // Check if the cursor is on an actual character or an empty line
+            if (editor->cursor < editor->data.count &&
+                editor->data.items[editor->cursor] != '\n') {
+                Vec2f next_char_pos = cursor_pos;
+                free_glyph_atlas_measure_line_sized(
+                                                    atlas, editor->data.items + editor->cursor,
+                                                    1, // Measure the actual character at the cursor
+                                                    &next_char_pos);
+                cursor_width = next_char_pos.x - cursor_pos.x;
+            } else {
+                // Measure the width of a default character ' '
+                Vec2f next_char_pos = cursor_pos;
+                free_glyph_atlas_measure_line_sized(atlas, " ", 1,
+                                                    &next_char_pos);
+                cursor_width = next_char_pos.x - cursor_pos.x;
+            }
+            
+            // Implement blinking for EMACS mode
+            if (t < CURSOR_BLINK_THRESHOLD ||
+                (t / CURSOR_BLINK_PERIOD) % 2 != 0) {
+                simple_renderer_solid_rect(sr, cursor_pos, vec2f(cursor_width, FREE_GLYPH_FONT_SIZE),
+                                           CURSOR_COLOR);
+            }
+        } break;
+
+            
         case INSERT:
-          CURSOR_COLOR = themes[currentThemeIndex].insert_cursor;
+            CURSOR_COLOR = themes[currentThemeIndex].insert_cursor;
             CURSOR_WIDTH = 5.0f; // Thin vertical line for INSERT mode
             // Implement blinking for INSERT mode
             if (t < CURSOR_BLINK_THRESHOLD ||
@@ -1333,6 +1438,7 @@ void editor_clipboard_copy(Editor *e)
             fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
         }
     }
+    copiedLine = false;
 }
 
 void editor_clipboard_paste(Editor *e)
@@ -1347,7 +1453,6 @@ void editor_clipboard_paste(Editor *e)
     SDL_free(text);
 }
 
-// ADDED
 void editor_cut_char_under_cursor(Editor *e) {
     if (e->searching) return;
 
@@ -1402,9 +1507,6 @@ void editor_start_visual_line_selection(Editor *e) {
     e->select_begin = current_line.begin;
     e->cursor = current_line.end;
 }
-
-
-
 
 void editor_update_selection(Editor *e, bool shift) {
     if (e->searching) return;
@@ -1585,39 +1687,6 @@ void editor_move_paragraph_down(Editor *e)
     e->cursor = e->lines.items[row].begin;
 }
 
-
-/* void editor_kill_line(Editor *e) { */
-/*     if (e->searching || e->cursor >= e->data.count) return; */
-
-/*     // Get the current row and the end of the line */
-/*     size_t row = editor_cursor_row(e); */
-/*     size_t end_of_line = e->lines.items[row].end; */
-
-/*     if (end_of_line <= e->cursor) { */
-/*         // Cursor is at or beyond the end of the line, nothing to kill */
-/*         return; */
-/*     } */
-
-/*     // Calculate the length of text to kill */
-/*     size_t length = end_of_line - e->cursor; */
-
-/*     // Copy to clipboard */
-/*     e->clipboard.count = 0; */
-/*     sb_append_buf(&e->clipboard, &e->data.items[e->cursor], length); */
-/*     sb_append_null(&e->clipboard); */
-/*     if (SDL_SetClipboardText(e->clipboard.items) < 0) { */
-/*         fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError()); */
-/*     } */
-
-/*     // Delete the range from the editor */
-/*     memmove(&e->data.items[e->cursor], &e->data.items[end_of_line], e->data.count - end_of_line); */
-/*     e->data.count -= length; */
-
-/*     editor_retokenize(e); */
-/* } */
-
-
-
 void editor_kill_line(Editor *e) {
     if (e->searching || e->cursor >= e->data.count) return;
 
@@ -1693,5 +1762,174 @@ void editor_backward_kill_word(Editor *e) {
 
     editor_retokenize(e);
 }
+
+// TODO when there is a {} dont add the space
+void editor_join_lines(Editor *e) {
+    size_t row = editor_cursor_row(e);
+    if (row >= e->lines.count - 1) return; // Exit if on the last line
+
+    // Get the current line and the next line
+    size_t current_line_end = e->lines.items[row].end;
+    size_t next_line_begin = e->lines.items[row + 1].begin;
+    size_t next_line_end = e->lines.items[row + 1].end;
+
+
+    // Check if the current line is empty or only has whitespaces
+    bool only_whitespaces = true;
+    for (size_t i = e->lines.items[row].begin; i < current_line_end; ++i) {
+        if (!isspace(e->data.items[i])) {
+            only_whitespaces = false;
+            break;
+        }
+    }
+
+    if (only_whitespaces) {
+        // Current line is empty or has only whitespaces, delete the line
+        size_t length_to_move = e->data.count - current_line_end;
+        memmove(&e->data.items[e->lines.items[row].begin],
+                &e->data.items[next_line_begin],
+                length_to_move);
+        e->data.count -= (next_line_begin - e->lines.items[row].begin);
+        editor_retokenize(e);
+        return;
+    }
+
+    // Check if the current line ends in a newline character
+    if (e->data.items[current_line_end] == '\n') {
+        // Skip leading spaces on the next line
+        while (next_line_begin < next_line_end &&
+               isspace(e->data.items[next_line_begin])) {
+            next_line_begin++;
+        }
+
+        // Calculate the length to move in memmove
+        size_t length_to_move = e->data.count - next_line_begin;
+
+        // Move the data from the next line start to the current line end
+        memmove(&e->data.items[current_line_end + 1],
+                &e->data.items[next_line_begin],
+                length_to_move);
+
+        // Adjust the total count of characters in the buffer
+        e->data.count -= (next_line_begin - current_line_end - 1);
+
+        // Insert a single space to separate the lines
+        e->data.items[current_line_end] = ' ';
+    }
+
+    editor_retokenize(e);
+}
+
+
+bool editor_is_line_empty(Editor *e, size_t row) {
+    if (row >= e->lines.count) return true; // Non-existent lines are considered empty
+
+    return e->lines.items[row].begin == e->lines.items[row].end;
+}
+
+bool editor_is_line_whitespaced(Editor *e, size_t row) {
+    if (row >= e->lines.count) return false;
+
+    size_t line_begin = e->lines.items[row].begin;
+    size_t line_end = e->lines.items[row].end;
+
+    for (size_t i = line_begin; i < line_end; ++i) {
+        if (!isspace(e->data.items[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+
+void editor_yank_line(Editor* editor) {
+    size_t start = editor->cursor;
+    while (start > 0 && editor->data.items[start - 1] != '\n') {
+        start--;
+    }
+
+    size_t end = start;
+    while (end < editor->data.count && editor->data.items[end] != '\n') {
+        end++;
+    }
+
+    if (start < end) {
+        editor->clipboard.count = 0;
+        sb_append_buf(&editor->clipboard, &editor->data.items[start], end - start);
+        sb_append_null(&editor->clipboard);
+
+        if (SDL_SetClipboardText(editor->clipboard.items) < 0) {
+            fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
+        }
+    }
+    copiedLine = true;
+}
+
+void editor_paste_line_after(Editor* editor) {
+    if (!copiedLine) {
+        return; // Do nothing if no line has been copied
+    }
+
+    char *text = SDL_GetClipboardText();
+    if (!text) {
+        fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
+        return;
+    }
+
+    size_t text_len = strlen(text);
+    if (text_len > 0) {
+        editor_move_line_down(editor); // Move to the start of the next line
+
+        // Insert the text from the clipboard
+        editor_insert_buf(editor, text, text_len);
+
+        // Insert a newline after pasting if the text doesn't end with one
+        if (text[text_len - 1] != '\n') {
+            editor_insert_buf(editor, "\n", 1);
+        }
+
+        editor_move_line_up(editor); // Move back to the original line
+    } else {
+        fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
+    }
+
+    SDL_free(text);
+}
+
+void editor_paste_line_before(Editor* editor) {
+    if (!copiedLine) {
+        return; // Do nothing if no line has been copied
+    }
+
+    char *text = SDL_GetClipboardText();
+    if (!text) {
+        fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
+        return;
+    }
+
+    size_t text_len = strlen(text);
+    if (text_len > 0) {
+        // Move cursor to the start of the current line
+        size_t start = editor->cursor;
+        while (start > 0 && editor->data.items[start - 1] != '\n') {
+            start--;
+        }
+        editor->cursor = start;
+
+        // Insert the text from the clipboard
+        editor_insert_buf(editor, text, text_len);
+
+        // Optionally, insert a newline after pasting if the text doesn't end with one
+        if (text[text_len - 1] != '\n') {
+            editor_insert_buf(editor, "\n", 1);
+        }
+    } else {
+        fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
+    }
+    editor_move_line_up(editor); // like this the cursor behave like vim HACK TODO
+    SDL_free(text);
+}
+
 
 

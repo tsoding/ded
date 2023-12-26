@@ -37,12 +37,18 @@ make the text disappear []
  (bad when going up) []
 ** Shaders
 use shaders from =~/.config/ded/shaders= instead [x]
+** Renderer 
+render circles (for whitespaces) []
 ** Editor
-Togglable visibility of whitespaces[]
+a theme should be able to define how much lighter of the bg
+whitespaces indicators are in % (currently hardcoded to 70%)[]
+yasnippet []
+Replace mode []
+Replace character mode []
+Pipe selection to unix command []
 Togglable visibility of new lines[]
 Togglable indentation lines[]
-show characters under cursor with the same color as the bg[]
-evil join on shift + j []
+show character under cursor with the same color as the bg[]
 keep a list of opened files to quickly
 go to the previous or next "buffer" or kill them []
 search should not be case sensitive []
@@ -53,6 +59,10 @@ most symple emacs style completition (ctrl + n in insert mode)[]
 use window hight and width dinamicly instead of fixed position when animations are off []
 
 
+when copying with y do it like vim[x]
+evil join on shift + j [x]
+Emacs mode [x]
+Togglable visibility of whitespaces[x]
 different cursor color based on the mode[x]
 if editor->has_mark make the cursor trasparent [x]
 ctrl + backspace should delete an entire word [x]

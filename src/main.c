@@ -563,8 +563,171 @@ int main(int argc, char **argv)
                 }
               } else {
                 switch (current_mode) {
+                case EMACS:
+                    // TODO add all keybinds
+                    switch (event.key.keysym.sym) {
+                        
+                    case SDLK_BACKSPACE:
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor_backward_kill_word(&editor);
+                            editor.last_stroke = SDL_GetTicks();
+                        }else{
+                            editor_backspace(&editor);
+                            editor.last_stroke = SDL_GetTicks();
+                    }
+                    break;
+                        
+
+                    case SDLK_t: {
+                        if (SDL_GetModState() & KMOD_CTRL) {
+                            isAnimated = !isAnimated;  // Toggle the state
+                        }
+                    }
+                    break;
+
+                    
+                    case SDLK_TAB: {
+                        for (size_t i = 0; i < indentation; ++i) {
+                            editor_insert_char(&editor, ' ');
+                        }
+                        editor.last_stroke = SDL_GetTicks();
+                    }
+                    break;
+                      
+                    case SDLK_r:
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            file_browser = true;
+                        }
+                        break;
+                        
+                    case SDLK_n: {
+                        if (SDL_GetModState() & KMOD_SHIFT) {
+                            editor_search_previous(&editor);
+                        } else if(editor.has_mark){
+                            editor_search_next(&editor);
+                        }
+                        if (SDL_GetModState() & KMOD_CTRL) {
+                            editor_move_line_down(&editor);
+                            editor.last_stroke = SDL_GetTicks();
+                        }
+                    } break;
+                        
+                    case SDLK_p:
+                        if (SDL_GetModState() & KMOD_CTRL){
+                            editor_move_line_up(&editor);
+                        }
+                        editor.last_stroke = SDL_GetTicks();
+                        break;
+
+
+                    case SDLK_v:
+                        if (SDL_GetModState() & KMOD_CTRL){
+                            editor_clipboard_paste(&editor);
+                        }
+                        editor.last_stroke = SDL_GetTicks();
+                        break;
+
+                        
+                    case SDLK_b:
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                        if (SDL_GetModState() & KMOD_CTRL){
+                            editor_move_char_left(&editor);
+                        } else {
+                            editor_move_word_left(&editor);
+                        }
+                        editor.last_stroke = SDL_GetTicks();
+                        break;
+
+
+                    case SDLK_RETURN: {
+                        if (editor.searching) {
+                            editor_stop_search_and_mark(&editor);
+                            current_mode = NORMAL;
+                        } else {
+                            size_t row = editor_cursor_row(&editor);
+                            size_t line_end = editor.lines.items[row].end;
+                            
+                            editor_insert_char(&editor, '\n');
+                            size_t line_begin = editor.lines.items[row].begin;
+                            bool inside_braces = false;
+                            
+                            // Check if the line contains an opening brace '{'
+                            for (size_t i = line_begin; i < line_end; ++i) {
+                                char c = editor.data.items[i];
+                                if (c == '{') {
+                                    inside_braces = true;
+                                    break;
+                                }
+                            }
+                            
+                            // Insert the same whitespace character
+                            for (size_t i = line_begin; i < line_end; ++i) {
+                                char c = editor.data.items[i];
+                                if (c == ' ' || c == '\t') {
+                                    editor_insert_char(&editor, c);
+                                } else {
+                                    break;
+                                }
+                            }
+                            
+                            // If inside braces, perform additional steps
+                            if (inside_braces) {
+                                editor_move_line_up(&editor);
+                                editor_move_to_line_end(&editor);
+                                editor_insert_char(&editor, '\n');
+                                
+                                // Add indentation
+                                for (size_t i = 0; i < indentation; ++i) {
+                                    editor_insert_char(&editor, ' ');
+                                }
+                            }
+                            
+                            editor.last_stroke = SDL_GetTicks();
+                        }
+                    }
+                    break;
+
+                    
+                    case SDLK_EQUALS: {
+                        if (SDL_GetModState() & KMOD_ALT) {  // Check if ALT is pressed
+                            theme_next(&currentThemeIndex);
+                            printf("Changed theme to %d\n", currentThemeIndex); // Logging the theme change for debugging
+                        } else if (SDL_GetModState() & KMOD_CTRL) {  // Check if CTRL is pressed
+                            zoom_factor -= 1.0f;
+                            if (zoom_factor < min_zoom_factor) {
+                                zoom_factor = min_zoom_factor;
+                            }
+                        }
+                    } break;
+
+                    case SDLK_MINUS: {
+                        if (SDL_GetModState() & KMOD_ALT) {  // Check if ALT is pressed
+                            theme_previous(&currentThemeIndex);
+                            printf("Changed theme back to %d\n", currentThemeIndex); // Logging the theme change for debugging
+                        } else if (SDL_GetModState() & KMOD_CTRL) {  // Check if CTRL is pressed
+                            zoom_factor += 1.0f;
+                            if (zoom_factor > max_zoom_factor) {
+                                zoom_factor = max_zoom_factor;
+                            }
+                        }
+                    } break;
+                        
+                  case SDLK_f:
+                      if (SDL_GetModState() & KMOD_CTRL){
+                          editor_move_char_right(&editor);
+                      }
+                      editor.last_stroke = SDL_GetTicks();
+                      break;
+                      
+                    case SDLK_s: {
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor_start_search(&editor);
+                        }
+                    }}
+                    break;
+                                        
                 case NORMAL:
-                  switch (event.key.keysym.sym) {
+                    switch (event.key.keysym.sym) {
                     SDL_Event tmpEvent; // Declare once at the beginning of the switch block
 
                   /* case SDLK_RETURN: { */
@@ -598,7 +761,7 @@ int main(int argc, char **argv)
                     }
                   } break;
 
-
+                      
                   case SDLK_ESCAPE: {
                     editor_clear_mark(&editor);
                     editor_stop_search(&editor);
@@ -662,7 +825,7 @@ int main(int argc, char **argv)
                         // - tabs/spaces
                         // - tab width
                         // - etc.
-                        for (size_t i = 0; i < 4; ++i) {
+                        for (size_t i = 0; i < indentation; ++i) {
                             editor_insert_char(&editor, ' ');
                         }
                     }
@@ -688,38 +851,28 @@ int main(int argc, char **argv)
                     }
                     break;
 
-                  // TODO the else should probably be in a function
-                  // like editor_clipboard_copy()
-                  case SDLK_y:
-                    if (editor.selection) {
-                      editor_clipboard_copy(&editor);
-                    } else {
-                      size_t start = editor.cursor;
-                      while (start > 0 &&
-                             editor.data.items[start - 1] != '\n') {
-                        start--;
-                      }
-
-                      size_t end = start;
-                      while (end < editor.data.count &&
-                             editor.data.items[end] != '\n') {
-                        end++;
-                      }
-
-                      if (start < end) {
-                        editor.clipboard.count = 0;
-                        sb_append_buf(&editor.clipboard,
-                                      &editor.data.items[start], end - start);
-                        sb_append_null(&editor.clipboard);
-
-                        if (SDL_SetClipboardText(editor.clipboard.items) < 0) {
-                          fprintf(stderr, "ERROR: SDL ERROR: %s\n",
-                                  SDL_GetError());
+                    case SDLK_y:
+                        if (editor.selection) {
+                            editor_clipboard_copy(&editor);
+                        } else {
+                            editor_yank_line(&editor);
                         }
-                      }
+                        break;
+                        
+                  case SDLK_p:
+                    if (SDL_GetModState() & KMOD_CTRL){
+                      editor_move_line_up(&editor);
+                    } else if (copiedLine) {
+                        if (SDL_GetModState() & KMOD_SHIFT) {
+                            editor_paste_line_before(&editor);
+                        } else {
+                            editor_paste_line_after(&editor);
+                        }
+                    } else {
+                        editor_clipboard_paste(&editor);
                     }
                     break;
-
+                    
                   case SDLK_g: {
                     if (SDL_GetModState() & KMOD_SHIFT) {
                       editor_move_to_end(&editor);
@@ -752,17 +905,12 @@ int main(int argc, char **argv)
                     }
                   } break;
 
-                  case SDLK_p:
-                    if (SDL_GetModState() & KMOD_CTRL){
-                      editor_move_line_up(&editor);
-                    } else {
-                      editor_clipboard_paste(&editor);
-                    }
-                    break;
-
                   case SDLK_b:
+                    editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                     if (SDL_GetModState() & KMOD_CTRL){
                       editor_move_char_left(&editor);
+                    } else {
+                      editor_move_word_left(&editor);
                     }
                     break;
 
@@ -835,6 +983,13 @@ int main(int argc, char **argv)
                     } else {
                       current_mode = VISUAL;
                       editor_start_visual_selection(&editor);  // Initiate character selection.
+                    }
+                  } break;
+
+
+                  case SDLK_4: {
+                    if (SDL_GetModState() & KMOD_SHIFT) {
+                      editor_move_to_line_end(&editor);
                     }
                   } break;
 
@@ -921,6 +1076,8 @@ int main(int argc, char **argv)
                       move_camera(&sr, "down", 50.0f);
                     } else if (event.key.keysym.mod & KMOD_CTRL) {
                       editor_new_line_down(&editor);
+                    } else if (event.key.keysym.mod & KMOD_SHIFT) {
+                      editor_join_lines(&editor);
                     } else if (event.key.keysym.mod & KMOD_ALT) {
                       editor_move_paragraph_down(&editor);
                     } else {
@@ -1447,7 +1604,7 @@ int main(int argc, char **argv)
             case SDL_TEXTINPUT:
               if (file_browser) {
                 // Once we have incremental search in the file browser this may become useful
-              } else if (current_mode == INSERT) { // Process text input only in INSERT mode
+              } else if (current_mode == INSERT || current_mode == EMACS) { // Process text input
                 const char *text = event.text.text;
                 size_t text_len = strlen(text);
                 for (size_t i = 0; i < text_len; ++i) {
