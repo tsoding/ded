@@ -1,7 +1,5 @@
 #+title: Todo
 
-https://google.com
-
 * TODO
 every function defined in the code should be callable
 while the app is running holy c emacs style M-x []
@@ -15,6 +13,7 @@ ctrl scroll should scroll more []
 splits(maybe)   []
 5k should work []
 shift + 8 []
+shift + 5 [x]
 ** Modeline
 show the current EvilMode, file name, info and cool icons
 ** Minibuffer
@@ -40,6 +39,7 @@ use shaders from =~/.config/ded/shaders= instead [x]
 ** Renderer 
 render circles (for whitespaces) []
 ** Editor
+Fringe[]
 a theme should be able to define how much lighter of the bg
 whitespaces indicators are in % (currently hardcoded to 70%)[]
 yasnippet []

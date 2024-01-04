@@ -85,6 +85,7 @@ typedef struct {
     Vec4f pointer;
     Vec4f modeline;
     Vec4f minibuffer;
+    Vec4f matching_parenthesis;
 } Theme;
 
 
@@ -103,9 +104,8 @@ typedef struct {
     size_t select_begin;
     size_t cursor;
 
-    /* EvilMode mode; // TODO */
     bool has_mark;            // Indicates if there's a marked search result.
-    size_t mark_start;        // Start of marked search result.
+    size_t mark_start;        // Start of marked search result. TODO support multiple marks
     size_t mark_end;          // End of marked search result.
 
 
@@ -169,6 +169,9 @@ bool editor_is_line_whitespaced(Editor *e, size_t row);
 void editor_yank_line(Editor *editor);
 void editor_paste_line_after(Editor *editor);
 void editor_paste_line_before(Editor* editor);
+ssize_t find_matching_parenthesis(Editor *editor, size_t cursor_pos);
+size_t editor_row_from_pos(const Editor *e, size_t pos);
+void editor_jump_to_matching_parenthesis(Editor *editor);
 
 
 extern float zoom_factor;

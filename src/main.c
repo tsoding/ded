@@ -762,13 +762,21 @@ int main(int argc, char **argv)
                   } break;
 
                       
-                  case SDLK_ESCAPE: {
-                    editor_clear_mark(&editor);
-                    editor_stop_search(&editor);
-                    editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                  }
+                    case SDLK_ESCAPE: {
+                        editor_clear_mark(&editor);
+                        editor_stop_search(&editor);
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                    }
                     break;
 
+
+                    case SDLK_5: {
+                        if (SDL_GetModState() & KMOD_SHIFT) {
+                            editor_jump_to_matching_parenthesis(&editor);
+                        }
+                    }
+                    break;
+                        
 
                     case SDLK_o:
                       if (SDL_GetModState() & KMOD_SHIFT) {
@@ -858,8 +866,8 @@ int main(int argc, char **argv)
                             editor_yank_line(&editor);
                         }
                         break;
-                        
-                  case SDLK_p:
+
+                    case SDLK_p:
                     if (SDL_GetModState() & KMOD_CTRL){
                       editor_move_line_up(&editor);
                     } else if (copiedLine) {
@@ -921,9 +929,9 @@ int main(int argc, char **argv)
                     break;
 
                     case SDLK_s: {
-                      current_mode = INSERT;
                       if (event.key.keysym.mod & KMOD_CTRL) {
-                        editor_start_search(&editor);
+                          editor_start_search(&editor);
+                          current_mode = INSERT;
                       }
                     }
                     break;
@@ -1122,6 +1130,8 @@ int main(int argc, char **argv)
                   case SDLK_e:
                     if (event.key.keysym.mod & KMOD_CTRL) {
                       isWave = !isWave;
+                      /* current_mode = EMACS; */
+                      /* editor.last_stroke = SDL_GetTicks(); */
                     }
                     break;
 

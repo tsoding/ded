@@ -16,16 +16,18 @@ EvilMode current_mode = NORMAL;
 float zoom_factor = 3.0f;
 float min_zoom_factor = 1.0;
 float max_zoom_factor = 10.0;
-bool showLineNumbers = false;
+
 bool isAnimated = true;
-bool isWave = true;
+bool isWave = false;
 int indentation = 4;
 
+bool showLineNumbers = false;
 bool highlightCurrentLineNumber = true;
 bool relativeLineNumbers = false;
 
 bool showWhitespaces = true;
 bool copiedLine = false;
+bool matchParenthesis = true; //TODO segfault and highlight size
 
 
 
@@ -144,6 +146,7 @@ void initialize_themes() {
         .logic_and = hex_to_vec4f(0x80D4FFFF),
         .pointer = hex_to_vec4f(0xCCD6F5FF),
         .multiplication = hex_to_vec4f(0x80D4FFFF),
+        .matching_parenthesis = hex_to_vec4f(0x1A1A1AFF),
 
     };
 
@@ -182,6 +185,7 @@ void initialize_themes() {
         .close_square = hex_to_vec4f(0x4183c4FF), // Link Color
         .current_line_number = hex_to_vec4f(0x3ca555FF), // List Bullet Color
         .array_content = hex_to_vec4f(0xdddDDDFF), // Various Elements Border Color
+        .matching_parenthesis = hex_to_vec4f(0x999999FF), // Button Active Border Color
     };
 
     // Base2Tone Extended Pink & Purple
@@ -220,6 +224,7 @@ void initialize_themes() {
         .current_line_number = hex_to_vec4f(0xB34688FF),
         .array_content = hex_to_vec4f(0xD49FD4FF),
         .link = hex_to_vec4f(0x89b4faFF), // Blue
+        .matching_parenthesis = hex_to_vec4f(0xD2146BFF),
     };
 
     // Monokai Expanded
@@ -257,6 +262,7 @@ void initialize_themes() {
         .current_line_number = hex_to_vec4f(0x66D9EFFF),
         .array_content = hex_to_vec4f(0x3E3D32FF),
         .link = hex_to_vec4f(0x89b4faFF), // Blue
+        .matching_parenthesis = hex_to_vec4f(0x49483EFF),
     };
 
     // Catppuccin
@@ -301,6 +307,7 @@ void initialize_themes() {
         .logic_and = hex_to_vec4f(0xa6e3a1FF), // Green
         .pointer = hex_to_vec4f(0xf5c2e7FF), // Pink
         .multiplication = hex_to_vec4f(0xFAB387FF), // Peach
+        .matching_parenthesis = hex_to_vec4f(0xf5c2e7FF), // Pink
     };
  }
 
@@ -843,9 +850,9 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
     // Render line numbers
     if (showLineNumbers) {
-        if (isWave){
+        if (isWave) {
             simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_TEXT);
-        }else{
+        } else {
             simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_TEXT);
         }
 
@@ -889,11 +896,55 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         simple_renderer_flush(sr);
     }
 
+    // Render matching parenthesis
+    {
+        if (current_mode == NORMAL || current_mode == EMACS) {
+            if (matchParenthesis) {
+                if (isWave) {
+                    simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_COLOR);
+                } else {
+                    simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
+                }
+                
+                ssize_t matching_pos = find_matching_parenthesis(editor, editor->cursor);
+                if (matching_pos != -1) {
+                    size_t matching_row = editor_row_from_pos(editor, matching_pos);
+                    
+                    Vec2f match_pos_screen = vec2fs(0.0f); // Initialize to zero
+                    match_pos_screen.y = -((float)matching_row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE;
+                    
+                    Line line = editor->lines.items[matching_row];
+                    if (matching_pos >= line.begin && matching_pos < line.end) {
+                        // Measure the position up to the matching character
+                        free_glyph_atlas_measure_line_sized(atlas, editor->data.items + line.begin, matching_pos - line.begin, &match_pos_screen);
+                        
+                        // Measure the width of the actual character at the matching position
+                        Vec2f char_end_pos = match_pos_screen;
+                        free_glyph_atlas_measure_line_sized(atlas, editor->data.items + matching_pos, 1, &char_end_pos);
+                        float char_width = char_end_pos.x - match_pos_screen.x;
+                        
+                        // Adjust for line numbers if displayed
+                        if (showLineNumbers) {
+                            match_pos_screen.x += lineNumberWidth;
+                        }
+                        
+                        // Define the size of the highlight rectangle to match character size
+                        Vec2f rect_size = vec2f(char_width, FREE_GLYPH_FONT_SIZE);
+                        
+                        simple_renderer_solid_rect(sr, match_pos_screen, rect_size, themes[currentThemeIndex].matching_parenthesis);
+                    }
+                }
+            }
+            simple_renderer_flush(sr);
+        }
+    }
+
+    
     // Render text
     {
-        if (isWave){
-            simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_TEXT);
-        }else{
+        if (isWave) {
+            simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_EPICNESS);
+        } else {
             simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_TEXT);
         }
         for (size_t i = 0; i < editor->tokens.count; ++i) {
@@ -1113,63 +1164,60 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         simple_renderer_flush(sr);
     }
 
+    
 
     // WHITESPACES
     {
-      if (showWhitespaces) {
-        if (isWave) {
-          simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_COLOR);
-        } else {
-          simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
-        }
-        
-        float squareSize = FREE_GLYPH_FONT_SIZE * 0.2;
-        
-        for (size_t i = 0; i < editor->lines.count; ++i) {
-          Line line = editor->lines.items[i];
-          Vec2f pos = { 0, -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE };
-          
-          if (showLineNumbers) {
-            pos.x += lineNumberWidth;
-          }
-          
-          for (size_t j = line.begin; j < line.end; ++j) {
-            if (editor->data.items[j] == ' ' || editor->data.items[j] == '\t') {
-              /* Vec4f whitespaceColor = vec4f(1, 0, 0, 1); // Red color for visibility */
-              
-              Vec4f backgroundColor = themes[currentThemeIndex].background;
-              Vec4f whitespaceColor;
-              
-              // Increase each RGB component by 70%, but not above 1
-              whitespaceColor.x = backgroundColor.x + 0.7 * (1 - backgroundColor.x);
-              whitespaceColor.y = backgroundColor.y + 0.7 * (1 - backgroundColor.y);
-              whitespaceColor.z = backgroundColor.z + 0.7 * (1 - backgroundColor.z);
-              
-              // Clamp values to max 1.0
-              whitespaceColor.x = whitespaceColor.x > 1 ? 1 : whitespaceColor.x;
-              whitespaceColor.y = whitespaceColor.y > 1 ? 1 : whitespaceColor.y;
-              whitespaceColor.z = whitespaceColor.z > 1 ? 1 : whitespaceColor.z;
-              
-              // Keep the alpha value the same
-              whitespaceColor.w = backgroundColor.w;
-              
-              
-
-            
-              // Measure the actual character width
-              Vec2f char_pos = pos;
-              char_pos.x += (j - line.begin) * squareSize; // Starting position for this character
-              free_glyph_atlas_measure_line_sized(atlas, editor->data.items + j, 1, &char_pos);
-              float char_width = char_pos.x - pos.x - (j - line.begin) * squareSize;
-              
-              Vec2f rectPos = {pos.x + (j - line.begin) * char_width + (char_width - squareSize) / 2, pos.y + (FREE_GLYPH_FONT_SIZE - squareSize) / 2};
-              simple_renderer_solid_rect(sr, rectPos, vec2f(squareSize, squareSize), whitespaceColor);
+        if (showWhitespaces) {
+            if (isWave) {
+                simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_COLOR);
+            } else {
+                simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
             }
-          }
+            
+            float squareSize = FREE_GLYPH_FONT_SIZE * 0.2;
+            
+            for (size_t i = 0; i < editor->lines.count; ++i) {
+                Line line = editor->lines.items[i];
+                Vec2f pos = { 0, -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE };
+                
+                if (showLineNumbers) {
+                    pos.x += lineNumberWidth;
+                }
+                
+                for (size_t j = line.begin; j < line.end; ++j) {
+                    if (editor->data.items[j] == ' ' || editor->data.items[j] == '\t') {
+                        /* Vec4f whitespaceColor = vec4f(1, 0, 0, 1); // Red color for visibility */
+                        
+                        Vec4f backgroundColor = themes[currentThemeIndex].background;
+                        Vec4f whitespaceColor;
+                        
+                        // Increase each RGB component by 70%, but not above 1
+                        whitespaceColor.x = backgroundColor.x + 0.7 * (1 - backgroundColor.x);
+                        whitespaceColor.y = backgroundColor.y + 0.7 * (1 - backgroundColor.y);
+                        whitespaceColor.z = backgroundColor.z + 0.7 * (1 - backgroundColor.z);
+                        
+                        // Clamp values to max 1.0
+                        whitespaceColor.x = whitespaceColor.x > 1 ? 1 : whitespaceColor.x;
+                        whitespaceColor.y = whitespaceColor.y > 1 ? 1 : whitespaceColor.y;
+                        whitespaceColor.z = whitespaceColor.z > 1 ? 1 : whitespaceColor.z;
+                        
+                        // Keep the alpha value the same
+                        whitespaceColor.w = backgroundColor.w;
+                        
+                        // Measure the actual character width
+                        Vec2f char_pos = pos;
+                        char_pos.x += (j - line.begin) * squareSize; // Starting position for this character
+                        free_glyph_atlas_measure_line_sized(atlas, editor->data.items + j, 1, &char_pos);
+                        float char_width = char_pos.x - pos.x - (j - line.begin) * squareSize;
+                        
+                        Vec2f rectPos = {pos.x + (j - line.begin) * char_width + (char_width - squareSize) / 2, pos.y + (FREE_GLYPH_FONT_SIZE - squareSize) / 2};
+                        simple_renderer_solid_rect(sr, rectPos, vec2f(squareSize, squareSize), whitespaceColor);
+                    }
+                }
+            }
+            simple_renderer_flush(sr);
         }
-        simple_renderer_flush(sr);
-        
-      }
     }
     
     
@@ -1897,6 +1945,7 @@ void editor_paste_line_after(Editor* editor) {
     SDL_free(text);
 }
 
+// BUG
 void editor_paste_line_before(Editor* editor) {
     if (!copiedLine) {
         return; // Do nothing if no line has been copied
@@ -1933,3 +1982,93 @@ void editor_paste_line_before(Editor* editor) {
 
 
 
+ssize_t find_matching_parenthesis(Editor *editor, size_t cursor_pos) {
+    // Ensure the cursor position is within the valid range
+    if (cursor_pos >= editor->data.count) return -1;
+    if (matchParenthesis){
+        char current_char = editor->data.items[cursor_pos];
+        char matching_char;
+        int direction;
+        
+        // Check if the character at cursor is a parenthesis
+        switch (current_char) {
+        case '(': matching_char = ')'; direction = 1; break;
+        case ')': matching_char = '('; direction = -1; break;
+        case '[': matching_char = ']'; direction = 1; break;
+        case ']': matching_char = '['; direction = -1; break;
+        case '{': matching_char = '}'; direction = 1; break;
+        case '}': matching_char = '{'; direction = -1; break;
+        default: return -1; // Not on a parenthesis character
+        }
+        
+        int balance = 1;
+        size_t pos = cursor_pos;
+        
+        while ((direction > 0 && pos < editor->data.count - 1) || (direction < 0 && pos > 0)) {
+            pos += direction;
+            
+            if (editor->data.items[pos] == current_char) {
+                balance++;
+            } else if (editor->data.items[pos] == matching_char) {
+                balance--;
+                if (balance == 0) {
+                    return pos; // Found the matching parenthesis
+                }
+            }
+        }
+        return -1; // No matching parenthesis found
+    }
+}
+
+size_t editor_row_from_pos(const Editor *e, size_t pos) {
+    assert(e->lines.count > 0);
+    for (size_t row = 0; row < e->lines.count; ++row) {
+        Line line = e->lines.items[row];
+        if (line.begin <= pos && pos <= line.end) {
+            return row;
+        }
+    }
+    return e->lines.count - 1;
+}
+
+/* void editor_jump_to_matching_parenthesis(Editor *editor) { */
+/*     if (editor->cursor >= editor->data.count) return; */
+
+/*     ssize_t matching_pos = find_matching_parenthesis(editor, editor->cursor); */
+/*     if (matching_pos != -1) { */
+/*         // Move the cursor to the matching parenthesis */
+/*         editor->cursor = matching_pos; */
+/*     } */
+/* } */
+
+void editor_jump_to_matching_parenthesis(Editor *editor) {
+    if (editor->cursor >= editor->data.count) return;
+
+    char current_char = editor->data.items[editor->cursor];
+    ssize_t matching_pos = -1;
+
+    // Check if the current cursor position is a parenthesis
+    if (strchr("()[]{}", current_char)) {
+        matching_pos = find_matching_parenthesis(editor, editor->cursor);
+    } else {
+        // If not, search for a parenthesis on the current line
+        size_t row = editor_cursor_row(editor);
+        size_t line_begin = editor->lines.items[row].begin;
+        size_t line_end = editor->lines.items[row].end;
+
+        for (size_t pos = line_begin; pos < line_end; ++pos) {
+            current_char = editor->data.items[pos];
+            if (strchr("()[]{}", current_char)) {
+                matching_pos = find_matching_parenthesis(editor, pos);
+                if (matching_pos != -1) {
+                    break;
+                }
+            }
+        }
+    }
+
+    // Move the cursor to the matching parenthesis
+    if (matching_pos != -1) {
+        editor->cursor = matching_pos;
+    }
+}

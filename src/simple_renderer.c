@@ -10,7 +10,7 @@
 
 #include <dirent.h>
 
-// hardocded
+// hardcoded
 /* #define vert_shader_file_path "./shaders/simple.vert" */
 
 /* static_assert(COUNT_SIMPLE_SHADERS == 5, "The amount of fragment shaders has changed"); */
@@ -45,6 +45,7 @@ void initialize_shader_paths() {
     set_shader_path(frag_shader_file_paths[SHADER_FOR_TEXT], "simple_text.frag");
     set_shader_path(frag_shader_file_paths[SHADER_FOR_EPICNESS], "simple_epic.frag");
     set_shader_path(frag_shader_file_paths[SHADER_FOR_GLOW], "simple_glow.frag");
+    set_shader_path(frag_shader_file_paths[SHADER_FOR_CURSOR], "cursor.frag");
 }
 
 // Call initialize_shader_paths() early in your program.
