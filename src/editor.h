@@ -86,6 +86,7 @@ typedef struct {
     Vec4f modeline;
     Vec4f minibuffer;
     Vec4f matching_parenthesis;
+    Vec4f hl_line; 
 } Theme;
 
 
@@ -183,6 +184,7 @@ extern bool showLineNumbers;
 extern bool isWave;
 extern bool showWhitespaces;
 extern bool copiedLine;
+extern bool hl_line;
 
 // THEME
 extern Theme themes[];

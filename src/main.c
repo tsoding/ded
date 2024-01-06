@@ -584,10 +584,10 @@ int main(int argc, char **argv)
 
                     case SDLK_TAB: {
                         activate_snippet(&editor);
-                        /* for (size_t i = 0; i < indentation; ++i) { */
-                        /*     editor_insert_char(&editor, ' '); */
-                        /* } */
-                        /* editor.last_stroke = SDL_GetTicks(); */
+                        for (size_t i = 0; i < indentation; ++i) {
+                            editor_insert_char(&editor, ' ');
+                        }
+                        editor.last_stroke = SDL_GetTicks();
                     }
                     break;
                       
@@ -684,25 +684,6 @@ int main(int argc, char **argv)
                     switch (event.key.keysym.sym) {
                     SDL_Event tmpEvent; // Declare once at the beginning of the switch block
 
-                  /* case SDLK_RETURN: { */
-                  /*   if (editor.searching) { */
-                  /*     editor_stop_search_and_mark(&editor); */
-                  /*     current_mode = NORMAL; */
-                  /*   } else { */
-                  /*     // buffer to hold the extracted word. */
-                  /*     // Assuming the maximum word length is 255 characters. */
-                  /*     char word[256]; */
-
-                  /*     // If the word is successfully extracted, print it to the */
-                  /*     // debug output. */
-                  /*     if (extractWordUnderCursor(&editor, word)) { */
-                  /*       printf("Extracted word: %s\n", word); */
-                  /*     } else { */
-                  /*       printf("No word under cursor\n"); */
-                  /*     } */
-                  /*   } */
-                  /* } break; */
-
                   case SDLK_RETURN: {
                     if (editor.searching) {
                       editor_stop_search_and_mark(&editor);
@@ -714,7 +695,6 @@ int main(int argc, char **argv)
                       }
                     }
                   } break;
-
                       
                     case SDLK_ESCAPE: {
                         editor_clear_mark(&editor);
@@ -723,10 +703,16 @@ int main(int argc, char **argv)
                     }
                     break;
 
-
                     case SDLK_5: {
                         if (SDL_GetModState() & KMOD_SHIFT) {
                             evil_jump_item(&editor);
+                        }
+                    }
+                    break;
+
+                    case SDLK_1: {
+                        if (SDL_GetModState() & KMOD_CTRL) {
+                            hl_line = !hl_line;
                         }
                     }
                     break;
@@ -787,11 +773,11 @@ int main(int argc, char **argv)
                         // - tabs/spaces
                         // - tab width
                         // - etc.
-                        /* for (size_t i = 0; i < indentation; ++i) { */
-                        /*     editor_insert_char(&editor, ' '); */
-                        /* } */
+                        for (size_t i = 0; i < indentation; ++i) {
+                            editor_insert_char(&editor, ' ');
+                        }
                         
-                        activate_snippet(&editor);
+                        /* activate_snippet(&editor); */
                     }
                     break;
 

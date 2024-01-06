@@ -25,10 +25,11 @@ bool showLineNumbers = false;
 bool highlightCurrentLineNumber = true;
 bool relativeLineNumbers = false;
 
-bool showWhitespaces = true;
+bool showWhitespaces = false;
 bool copiedLine = false;
 bool matchParenthesis = true; //TODO segfault and highlight size
 
+bool hl_line = true;
 
 
 void editor_new_line_down(Editor *editor) {
@@ -100,7 +101,7 @@ void move_camera(Simple_Renderer *sr, const char* direction, float amount) {
 
 
 
-int currentThemeIndex = 0;
+int currentThemeIndex = 5;
 Theme themes[6];
 
 void initialize_themes() {
@@ -353,6 +354,7 @@ void initialize_themes() {
         .pointer = hex_to_vec4f(0x514B8EFF), 
         .multiplication = hex_to_vec4f(0x867892FF), 
         .matching_parenthesis = hex_to_vec4f(0x262626FF), 
+        .hl_line = hex_to_vec4f(0x070707FF)
     };
  }
 
@@ -811,6 +813,30 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                        );
     }
 
+    
+    // Render hl_line
+    {
+        if (hl_line){
+            simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
+            
+            size_t currentLine = editor_cursor_row(editor);
+            Vec2f highlightPos = {0.0f, -((float)currentLine + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE};
+            
+            float highlightWidth = 8000;  // Default width for the highlight
+            
+            // If showing line numbers, adjust the position and width of the highlight
+            if (showLineNumbers) {
+                highlightPos.x -= lineNumberWidth - 260;  // Move highlight to the left to cover line numbers
+                highlightWidth += lineNumberWidth;  // Increase width to include line numbers area
+            }
+            
+            simple_renderer_solid_rect(sr, highlightPos, vec2f(highlightWidth, FREE_GLYPH_FONT_SIZE), themes[currentThemeIndex].hl_line);
+            
+            simple_renderer_flush(sr);
+        }
+    }
+
+    
     // Render search
     {
         if (editor->searching) {
@@ -1439,7 +1465,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     // Update camera
     {
         if (isAnimated) {
-            // Your current camera update logic for animated behavior
 
             if (max_line_len > 1000.0f) {
                 max_line_len = 1000.0f;
