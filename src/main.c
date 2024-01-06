@@ -32,14 +32,14 @@
 #include <libgen.h>
 #include <limits.h>
 #include <stdbool.h>
+#include "yasnippet.h"
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 #define FONT_DIR "~/.config/ded/fonts/"
 /* #define DEFAULT_FONT "jet-extra-bold.ttf" */
-#define DEFAULT_FONT "radon.otf"
-/* #define DEFAULT_FONT "Letters.ttf" */
-/* #define DEFAULT_FONT "designer.otf" */
+/* #define DEFAULT_FONT "radon.otf" */
+#define DEFAULT_FONT "iosevka-regular.ttf"
 #define MAX_FONTS 20
 #define MAX_PATH_SIZE 1024
 
@@ -52,10 +52,9 @@ int current_font_index = 0;
 // Needed when ded is ran without any file so it does not know where to save.
 
 // TODO: An ability to create a new file
-// TODO: Delete a word
-// TODO: Delete selection
 // TODO: Undo/redo system
-
+// DONE: Delete a word
+// DONE: Delete selection
 void MessageCallback(GLenum source,
                      GLenum type,
                      GLuint id,
@@ -259,8 +258,10 @@ Errno openLocalIncludeFile(Editor *editor, const char *includePath) {
 int main(int argc, char **argv)
 {
 
-  initialize_themes();
-  initialize_shader_paths();
+    initialize_themes();
+    initialize_shader_paths();
+    load_snippets_from_directory();
+
     Errno err;
 
     FT_Library library = {0};
@@ -308,12 +309,7 @@ int main(int argc, char **argv)
     /* FT_Face face = load_font_face(library, fonts[current_font_index]); */
     FT_Face face = load_font_face(library, fonts[current_font_index], FREE_GLYPH_FONT_SIZE);
 
-
-
-
-
-
-
+    
     /* original */
     /* FT_Face face; */
     /* error = FT_New_Face(library, font_file_path, 0, &face); */
@@ -585,12 +581,13 @@ int main(int argc, char **argv)
                     }
                     break;
 
-                    
+
                     case SDLK_TAB: {
-                        for (size_t i = 0; i < indentation; ++i) {
-                            editor_insert_char(&editor, ' ');
-                        }
-                        editor.last_stroke = SDL_GetTicks();
+                        activate_snippet(&editor);
+                        /* for (size_t i = 0; i < indentation; ++i) { */
+                        /*     editor_insert_char(&editor, ' '); */
+                        /* } */
+                        /* editor.last_stroke = SDL_GetTicks(); */
                     }
                     break;
                       
@@ -640,50 +637,7 @@ int main(int argc, char **argv)
 
 
                     case SDLK_RETURN: {
-                        if (editor.searching) {
-                            editor_stop_search_and_mark(&editor);
-                            current_mode = NORMAL;
-                        } else {
-                            size_t row = editor_cursor_row(&editor);
-                            size_t line_end = editor.lines.items[row].end;
-                            
-                            editor_insert_char(&editor, '\n');
-                            size_t line_begin = editor.lines.items[row].begin;
-                            bool inside_braces = false;
-                            
-                            // Check if the line contains an opening brace '{'
-                            for (size_t i = line_begin; i < line_end; ++i) {
-                                char c = editor.data.items[i];
-                                if (c == '{') {
-                                    inside_braces = true;
-                                    break;
-                                }
-                            }
-                            
-                            // Insert the same whitespace character
-                            for (size_t i = line_begin; i < line_end; ++i) {
-                                char c = editor.data.items[i];
-                                if (c == ' ' || c == '\t') {
-                                    editor_insert_char(&editor, c);
-                                } else {
-                                    break;
-                                }
-                            }
-                            
-                            // If inside braces, perform additional steps
-                            if (inside_braces) {
-                                editor_move_line_up(&editor);
-                                editor_move_to_line_end(&editor);
-                                editor_insert_char(&editor, '\n');
-                                
-                                // Add indentation
-                                for (size_t i = 0; i < indentation; ++i) {
-                                    editor_insert_char(&editor, ' ');
-                                }
-                            }
-                            
-                            editor.last_stroke = SDL_GetTicks();
-                        }
+                        editor_enter(&editor);
                     }
                     break;
 
@@ -772,7 +726,7 @@ int main(int argc, char **argv)
 
                     case SDLK_5: {
                         if (SDL_GetModState() & KMOD_SHIFT) {
-                            editor_jump_to_matching_parenthesis(&editor);
+                            evil_jump_item(&editor);
                         }
                     }
                     break;
@@ -792,7 +746,7 @@ int main(int argc, char **argv)
                       SDL_PollEvent(&tmpEvent);
                       if (tmpEvent.type != SDL_TEXTINPUT ||
                           (tmpEvent.text.text[0] != 'o' && tmpEvent.text.text[0] != 'O')) {
-                        SDL_PushEvent(&tmpEvent); // Push it back to the event queue if it's not 'o' or 'O'
+                        SDL_PushEvent(&tmpEvent); // Push it back to the event queue if it's not
                       }
                       break;
 
@@ -833,9 +787,11 @@ int main(int argc, char **argv)
                         // - tabs/spaces
                         // - tab width
                         // - etc.
-                        for (size_t i = 0; i < indentation; ++i) {
-                            editor_insert_char(&editor, ' ');
-                        }
+                        /* for (size_t i = 0; i < indentation; ++i) { */
+                        /*     editor_insert_char(&editor, ' '); */
+                        /* } */
+                        
+                        activate_snippet(&editor);
                     }
                     break;
 
@@ -1177,9 +1133,11 @@ int main(int argc, char **argv)
                         // - tabs/spaces [ ]
                         // - tab width [x]
                         // - etc.
-                        for (size_t i = 0; i < indentation; ++i) {
-                            editor_insert_char(&editor, ' ');
-                        }
+                        /* for (size_t i = 0; i < indentation; ++i) { */
+                        /*     editor_insert_char(&editor, ' '); */
+                        /* } */
+
+                        activate_snippet(&editor);
                     }
                     break;
 
@@ -1648,6 +1606,7 @@ int main(int argc, char **argv)
             SDL_Delay(delta_time_ms - duration);
         }
     }
+    free_snippet_array(&snippets);
     return 0;
 }
 

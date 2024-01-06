@@ -78,7 +78,7 @@ bool extractWordUnderCursor(Editor *editor, char *word) {
 
 // TODO
 void move_camera(Simple_Renderer *sr, const char* direction, float amount) {
-    if(sr == NULL) return; // check if the SimpleRenderer pointer is valid
+    if(sr == NULL) return;
 
     // Check the direction and adjust the camera position accordingly.
     if(strcmp(direction, "up") == 0) {
@@ -101,7 +101,7 @@ void move_camera(Simple_Renderer *sr, const char* direction, float amount) {
 
 
 int currentThemeIndex = 0;
-Theme themes[5];
+Theme themes[6];
 
 void initialize_themes() {
 
@@ -152,40 +152,40 @@ void initialize_themes() {
 
     // Base2Tone
     themes[1] = (Theme) {
-        .cursor = hex_to_vec4f(0x4183c4FF), // Link Color
-        .insert_cursor = hex_to_vec4f(0x4183c4FF), // Link Color
+        .cursor = hex_to_vec4f(0x4183c4FF), 
+        .insert_cursor = hex_to_vec4f(0x4183c4FF), 
         .emacs_cursor = hex_to_vec4f(0x834EB6FF),
-        .text = hex_to_vec4f(0x111111FF), // Primary Text Color
-        .background = hex_to_vec4f(0x00000026), // Base Background Color
-        .comment = hex_to_vec4f(0x222222FF), // Heading Colors
-        .hashtag = hex_to_vec4f(0x3ca555FF), // List Bullet Color
-        .logic = hex_to_vec4f(0x06f06fFF), // Button Focus Box Shadow
-        .string = hex_to_vec4f(0xc0c0c0FF), // Fieldset Border Color
-        .selection = hex_to_vec4f(0x999999FF), // Button Active Border Color
-        .search = hex_to_vec4f(0xcccCCCFF), // Various Elements Border Color
-        .todo = hex_to_vec4f(0xf8f8f8FF), // Pre Background Color
-        .line_numbers = hex_to_vec4f(0x9399b2FF), // As per example
-        .fixme = hex_to_vec4f(0xf7f7f7FF), // Blockquote Background
-        .note = hex_to_vec4f(0x666666FF), // Blockquote Text Color
-        .bug = hex_to_vec4f(0x4183c4FF), // Link Color
-        .not_equals = hex_to_vec4f(0x06f06fFF), // Button Focus Box Shadow
-        .exclamation = hex_to_vec4f(0x666666FF), // Blockquote Text Color
-        .equals = hex_to_vec4f(0x3ca555FF), // List Bullet Color
-        .equals_equals = hex_to_vec4f(0x3ca555FF), // List Bullet Color
-        .greater_than = hex_to_vec4f(0x06f06fFF), // Button Focus Box Shadow
-        .less_than = hex_to_vec4f(0x4183c4FF), // Link Color
-        .marks = hex_to_vec4f(0x06f06fFF), // Button Focus Box Shadow
-        .fb_selection = hex_to_vec4f(0xdddDDDFF), // Various Elements Border Color
-        .plus = hex_to_vec4f(0x3ca555FF), // List Bullet Color
-        .minus = hex_to_vec4f(0x4183c4FF), // Link Color
-        .truee = hex_to_vec4f(0x3ca555FF), // List Bullet Color
-        .falsee = hex_to_vec4f(0x4183c4FF), // Link Color
-        .arrow = hex_to_vec4f(0x666666FF), // Blockquote Text Color
-        .open_square = hex_to_vec4f(0x4183c4FF), // Link Color
-        .close_square = hex_to_vec4f(0x4183c4FF), // Link Color
-        .current_line_number = hex_to_vec4f(0x3ca555FF), // List Bullet Color
-        .array_content = hex_to_vec4f(0xdddDDDFF), // Various Elements Border Color
-        .matching_parenthesis = hex_to_vec4f(0x999999FF), // Button Active Border Color
+        .text = hex_to_vec4f(0x111111FF), 
+        .background = hex_to_vec4f(0x00000026), 
+        .comment = hex_to_vec4f(0x222222FF), 
+        .hashtag = hex_to_vec4f(0x3ca555FF), 
+        .logic = hex_to_vec4f(0x06f06fFF), 
+        .string = hex_to_vec4f(0xc0c0c0FF), 
+        .selection = hex_to_vec4f(0x999999FF), 
+        .search = hex_to_vec4f(0xcccCCCFF), 
+        .todo = hex_to_vec4f(0xf8f8f8FF), 
+        .line_numbers = hex_to_vec4f(0x9399b2FF), 
+        .fixme = hex_to_vec4f(0xf7f7f7FF), 
+        .note = hex_to_vec4f(0x666666FF), 
+        .bug = hex_to_vec4f(0x4183c4FF), 
+        .not_equals = hex_to_vec4f(0x06f06fFF), 
+        .exclamation = hex_to_vec4f(0x666666FF), 
+        .equals = hex_to_vec4f(0x3ca555FF), 
+        .equals_equals = hex_to_vec4f(0x3ca555FF), 
+        .greater_than = hex_to_vec4f(0x06f06fFF), 
+        .less_than = hex_to_vec4f(0x4183c4FF), 
+        .marks = hex_to_vec4f(0x06f06fFF), 
+        .fb_selection = hex_to_vec4f(0xdddDDDFF), 
+        .plus = hex_to_vec4f(0x3ca555FF), 
+        .minus = hex_to_vec4f(0x4183c4FF), 
+        .truee = hex_to_vec4f(0x3ca555FF), 
+        .falsee = hex_to_vec4f(0x4183c4FF), 
+        .arrow = hex_to_vec4f(0x666666FF), 
+        .open_square = hex_to_vec4f(0x4183c4FF), 
+        .close_square = hex_to_vec4f(0x4183c4FF), 
+        .current_line_number = hex_to_vec4f(0x3ca555FF), 
+        .array_content = hex_to_vec4f(0xdddDDDFF), 
+        .matching_parenthesis = hex_to_vec4f(0x999999FF), 
     };
 
     // Base2Tone Extended Pink & Purple
@@ -266,48 +266,93 @@ void initialize_themes() {
     };
 
     // Catppuccin
-    themes[4] = (Theme) {
-        .cursor = hex_to_vec4f(0xf38ba8FF), // Red
-        .insert_cursor = hex_to_vec4f(0xf38ba8FF), // Red
+    themes[4] = (Theme){
+        .cursor = hex_to_vec4f(0xf38ba8FF),
+        .insert_cursor = hex_to_vec4f(0xf38ba8FF),
         .emacs_cursor = hex_to_vec4f(0x834EB6FF),
-        .text = hex_to_vec4f(0xcdd6f4FF), // Text
-        .background = hex_to_vec4f(0x1e1e2eFF), // Base
-        .comment = hex_to_vec4f(0x9399b2FF), // Overlay2
-        .hashtag = hex_to_vec4f(0x89b4faFF), // Blue
-        .logic = hex_to_vec4f(0xCBA6F7FF), // Peach
-        .string = hex_to_vec4f(0xf9e2afFF), // Yellow
-        .selection = hex_to_vec4f(0xf5c2e7FF), // Pink
-        .search = hex_to_vec4f(0xf2cdcdFF), // Flamingo
-        .todo = hex_to_vec4f(0xf2cdcdFF), // Flamingo
-        .line_numbers = hex_to_vec4f(0x9399b2FF), // Overlay2
-        .fixme = hex_to_vec4f(0xf2cdcdFF), // Flamingo
-        .note = hex_to_vec4f(0xa6e3a1FF), // Green
-        .bug = hex_to_vec4f(0xf38ba8FF), // Red
-        .not_equals = hex_to_vec4f(0xf38ba8FF), // Red
-        .exclamation = hex_to_vec4f(0xf38ba8FF), // Red
-        .equals = hex_to_vec4f(0xa6e3a1FF), // Green
-        .equals_equals = hex_to_vec4f(0xa6e3a1FF), // Green
-        .greater_than = hex_to_vec4f(0xa6e3a1FF), // Green
-        .less_than = hex_to_vec4f(0x74c7ecFF), // Sapphire
-        .marks = hex_to_vec4f(0x74c7ecFF), // Sapphire
-        .fb_selection = hex_to_vec4f(0xb4befeFF), // Lavender
-        .plus = hex_to_vec4f(0xa6e3a1FF), // Green
-        .minus = hex_to_vec4f(0xf38ba8FF), // Red
-        .truee = hex_to_vec4f(0xa6e3a1FF), // Green
-        .falsee = hex_to_vec4f(0xf38ba8FF), // Red
-        .arrow = hex_to_vec4f(0xf9e2afFF), // Yellow
-        .open_square = hex_to_vec4f(0x89b4faFF), // Blue
-        .close_square = hex_to_vec4f(0x89b4faFF), // Blue
-        .current_line_number = hex_to_vec4f(0x89b4faFF), // Blue
-        .array_content = hex_to_vec4f(0x74c7ecFF), // Sapphire
-        .link = hex_to_vec4f(0x89b4faFF), // Blue
-        .logic_or = hex_to_vec4f(0xf38ba8FF), // Red
-        .pipe = hex_to_vec4f(0xa6e3a1FF), // Green
-        .ampersand = hex_to_vec4f(0xb4befeFF), // Lavender
-        .logic_and = hex_to_vec4f(0xa6e3a1FF), // Green
-        .pointer = hex_to_vec4f(0xf5c2e7FF), // Pink
-        .multiplication = hex_to_vec4f(0xFAB387FF), // Peach
-        .matching_parenthesis = hex_to_vec4f(0xf5c2e7FF), // Pink
+        .text = hex_to_vec4f(0xcdd6f4FF),
+        .background = hex_to_vec4f(0x1e1e2eFF),
+        .comment = hex_to_vec4f(0x9399b2FF),
+        .hashtag = hex_to_vec4f(0x89b4faFF),
+        .logic = hex_to_vec4f(0xCBA6F7FF),
+        .string = hex_to_vec4f(0xf9e2afFF),
+        .selection = hex_to_vec4f(0xf5c2e7FF),
+        .search = hex_to_vec4f(0xf2cdcdFF),
+        .todo = hex_to_vec4f(0xf2cdcdFF),
+        .line_numbers = hex_to_vec4f(0x9399b2FF),
+        .fixme = hex_to_vec4f(0xf2cdcdFF),
+        .note = hex_to_vec4f(0xa6e3a1FF),
+        .bug = hex_to_vec4f(0xf38ba8FF),
+        .not_equals = hex_to_vec4f(0xf38ba8FF),
+        .exclamation = hex_to_vec4f(0xf38ba8FF),
+        .equals = hex_to_vec4f(0xa6e3a1FF),
+        .equals_equals = hex_to_vec4f(0xa6e3a1FF),
+        .greater_than = hex_to_vec4f(0xa6e3a1FF),
+        .less_than = hex_to_vec4f(0x74c7ecFF),
+        .marks = hex_to_vec4f(0x74c7ecFF),
+        .fb_selection = hex_to_vec4f(0xb4befeFF),
+        .plus = hex_to_vec4f(0xa6e3a1FF),
+        .minus = hex_to_vec4f(0xf38ba8FF),
+        .truee = hex_to_vec4f(0xa6e3a1FF),
+        .falsee = hex_to_vec4f(0xf38ba8FF),
+        .arrow = hex_to_vec4f(0xf9e2afFF),
+        .open_square = hex_to_vec4f(0x89b4faFF),
+        .close_square = hex_to_vec4f(0x89b4faFF),
+        .current_line_number = hex_to_vec4f(0x89b4faFF),
+        .array_content = hex_to_vec4f(0x74c7ecFF),
+        .link = hex_to_vec4f(0x89b4faFF),
+        .logic_or = hex_to_vec4f(0xf38ba8FF),
+        .pipe = hex_to_vec4f(0xa6e3a1FF),
+        .ampersand = hex_to_vec4f(0xb4befeFF),
+        .logic_and = hex_to_vec4f(0xa6e3a1FF),
+        .pointer = hex_to_vec4f(0xf5c2e7FF),
+        .multiplication = hex_to_vec4f(0xFAB387FF),
+        .matching_parenthesis = hex_to_vec4f(0xf5c2e7FF),
+    };
+
+    // Nature
+    themes[5] = (Theme) {
+        .cursor = hex_to_vec4f(0x658B5FFF), 
+        .insert_cursor = hex_to_vec4f(0x514B8EFF), 
+        .emacs_cursor = hex_to_vec4f(0x834EB6FF),
+        .text = hex_to_vec4f(0xC0ACD1FF), 
+        .background = hex_to_vec4f(0x090909FF), 
+        .comment = hex_to_vec4f(0x867892FF), 
+        .hashtag = hex_to_vec4f(0x658B5FFF), 
+        .logic = hex_to_vec4f(0x658B5FFF), 
+        .string = hex_to_vec4f(0x4C6750FF), 
+        .selection = hex_to_vec4f(0x262626FF), 
+        .search = hex_to_vec4f(0x262626FF), 
+        .todo = hex_to_vec4f(0x565663FF), 
+        .line_numbers = hex_to_vec4f(0x171717FF), 
+        .current_line_number = hex_to_vec4f(0xC0ACD1FF), 
+        .fixme = hex_to_vec4f(0x444E46FF), 
+        .note = hex_to_vec4f(0x4C6750FF), 
+        .bug = hex_to_vec4f(0x867892FF), 
+        .not_equals = hex_to_vec4f(0x867892FF), 
+        .exclamation = hex_to_vec4f(0x4C6750FF), 
+        .equals = hex_to_vec4f(0xC0ACD1FF), 
+        .equals_equals = hex_to_vec4f(0x658B5FFF), 
+        .greater_than = hex_to_vec4f(0x834EB6FF), 
+        .less_than = hex_to_vec4f(0x834EB6FF), 
+        .marks = hex_to_vec4f(0x565663FF), 
+        .fb_selection = hex_to_vec4f(0x262626FF), 
+        .plus = hex_to_vec4f(0x658B5FFF), 
+        .minus = hex_to_vec4f(0x658B5FFF), 
+        .truee = hex_to_vec4f(0x4C6750FF), 
+        .falsee = hex_to_vec4f(0x867892FF), 
+        .arrow = hex_to_vec4f(0x834EB6FF), 
+        .open_square = hex_to_vec4f(0xC0ACD1FF), 
+        .close_square = hex_to_vec4f(0xC0ACD1FF), 
+        .array_content = hex_to_vec4f(0x4C6750FF), 
+        .link = hex_to_vec4f(0x565663FF), 
+        .logic_or = hex_to_vec4f(0x658B5FFF), 
+        .pipe = hex_to_vec4f(0x565663FF), 
+        .ampersand = hex_to_vec4f(0x658B5FFF), 
+        .logic_and = hex_to_vec4f(0x658B5FFF), 
+        .pointer = hex_to_vec4f(0x514B8EFF), 
+        .multiplication = hex_to_vec4f(0x867892FF), 
+        .matching_parenthesis = hex_to_vec4f(0x262626FF), 
     };
  }
 
@@ -326,47 +371,6 @@ void theme_previous(int *currentThemeIndex) {
         *currentThemeIndex = themeCount - 1;  // wrap around to the last theme
     }
 }
-
-// Smart parentheses
-/* void editor_backspace(Editor *e) */
-/* { */
-/*     if (e->searching) { */
-/*         if (e->search.count > 0) { */
-/*             e->search.count -= 1; */
-/*         } */
-/*     } else { */
-/*         if (e->cursor == 0) return; // Cursor at the beginning, nothing to delete TODO also check for the beginning of line */
-
-/*         size_t cursor_pos = e->cursor; */
-
-/*         if (cursor_pos > e->data.count) { */
-/*             cursor_pos = e->data.count; */
-/*         } */
-
-/*         // Determine the characters before and after the cursor */
-/*         char char_before_cursor = (cursor_pos > 0) ? e->data.items[cursor_pos - 1] : '\0'; */
-/*         char char_after_cursor = (cursor_pos < e->data.count) ? e->data.items[cursor_pos] : '\0'; */
-
-/*         if ((char_before_cursor == '(' && char_after_cursor == ')') || */
-/*             (char_before_cursor == '[' && char_after_cursor == ']') || */
-/*             (char_before_cursor == '{' && char_after_cursor == '}') || */
-/*             (char_before_cursor == '\'' && char_after_cursor == '\'') || */
-/*             (char_before_cursor == '"' && char_after_cursor == '"')) { */
-/*             // Delete both characters and move cursor left */
-/*             memmove(&e->data.items[cursor_pos - 1], &e->data.items[cursor_pos + 1], e->data.count - cursor_pos); */
-/*             e->cursor -= 1; */
-/*             e->data.count -= 2; */
-/*         } else { */
-/*             // Delete only the character before the cursor */
-/*             memmove(&e->data.items[cursor_pos - 1], &e->data.items[cursor_pos], e->data.count - cursor_pos); */
-/*             e->cursor -= 1; */
-/*             e->data.count -= 1; */
-/*         } */
-
-/*         editor_retokenize(e); */
-/*     } */
-/* } */
-
 
 void editor_backspace(Editor *e) {
     // If in search mode, reduce the search query length
@@ -412,24 +416,50 @@ void editor_backspace(Editor *e) {
             e->data.count -= 1;
             // Cursor stays at the beginning of the next line (which is now the first line)
           }
-          // Handle completely empty line
-          // Logic to delete the line or move cursor to the previous line
         } else if (editor_is_line_whitespaced(e, row)) {
+            /* // If the line is only whitespaces */
+            /* size_t line_begin = e->lines.items[row].begin; */
+            /* size_t delete_length = (cursor_pos - line_begin >= indentation) ? indentation : cursor_pos - line_begin; */
+
+            /* memmove(&e->data.items[cursor_pos - delete_length], &e->data.items[cursor_pos], e->data.count - cursor_pos); */
+            /* e->cursor -= delete_length; */
+            /* e->data.count -= delete_length; */
+
             // If the line is only whitespaces
             size_t line_begin = e->lines.items[row].begin;
-            size_t delete_length = (cursor_pos - line_begin >= indentation) ? indentation : cursor_pos - line_begin;
-
-            memmove(&e->data.items[cursor_pos - delete_length], &e->data.items[cursor_pos], e->data.count - cursor_pos);
-            e->cursor -= delete_length;
-            e->data.count -= delete_length;
+            size_t line_end = e->lines.items[row].end;
+            size_t whitespace_length = cursor_pos - line_begin;
+            
+            if (whitespace_length == indentation) {
+                // If the number of whitespaces matches indentation exactly, remove the entire line
+                if (row < e->lines.count - 1) {
+                    memmove(&e->data.items[line_begin], &e->data.items[line_end + 1], e->data.count - line_end - 1);
+                    e->data.count -= (line_end - line_begin + 1);
+                    e->cursor = line_begin; // Update cursor position to the beginning of the next line
+                } else if (row > 0 && e->data.items[line_begin - 1] == '\n') {
+                    // If it's the last line, remove the preceding newline character
+                    e->data.count -= 1;
+                    memmove(&e->data.items[line_begin - 1], &e->data.items[line_end], e->data.count - line_end);
+                    e->cursor = (line_begin > 1) ? line_begin - 1 : 0; // Move cursor to the end of the previous line, plus one character
+                }
+                // Update the cursor position if it's not the first line
+                if (row > 0) {
+                    e->cursor = e->lines.items[row - 1].end; // Move cursor to one character right of the end of the previous line
+                    if (e->cursor > e->data.count) e->cursor = e->data.count; // Bound check
+                }
+            } else {
+                // Original behavior for deleting whitespaces
+                size_t delete_length = (whitespace_length >= indentation) ? indentation : whitespace_length;
+                memmove(&e->data.items[cursor_pos - delete_length], &e->data.items[cursor_pos], e->data.count - cursor_pos);
+                e->cursor -= delete_length;
+                e->data.count -= delete_length;
+            }
         } else {
             // Delete only the character before the cursor
             memmove(&e->data.items[cursor_pos - 1], &e->data.items[cursor_pos], e->data.count - cursor_pos);
             e->cursor -= 1;
             e->data.count -= 1;
         }
-
-        // Retokenize the editor content
         editor_retokenize(e);
     }
 }
@@ -1754,7 +1784,6 @@ void editor_kill_line(Editor *e) {
             e->data.count -= 1;
             memmove(&e->data.items[line_begin - 1], &e->data.items[line_end], e->data.count - line_end);
         }
-        // ... 
     } else {
         // If the line is not empty, kill the text from the cursor to the end of the line
         size_t length = line_end - e->cursor;
@@ -2031,17 +2060,17 @@ size_t editor_row_from_pos(const Editor *e, size_t pos) {
     return e->lines.count - 1;
 }
 
-/* void editor_jump_to_matching_parenthesis(Editor *editor) { */
-/*     if (editor->cursor >= editor->data.count) return; */
-
-/*     ssize_t matching_pos = find_matching_parenthesis(editor, editor->cursor); */
-/*     if (matching_pos != -1) { */
-/*         // Move the cursor to the matching parenthesis */
-/*         editor->cursor = matching_pos; */
-/*     } */
-/* } */
-
 void editor_jump_to_matching_parenthesis(Editor *editor) {
+    if (editor->cursor >= editor->data.count) return;
+
+    ssize_t matching_pos = find_matching_parenthesis(editor, editor->cursor);
+    if (matching_pos != -1) {
+        // Move the cursor to the matching parenthesis
+        editor->cursor = matching_pos;
+    }
+}
+
+void evil_jump_item(Editor *editor) {
     if (editor->cursor >= editor->data.count) return;
 
     char current_char = editor->data.items[editor->cursor];
@@ -2072,3 +2101,53 @@ void editor_jump_to_matching_parenthesis(Editor *editor) {
         editor->cursor = matching_pos;
     }
 }
+
+
+void editor_enter(Editor *e) {
+    if (e->searching) {
+        editor_stop_search_and_mark(e);
+        current_mode = NORMAL;
+        return;
+    }
+
+    size_t row = editor_cursor_row(e);
+    size_t line_end = e->lines.items[row].end;
+
+    editor_insert_char(e, '\n');
+    size_t line_begin = e->lines.items[row].begin;
+    bool inside_braces = false;
+
+    // Check if the line contains an opening brace '{'
+    for (size_t i = line_begin; i < line_end; ++i) {
+        char c = e->data.items[i];
+        if (c == '{') {
+            inside_braces = true;
+            break;
+        }
+    }
+
+    // Insert the same whitespace character
+    for (size_t i = line_begin; i < line_end; ++i) {
+        char c = e->data.items[i];
+        if (c == ' ' || c == '\t') {
+            editor_insert_char(e, c);
+        } else {
+            break;
+        }
+    }
+
+    // If inside braces, perform additional steps
+    if (inside_braces) {
+        editor_move_line_up(e);
+        editor_move_to_line_end(e);
+        editor_insert_char(e, '\n');
+
+        // Add indentation
+        for (size_t i = 0; i < indentation; ++i) {
+            editor_insert_char(e, ' ');
+        }
+    }
+
+    e->last_stroke = SDL_GetTicks();
+}
+

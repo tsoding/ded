@@ -172,6 +172,8 @@ void editor_paste_line_before(Editor* editor);
 ssize_t find_matching_parenthesis(Editor *editor, size_t cursor_pos);
 size_t editor_row_from_pos(const Editor *e, size_t pos);
 void editor_jump_to_matching_parenthesis(Editor *editor);
+void evil_jump_item(Editor *editor);
+void editor_enter(Editor *e);
 
 
 extern float zoom_factor;
@@ -190,6 +192,7 @@ void initialize_themes();
 
 void theme_next(int *currentThemeIndex);
 void theme_previous(int *currentThemeIndex);
+
 
 
 #endif // EDITOR_H_

@@ -39,10 +39,13 @@ use shaders from =~/.config/ded/shaders= instead [x]
 ** Renderer 
 render circles (for whitespaces) []
 ** Editor
-Fringe[]
+Editor_new_line_down shoudl mantain indentation []
+Drag lines up/down [] next
+multicursor[]
+Iedit[]
+Fringe(showing unsaved changes, and later with git integration )[]
 a theme should be able to define how much lighter of the bg
 whitespaces indicators are in % (currently hardcoded to 70%)[]
-yasnippet []
 Replace mode []
 Replace character mode []
 Pipe selection to unix command []
@@ -59,7 +62,8 @@ most symple emacs style completition (ctrl + n in insert mode)[]
 use window hight and width dinamicly instead of fixed position when animations are off []
 
 
-when copying with y do it like vim[x]
+yasnippet [x] TODO
+when copying with y do it like vim[x] TODO BUG
 evil join on shift + j [x]
 Emacs mode [x]
 Togglable visibility of whitespaces[x]
