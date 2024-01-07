@@ -87,6 +87,8 @@ typedef struct {
     Vec4f minibuffer;
     Vec4f matching_parenthesis;
     Vec4f hl_line; 
+    Vec4f type; 
+    Vec4f function_definition; 
 } Theme;
 
 

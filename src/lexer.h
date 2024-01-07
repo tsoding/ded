@@ -42,6 +42,8 @@ typedef enum {
     TOKEN_AMPERSAND,
     TOKEN_MULTIPLICATION,
     TOKEN_POINTER,
+    TOKEN_TYPE,
+    TOKEN_FUNCTION_DEFINITION,
   } Token_Kind;
 
 const char *token_kind_name(Token_Kind kind);

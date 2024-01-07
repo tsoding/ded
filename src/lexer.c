@@ -45,6 +45,18 @@ const char *cKeywords[] = {
 #define cKeywords_count (sizeof(cKeywords)/sizeof(cKeywords[0]))
 
 
+const char *cTypeKeywords[] = {
+    "char", "double", "float", "int", "long", "short", "signed", "unsigned", "void",
+    "_Bool", "_Complex", "_Imaginary", "bool"
+};
+
+
+
+#define cTypeKeywords_count (sizeof(cTypeKeywords) / sizeof(cTypeKeywords[0]))
+
+
+
+
 const char *token_kind_name(Token_Kind kind)
 {
     switch (kind) {
@@ -321,35 +333,6 @@ Token lexer_next(Lexer *l)
         }
     }
 
-    /* // all bad spell */
-    /* if (l->cursor < l->content_len) { */
-    /*     // Check for other words or identifiers here */
-    /*     // Example: */
-    /*     if (isalpha(l->content[l->cursor])) { */
-    /*         size_t potential_length = 0; */
-
-    /*         // Count the potential word length */
-    /*         while (l->cursor + potential_length < l->content_len && isalnum(l->content[l->cursor + potential_length])) { */
-    /*             potential_length++; */
-    /*         } */
-
-    /*         // If potential word was detected and not empty */
-    /*         if (potential_length > 0) { */
-    /*             // Mark all words as TOKEN_BAD_SPELLCHECK */
-    /*             token.kind = TOKEN_BAD_SPELLCHECK; */
-    /*             token.text_len = potential_length; */
-    /*             lexer_chop_char(l, potential_length); */
-    /*             return token; */
-    /*         } */
-    /*     } */
-    /* } */
-
-
-
-
-
-
-
     // Check for arrays
     if (l->cursor < l->content_len) {
         char current_char = l->content[l->cursor];
@@ -482,6 +465,76 @@ Token lexer_next(Lexer *l)
         return token;
     }
 
+    // FUNCTION DEFINITION
+    if (l->cursor < l->content_len && is_symbol_start(l->content[l->cursor])) {
+        // Save the start position of the potential function name
+        size_t symbolStart = l->cursor;
+        
+        // Skip over the potential function name
+        while (l->cursor < l->content_len && is_symbol(l->content[l->cursor])) {
+            l->cursor++;
+        }
+        
+        size_t symbolEnd = l->cursor;
+        
+        // Look to the left for a type keyword
+        bool precededByTypeKeyword = false;
+        size_t leftCursor = symbolStart;
+        while (leftCursor > 0 && isspace(l->content[leftCursor - 1])) {
+            leftCursor--; // Skip whitespace
+        }
+        if (leftCursor > 0) {
+            for (size_t i = 0; i < cTypeKeywords_count; ++i) {
+                size_t keyword_len = strlen(cTypeKeywords[i]);
+                if (leftCursor >= keyword_len &&
+                    strncmp(cTypeKeywords[i], &l->content[leftCursor - keyword_len], keyword_len) == 0 &&
+                    (leftCursor == keyword_len || isspace(l->content[leftCursor - keyword_len - 1]))) {
+                    precededByTypeKeyword = true;
+                    break;
+                }
+            }
+        }
+        
+        // Look to the right for parentheses
+        bool followedByParentheses = false;
+        size_t rightCursor = symbolEnd;
+        while (rightCursor < l->content_len && isspace(l->content[rightCursor])) {
+            rightCursor++; // Skip whitespace
+        }
+        if (l->content_len - rightCursor >= 1 && l->content[rightCursor] == '(') {
+            followedByParentheses = true;
+        }
+        
+        // Mark as a function definition if conditions are met
+        if (precededByTypeKeyword && followedByParentheses) {
+            token.kind = TOKEN_FUNCTION_DEFINITION;
+            token.text_len = symbolEnd - symbolStart;
+            token.text = &l->content[symbolStart];
+            
+            // IMPORTANT: Adjust the position offset for the next token
+            token.position.x = l->x;
+            for (size_t i = symbolStart; i < rightCursor; i++) {
+                char c = l->content[i];
+                size_t glyph_index = c;
+                if (glyph_index >= GLYPH_METRICS_CAPACITY) {
+                    glyph_index = '?';
+                }
+                Glyph_Metric metric = l->atlas->metrics[glyph_index];
+                l->x += metric.ax;
+            }
+            
+            l->cursor = rightCursor; // Set cursor to the start of the parentheses
+            return token;
+        } else {
+            // Reset cursor position to start of symbol for further processing
+            l->cursor = symbolStart;
+        }
+    }
+    
+    
+
+     
+
      for (size_t i = 0; i < literal_tokens_count; ++i) {
         if (lexer_starts_with(l, literal_tokens[i].text)) {
             // NOTE: this code assumes that there is no newlines in literal_tokens[i].text
@@ -491,7 +544,9 @@ Token lexer_next(Lexer *l)
             lexer_chop_char(l, text_len);
             return token;
         }
-    }
+     }
+
+ 
 
     if (is_symbol_start(l->content[l->cursor])) {
         token.kind = TOKEN_SYMBOL;
@@ -500,6 +555,16 @@ Token lexer_next(Lexer *l)
             token.text_len += 1;
         }
 
+        // First, check if the token is a type
+        for (size_t i = 0; i < cTypeKeywords_count; ++i) {
+            size_t keyword_len = strlen(cTypeKeywords[i]);
+            if (keyword_len == token.text_len && memcmp(cTypeKeywords[i], token.text, keyword_len) == 0) {
+                token.kind = TOKEN_TYPE;
+                return token;
+            }
+        }
+
+        // If not a type, check if it's a general keyword
         for (size_t i = 0; i < cKeywords_count; ++i) {
             size_t keyword_len = strlen(cKeywords[i]);
             if (keyword_len == token.text_len && memcmp(cKeywords[i], token.text, keyword_len) == 0) {

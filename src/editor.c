@@ -313,48 +313,42 @@ void initialize_themes() {
 
     // Nature
     themes[5] = (Theme) {
-        .cursor = hex_to_vec4f(0x658B5FFF), 
-        .insert_cursor = hex_to_vec4f(0x514B8EFF), 
+        .cursor = hex_to_vec4f(0x658B5FFF),
+        .insert_cursor = hex_to_vec4f(0x514B8EFF),
         .emacs_cursor = hex_to_vec4f(0x834EB6FF),
-        .text = hex_to_vec4f(0xC0ACD1FF), 
-        .background = hex_to_vec4f(0x090909FF), 
-        .comment = hex_to_vec4f(0x867892FF), 
-        .hashtag = hex_to_vec4f(0x658B5FFF), 
-        .logic = hex_to_vec4f(0x658B5FFF), 
-        .string = hex_to_vec4f(0x4C6750FF), 
-        .selection = hex_to_vec4f(0x262626FF), 
-        .search = hex_to_vec4f(0x262626FF), 
-        .todo = hex_to_vec4f(0x565663FF), 
-        .line_numbers = hex_to_vec4f(0x171717FF), 
-        .current_line_number = hex_to_vec4f(0xC0ACD1FF), 
-        .fixme = hex_to_vec4f(0x444E46FF), 
-        .note = hex_to_vec4f(0x4C6750FF), 
-        .bug = hex_to_vec4f(0x867892FF), 
-        .not_equals = hex_to_vec4f(0x867892FF), 
-        .exclamation = hex_to_vec4f(0x4C6750FF), 
-        .equals = hex_to_vec4f(0xC0ACD1FF), 
-        .equals_equals = hex_to_vec4f(0x658B5FFF), 
-        .greater_than = hex_to_vec4f(0x834EB6FF), 
-        .less_than = hex_to_vec4f(0x834EB6FF), 
-        .marks = hex_to_vec4f(0x565663FF), 
-        .fb_selection = hex_to_vec4f(0x262626FF), 
-        .plus = hex_to_vec4f(0x658B5FFF), 
-        .minus = hex_to_vec4f(0x658B5FFF), 
-        .truee = hex_to_vec4f(0x4C6750FF), 
-        .falsee = hex_to_vec4f(0x867892FF), 
-        .arrow = hex_to_vec4f(0x834EB6FF), 
-        .open_square = hex_to_vec4f(0xC0ACD1FF), 
-        .close_square = hex_to_vec4f(0xC0ACD1FF), 
-        .array_content = hex_to_vec4f(0x4C6750FF), 
-        .link = hex_to_vec4f(0x565663FF), 
-        .logic_or = hex_to_vec4f(0x658B5FFF), 
-        .pipe = hex_to_vec4f(0x565663FF), 
-        .ampersand = hex_to_vec4f(0x658B5FFF), 
-        .logic_and = hex_to_vec4f(0x658B5FFF), 
-        .pointer = hex_to_vec4f(0x514B8EFF), 
-        .multiplication = hex_to_vec4f(0x867892FF), 
-        .matching_parenthesis = hex_to_vec4f(0x262626FF), 
-        .hl_line = hex_to_vec4f(0x070707FF)
+        .text = hex_to_vec4f(0xC0ACD1FF),
+        .background = hex_to_vec4f(0x090909FF),
+        .comment = hex_to_vec4f(0x867892FF),
+        .hashtag = hex_to_vec4f(0x658B5FFF), .logic = hex_to_vec4f(0x658B5FFF),
+        .string = hex_to_vec4f(0x4C6750FF),
+        .selection = hex_to_vec4f(0x262626FF),
+        .search = hex_to_vec4f(0x262626FF), .todo = hex_to_vec4f(0x565663FF),
+        .line_numbers = hex_to_vec4f(0x171717FF),
+        .current_line_number = hex_to_vec4f(0xC0ACD1FF),
+        .fixme = hex_to_vec4f(0x444E46FF), .note = hex_to_vec4f(0x4C6750FF),
+        .bug = hex_to_vec4f(0x867892FF), .not_equals = hex_to_vec4f(0x867892FF),
+        .exclamation = hex_to_vec4f(0x4C6750FF),
+        .equals = hex_to_vec4f(0xC0ACD1FF),
+        .equals_equals = hex_to_vec4f(0x658B5FFF),
+        .greater_than = hex_to_vec4f(0x834EB6FF),
+        .less_than = hex_to_vec4f(0x834EB6FF),
+        .marks = hex_to_vec4f(0x565663FF),
+        .fb_selection = hex_to_vec4f(0x262626FF),
+        .plus = hex_to_vec4f(0x658B5FFF), .minus = hex_to_vec4f(0x658B5FFF),
+        .truee = hex_to_vec4f(0x4C6750FF), .falsee = hex_to_vec4f(0x867892FF),
+        .arrow = hex_to_vec4f(0x834EB6FF),
+        .open_square = hex_to_vec4f(0xC0ACD1FF),
+        .close_square = hex_to_vec4f(0xC0ACD1FF),
+        .array_content = hex_to_vec4f(0x4C6750FF),
+        .link = hex_to_vec4f(0x565663FF), .logic_or = hex_to_vec4f(0x658B5FFF),
+        .pipe = hex_to_vec4f(0x565663FF), .ampersand = hex_to_vec4f(0x658B5FFF),
+        .logic_and = hex_to_vec4f(0x658B5FFF),
+        .pointer = hex_to_vec4f(0x514B8EFF),
+        .multiplication = hex_to_vec4f(0x867892FF),
+        .matching_parenthesis = hex_to_vec4f(0x262626FF),
+        .hl_line = hex_to_vec4f(0x070707FF),
+        .type = hex_to_vec4f(0x565663FF),
+        .function_definition = hex_to_vec4f(0x564F96FF)
     };
  }
 
@@ -1042,6 +1036,14 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
             case TOKEN_KEYWORD:
                 color = themes[currentThemeIndex].logic;
+                break;
+                
+            case TOKEN_TYPE:
+                color = themes[currentThemeIndex].type;
+                break;
+                
+            case TOKEN_FUNCTION_DEFINITION:
+                color = themes[currentThemeIndex].function_definition;
                 break;
 
             case TOKEN_LINK:
