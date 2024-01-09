@@ -29,18 +29,57 @@ bool showWhitespaces = false;
 bool copiedLine = false;
 bool matchParenthesis = true; //TODO segfault and highlight size
 
-bool hl_line = true;
+bool hl_line = false;
 
 
 void editor_new_line_down(Editor *editor) {
+    size_t row = editor_cursor_row(editor);
+    size_t line_begin = editor->lines.items[row].begin;
+    size_t line_end = editor->lines.items[row].end;
+
     editor_move_to_line_end(editor);
     editor_insert_char(editor, '\n');
+
+    // Copy indentation
+    for (size_t i = line_begin; i < line_end; ++i) {
+        char c = editor->data.items[i];
+        if (c == ' ' || c == '\t') {
+            editor_insert_char(editor, c);
+        } else {
+            break;
+        }
+    }
 }
 
 void editor_new_line_up(Editor *editor) {
+    size_t row = editor_cursor_row(editor);
+
+    // Determine the current line's start and end for capturing indentation
+    size_t line_begin = editor->lines.items[row].begin;
+    size_t line_end = editor->lines.items[row].end;
+
+    // Capture the indentation of the current line in a local array
+    char indentation[128]; // Assuming 128 characters is enough for indentation
+    size_t indentIndex = 0;
+    for (size_t i = line_begin; i < line_end && indentIndex < sizeof(indentation) - 1; ++i) {
+        char c = editor->data.items[i];
+        if (c == ' ' || c == '\t') {
+            indentation[indentIndex++] = c;
+        } else {
+            break;
+        }
+    }
+    indentation[indentIndex] = '\0'; // Null-terminate the string
+
+    // Insert a newline at the beginning of the current line
     editor_move_to_line_begin(editor);
     editor_insert_char(editor, '\n');
     editor_move_line_up(editor);
+
+    // Apply the captured indentation
+    for (size_t i = 0; i < indentIndex; ++i) {
+        editor_insert_char(editor, indentation[i]);
+    }
 }
 
 
@@ -348,7 +387,8 @@ void initialize_themes() {
         .matching_parenthesis = hex_to_vec4f(0x262626FF),
         .hl_line = hex_to_vec4f(0x070707FF),
         .type = hex_to_vec4f(0x565663FF),
-        .function_definition = hex_to_vec4f(0x564F96FF)
+        .function_definition = hex_to_vec4f(0x564F96FF),
+        .anchor = hex_to_vec4f(0x564F96FF)
     };
  }
 
@@ -737,8 +777,66 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     float lineNumberWidth = FREE_GLYPH_FONT_SIZE * 5;
     /* Vec4f lineNumberColor = vec4f(0.5, 0.5, 0.5, 1);  // A lighter color for line numbers, adjust as needed */
 
+    // Calculate the width of a whitespace character
+    Vec2f whitespace_size = vec2fs(0.0f);
+    free_glyph_atlas_measure_line_sized(atlas, " ", 1, &whitespace_size);
+    float whitespace_width = whitespace_size.x;
 
 
+    
+    // Render hl_line
+    {
+        if (hl_line){
+            simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
+            
+            size_t currentLine = editor_cursor_row(editor);
+            Vec2f highlightPos = {0.0f, -((float)currentLine + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE};
+            
+            float highlightWidth = 8000;  // Default width for the highlight
+            
+            // If showing line numbers, adjust the position and width of the highlight
+            if (showLineNumbers) {
+                highlightPos.x -= lineNumberWidth - 260;  // Move highlight to the left to cover line numbers
+                highlightWidth += lineNumberWidth;  // Increase width to include line numbers area
+            }
+            
+            simple_renderer_solid_rect(sr, highlightPos, vec2f(highlightWidth, FREE_GLYPH_FONT_SIZE), themes[currentThemeIndex].hl_line);
+            
+            simple_renderer_flush(sr);
+        }
+    }
+
+    // Render anchor
+    if (editor->has_anchor) {
+        simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
+        
+        size_t anchor_row = editor_row_from_pos(editor, editor->anchor_pos);
+        Line anchor_line = editor->lines.items[anchor_row];
+        size_t anchor_col = editor->anchor_pos - anchor_line.begin;
+        
+        Vec2f anchor_pos = vec2fs(0.0f);
+        anchor_pos.y = -((float)anchor_row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE;
+        anchor_pos.x = free_glyph_atlas_cursor_pos(
+                                                   atlas,
+                                                   editor->data.items + anchor_line.begin, anchor_line.end - anchor_line.begin,
+                                                   vec2f(0.0, anchor_pos.y),
+                                                   anchor_col
+                                                   );
+        
+        // Adjust anchor position if line numbers are shown
+        if (showLineNumbers) {
+            anchor_pos.x += lineNumberWidth;
+        }
+        
+        Vec4f ANCHOR_COLOR = themes[currentThemeIndex].anchor;
+        
+        simple_renderer_solid_rect(
+                                   sr, anchor_pos, vec2f(whitespace_width, FREE_GLYPH_FONT_SIZE),
+                                   themes[currentThemeIndex].anchor);
+
+        
+        simple_renderer_flush(sr);
+    }
 
     
     // Render selection
@@ -805,29 +903,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                            vec2f(0.0, cursor_pos.y),
                            cursor_col
                        );
-    }
-
-    
-    // Render hl_line
-    {
-        if (hl_line){
-            simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
-            
-            size_t currentLine = editor_cursor_row(editor);
-            Vec2f highlightPos = {0.0f, -((float)currentLine + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE};
-            
-            float highlightWidth = 8000;  // Default width for the highlight
-            
-            // If showing line numbers, adjust the position and width of the highlight
-            if (showLineNumbers) {
-                highlightPos.x -= lineNumberWidth - 260;  // Move highlight to the left to cover line numbers
-                highlightWidth += lineNumberWidth;  // Increase width to include line numbers area
-            }
-            
-            simple_renderer_solid_rect(sr, highlightPos, vec2f(highlightWidth, FREE_GLYPH_FONT_SIZE), themes[currentThemeIndex].hl_line);
-            
-            simple_renderer_flush(sr);
-        }
     }
 
     
@@ -1336,13 +1411,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                         &next_char_pos);
                     cursor_width = next_char_pos.x - cursor_pos.x;
             } else {
-                    // Measure the width of a default character ' '
-                    Vec2f next_char_pos = cursor_pos;
-                    free_glyph_atlas_measure_line_sized(atlas, " ", 1,
-                                                        &next_char_pos);
-                    cursor_width = next_char_pos.x - cursor_pos.x;
-
-                    /* cursor_width = FREE_GLYPH_FONT_SIZE / 2.0f; */
+                    cursor_width = whitespace_width;
             }
 
             simple_renderer_solid_rect(
@@ -1363,11 +1432,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                                                     &next_char_pos);
                 cursor_width = next_char_pos.x - cursor_pos.x;
             } else {
-                // Measure the width of a default character ' '
-                Vec2f next_char_pos = cursor_pos;
-                free_glyph_atlas_measure_line_sized(atlas, " ", 1,
-                                                    &next_char_pos);
-                cursor_width = next_char_pos.x - cursor_pos.x;
+                cursor_width = whitespace_width;
             }
             
             // Implement blinking for EMACS mode
@@ -2176,5 +2241,115 @@ void editor_enter(Editor *e) {
     }
 
     e->last_stroke = SDL_GetTicks();
+}
+
+
+void editor_set_anchor(Editor *editor) {
+    editor->has_anchor = true;
+    editor->anchor_pos = editor->cursor;
+}
+
+void editor_goto_anchor_and_clear(Editor *editor) {
+    if (editor->has_anchor) {
+        editor->cursor = editor->anchor_pos;
+        editor->has_anchor = false;
+    }
+}
+
+
+void editor_drag_line_down(Editor *editor) {
+    size_t row = editor_cursor_row(editor);
+    if (row >= editor->lines.count - 1) return; // Can't move the last line down
+
+    Line current_line = editor->lines.items[row];
+    Line next_line = editor->lines.items[row + 1];
+
+    // Calculate lengths including the newline character
+    size_t current_line_length = current_line.end - current_line.begin + 1;
+    size_t next_line_length = next_line.end - next_line.begin + 1;
+
+    // Allocate temporary buffer to hold the lines
+    char *temp = malloc(current_line_length + next_line_length);
+    if (!temp) {
+        // Handle memory allocation error
+        fprintf(stderr, "ERROR: Unable to allocate memory for line swapping.\n");
+        return;
+    }
+
+    // Copy current and next lines into temp
+    memcpy(temp, &editor->data.items[current_line.begin], current_line_length);
+    memcpy(temp + current_line_length, &editor->data.items[next_line.begin], next_line_length);
+
+    // Swap lines in editor's data
+    memcpy(&editor->data.items[current_line.begin], temp + current_line_length, next_line_length);
+    memcpy(&editor->data.items[current_line.begin + next_line_length], temp, current_line_length);
+
+    // Free the temporary buffer
+    free(temp);
+
+    // Update cursor position
+    if (editor->cursor >= current_line.begin && editor->cursor < current_line.end) {
+        // The cursor is on the current line, move it down with the line
+        editor->cursor += next_line_length;
+    } else if (editor->cursor >= next_line.begin && editor->cursor <= next_line.end) {
+        // The cursor is on the next line, move it up to the start of the current line
+        editor->cursor = current_line.begin + (editor->cursor - next_line.begin);
+    }
+
+    // Update line positions in the Lines struct
+    editor->lines.items[row].begin = current_line.begin;
+    editor->lines.items[row].end = current_line.begin + next_line_length - 1;
+    editor->lines.items[row + 1].begin = current_line.begin + next_line_length;
+    editor->lines.items[row + 1].end = editor->lines.items[row + 1].begin + current_line_length - 1;
+
+    // Retokenize
+    editor_retokenize(editor);
+}
+
+
+
+
+
+void editor_drag_line_up(Editor *editor) {
+    size_t row = editor_cursor_row(editor);
+    if (row == 0) return; // Can't move the first line up
+
+    Line current_line = editor->lines.items[row];
+    Line previous_line = editor->lines.items[row - 1];
+
+    // Calculate lengths including the newline character
+    size_t current_line_length = current_line.end - current_line.begin + 1;
+    size_t previous_line_length = previous_line.end - previous_line.begin + 1;
+
+    // Allocate temporary buffer to hold the lines
+    char *temp = malloc(current_line_length + previous_line_length);
+    if (!temp) {
+        // Handle memory allocation error
+        fprintf(stderr, "ERROR: Unable to allocate memory for line swapping.\n");
+        return;
+    }
+
+    // Copy current and previous lines into temp
+    memcpy(temp, &editor->data.items[previous_line.begin], previous_line_length);
+    memcpy(temp + previous_line_length, &editor->data.items[current_line.begin], current_line_length);
+
+    // Swap lines in editor's data
+    memcpy(&editor->data.items[previous_line.begin], temp + previous_line_length, current_line_length);
+    memcpy(&editor->data.items[previous_line.begin + current_line_length], temp, previous_line_length);
+
+    // Free the temporary buffer
+    free(temp);
+
+    // Update cursor position
+    editor->cursor = previous_line.begin + (editor->cursor - current_line.begin);
+
+    // Update line positions in the Lines struct
+    editor->lines.items[row - 1].begin = previous_line.begin;
+    editor->lines.items[row - 1].end = previous_line.begin + current_line_length - 1;
+    editor->lines.items[row].begin = previous_line.begin + current_line_length;
+    editor->lines.items[row].end = editor->lines.items[row].begin + previous_line_length - 1;
+
+    // Retokenize
+    editor_retokenize(editor);
 }
 

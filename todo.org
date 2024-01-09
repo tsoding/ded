@@ -2,13 +2,8 @@
 
 * TODO
 every function defined in the code should be callable
-while the app is running holy c emacs style M-x []
+while the app is running emacs style M-x []
 
-** Mouse support
-clickable links with both cursor and mouse []
-ctrl click for documentation on the thing or enter in normal mode []
-mouse scroll []
-ctrl scroll should scroll more []
 ** Evil Mode
 splits(maybe)   []
 5k should work []
@@ -38,9 +33,10 @@ make the text disappear []
 use shaders from =~/.config/ded/shaders= instead [x]
 ** Renderer 
 render circles (for whitespaces) []
+** Bugs
+opening a file with ded file.c that contain a
+function definition, trow a [1] 35755 segmentation fault (core dumped)
 ** Editor
-Editor_new_line_down shoudl mantain indentation []
-Drag lines up/down [] next
 multicursor[]
 Iedit[]
 Fringe(showing unsaved changes, and later with git integration )[]
@@ -62,6 +58,8 @@ most symple emacs style completition (ctrl + n in insert mode)[]
 use window hight and width dinamicly instead of fixed position when animations are off []
 
 
+Drag lines up/down [x] // TODO drag selection or multiple cursors BUG behaves bad when there are only 2 lines in the editor and you swap them
+Editor_new_line_down and up should mantain indentation [x]
 yasnippet [x] TODO
 when copying with y do it like vim[x] TODO BUG
 evil join on shift + j [x]

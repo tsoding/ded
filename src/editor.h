@@ -89,6 +89,7 @@ typedef struct {
     Vec4f hl_line; 
     Vec4f type; 
     Vec4f function_definition; 
+    Vec4f anchor; 
 } Theme;
 
 
@@ -115,6 +116,11 @@ typedef struct {
     Uint32 last_stroke;
 
     String_Builder clipboard;
+
+    // ANCHOR
+    bool has_anchor;          // Indicates if an anchor is set.
+    size_t anchor_pos;        // Position of the set anchor.
+
 } Editor;
 
 Errno editor_save_as(Editor *editor, const char *file_path);
@@ -177,6 +183,10 @@ size_t editor_row_from_pos(const Editor *e, size_t pos);
 void editor_jump_to_matching_parenthesis(Editor *editor);
 void evil_jump_item(Editor *editor);
 void editor_enter(Editor *e);
+void editor_set_anchor(Editor *editor);
+void editor_goto_anchor_and_clear(Editor *editor);
+void editor_drag_line_down(Editor *editor);
+void editor_drag_line_up(Editor *editor);
 
 
 extern float zoom_factor;

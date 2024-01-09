@@ -39,6 +39,7 @@
 #define FONT_DIR "~/.config/ded/fonts/"
 /* #define DEFAULT_FONT "jet-extra-bold.ttf" */
 /* #define DEFAULT_FONT "radon.otf" */
+/* #define DEFAULT_FONT "minecraft.ttf" */
 #define DEFAULT_FONT "iosevka-regular.ttf"
 #define MAX_FONTS 20
 #define MAX_PATH_SIZE 1024
@@ -703,6 +704,18 @@ int main(int argc, char **argv)
                     }
                     break;
 
+
+                    case SDLK_SPACE: {
+                        if (SDL_GetModState() & KMOD_CTRL) {
+                            if (!editor.has_anchor){
+                                editor_set_anchor(&editor);
+                            } else {
+                                editor_goto_anchor_and_clear(&editor);
+                            }
+                        }                      
+                    }
+                    break;
+
                     case SDLK_5: {
                         if (SDL_GetModState() & KMOD_SHIFT) {
                             evil_jump_item(&editor);
@@ -1026,7 +1039,7 @@ int main(int argc, char **argv)
                       move_camera(&sr, "down", 50.0f);
                     } else if (event.key.keysym.mod & KMOD_CTRL) {
                       editor_new_line_down(&editor);
-                    } else if (event.key.keysym.mod & KMOD_SHIFT) {
+                    } else if ((event.key.keysym.mod & KMOD_SHIFT) && !(event.key.keysym.mod & KMOD_ALT)) {
                       editor_join_lines(&editor);
                     } else if (event.key.keysym.mod & KMOD_ALT) {
                       editor_move_paragraph_down(&editor);
@@ -1059,6 +1072,28 @@ int main(int argc, char **argv)
                     }
                     editor.last_stroke = SDL_GetTicks();
                     break;
+
+                    
+                    case SDLK_DOWN:
+                        if (event.key.keysym.mod & KMOD_ALT) {
+                            editor_drag_line_down(&editor);
+                        } else {
+                            editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                            editor_move_line_down(&editor);
+                        }
+                        break;
+                        
+
+                    case SDLK_UP:
+                        if (event.key.keysym.mod & KMOD_ALT) {
+                            editor_drag_line_up(&editor);
+                        } else {
+                            editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                            editor_move_line_up(&editor);
+                        }
+                        break;
+
+
 
                   case SDLK_w:
                     if (event.key.keysym.mod & KMOD_CTRL) {
