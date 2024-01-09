@@ -37,6 +37,9 @@ render circles (for whitespaces) []
 opening a file with ded file.c that contain a
 function definition, trow a [1] 35755 segmentation fault (core dumped)
 ** Editor
+ivy for everything []
+imenu for function definition jump []
+sub-pixel antialiasing []
 multicursor[]
 Iedit[]
 Fringe(showing unsaved changes, and later with git integration )[]
@@ -48,16 +51,17 @@ Pipe selection to unix command []
 Togglable visibility of new lines[]
 Togglable indentation lines[]
 show character under cursor with the same color as the bg[]
-keep a list of opened files to quickly
-go to the previous or next "buffer" or kill them []
 search should not be case sensitive []
-mismatched cut and selection []
 support multiple marks not just one []
 render wavy or normal line under text for errors or whatever []
 most symple emacs style completition (ctrl + n in insert mode)[]
 use window hight and width dinamicly instead of fixed position when animations are off []
 
 
+
+keep a list of opened files to quickly
+go to the previous or next "buffer" or kill them [x]
+mismatched cut and selection [x]
 Drag lines up/down [x] // TODO drag selection or multiple cursors BUG behaves bad when there are only 2 lines in the editor and you swap them
 Editor_new_line_down and up should mantain indentation [x]
 yasnippet [x] TODO

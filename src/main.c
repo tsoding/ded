@@ -1139,6 +1139,18 @@ int main(int argc, char **argv)
                 case INSERT:
                   switch (event.key.keysym.sym) {
 
+                    case SDLK_SPACE: {
+                        if (SDL_GetModState() & KMOD_CTRL) {
+                            if (!editor.has_anchor){
+                                editor_set_anchor(&editor);
+                            } else {
+                                editor_goto_anchor_and_clear(&editor);
+                            }
+                        }                      
+                    }
+                    break;
+
+                    
                   case SDLK_h:
                     if (event.key.keysym.mod & KMOD_CTRL) {
                       editor_move_char_left(&editor);

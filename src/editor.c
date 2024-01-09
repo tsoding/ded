@@ -501,8 +501,7 @@ void editor_backspace(Editor *e) {
 }
 
 
-
-
+// Unused ?
 void editor_delete(Editor *e)
 {
     if (e->searching) return;
@@ -550,6 +549,9 @@ void editor_delete_selection(Editor *e)
     }
     editor_retokenize(e);
 }
+
+
+
 
 // TODO: make sure that you always have new line at the end of the file while saving
 // https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_206
@@ -707,6 +709,30 @@ void editor_insert_buf(Editor *e, char *buf, size_t buf_len)
     }
 }
 
+
+void editor_insert_buf_at(Editor *e, char *buf, size_t buf_len, size_t pos) {
+    // Ensure the position is within bounds
+    if (pos > e->data.count) {
+        pos = e->data.count;
+    }
+
+    // Expand the buffer to accommodate the new text
+    for (size_t i = 0; i < buf_len; ++i) {
+        da_append(&e->data, '\0'); // Assuming da_append is a function to expand the buffer
+    }
+
+    // Shift existing text to make room for the new text
+    memmove(&e->data.items[pos + buf_len], &e->data.items[pos], e->data.count - pos);
+
+    // Copy the new text into the buffer at the specified position
+    memcpy(&e->data.items[pos], buf, buf_len);
+
+    // Update the cursor position and retokenize
+    e->cursor = pos + buf_len;
+    editor_retokenize(e);
+}
+
+
 void editor_retokenize(Editor *e)
 {
     // Lines
@@ -814,31 +840,34 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     // Render anchor
     if (editor->has_anchor) {
         simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
+
+        // Update the anchor position before rendering
+        editor_update_anchor(editor);
         
         size_t anchor_row = editor_row_from_pos(editor, editor->anchor_pos);
         Line anchor_line = editor->lines.items[anchor_row];
         size_t anchor_col = editor->anchor_pos - anchor_line.begin;
         
-        Vec2f anchor_pos = vec2fs(0.0f);
-        anchor_pos.y = -((float)anchor_row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE;
-        anchor_pos.x = free_glyph_atlas_cursor_pos(
-                                                   atlas,
-                                                   editor->data.items + anchor_line.begin, anchor_line.end - anchor_line.begin,
-                                                   vec2f(0.0, anchor_pos.y),
-                                                   anchor_col
-                                                   );
+        Vec2f anchor_pos_vec = vec2fs(0.0f);
+        anchor_pos_vec.y = -((float)anchor_row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE;
+        anchor_pos_vec.x = free_glyph_atlas_cursor_pos(
+                                                       atlas,
+                                                       editor->data.items + anchor_line.begin, anchor_line.end - anchor_line.begin,
+                                                       vec2f(0.0, anchor_pos_vec.y),
+                                                       anchor_col
+                                                       );
         
         // Adjust anchor position if line numbers are shown
         if (showLineNumbers) {
-            anchor_pos.x += lineNumberWidth;
+            anchor_pos_vec.x += lineNumberWidth;
         }
         
         Vec4f ANCHOR_COLOR = themes[currentThemeIndex].anchor;
         
         simple_renderer_solid_rect(
-                                   sr, anchor_pos, vec2f(whitespace_width, FREE_GLYPH_FONT_SIZE),
-                                   themes[currentThemeIndex].anchor);
-
+                                   sr, anchor_pos_vec, vec2f(whitespace_width, FREE_GLYPH_FONT_SIZE),
+                                   ANCHOR_COLOR);
+        
         
         simple_renderer_flush(sr);
     }
@@ -1862,6 +1891,7 @@ void editor_move_paragraph_down(Editor *e)
     e->cursor = e->lines.items[row].begin;
 }
 
+
 void editor_kill_line(Editor *e) {
     if (e->searching || e->cursor >= e->data.count) return;
 
@@ -1901,6 +1931,7 @@ void editor_kill_line(Editor *e) {
     editor_retokenize(e);
 }
 
+
 void editor_backward_kill_word(Editor *e) {
     editor_stop_search(e);
 
@@ -1936,6 +1967,9 @@ void editor_backward_kill_word(Editor *e) {
 
     editor_retokenize(e);
 }
+
+
+
 
 // TODO when there is a {} dont add the space
 void editor_join_lines(Editor *e) {
@@ -1993,6 +2027,7 @@ void editor_join_lines(Editor *e) {
 
     editor_retokenize(e);
 }
+
 
 
 bool editor_is_line_empty(Editor *e, size_t row) {
@@ -2053,25 +2088,35 @@ void editor_paste_line_after(Editor* editor) {
 
     size_t text_len = strlen(text);
     if (text_len > 0) {
-        editor_move_line_down(editor); // Move to the start of the next line
-
-        // Insert the text from the clipboard
-        editor_insert_buf(editor, text, text_len);
-
-        // Insert a newline after pasting if the text doesn't end with one
-        if (text[text_len - 1] != '\n') {
-            editor_insert_buf(editor, "\n", 1);
+        // Find the end of the current line
+        size_t end = editor->cursor;
+        while (end < editor->data.count && editor->data.items[end] != '\n') {
+            end++;
         }
 
-        editor_move_line_up(editor); // Move back to the original line
-    } else {
-        fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
+        // If not at the end of the file, move to the start of the next line
+        if (end < editor->data.count) {
+            end++;
+        }
+
+        // Insert the text from the clipboard
+        editor_insert_buf_at(editor, text, text_len, end);
+
+        // If the pasted text does not end with a newline, add one
+        if (text[text_len - 1] != '\n') {
+            editor_insert_buf_at(editor, "\n", 1, end + text_len);
+        }
+
+        // Move cursor to the first non-space character of the pasted line
+        editor->cursor = end;
+        while (editor->cursor < editor->data.count && editor->data.items[editor->cursor] == ' ') {
+            editor->cursor++;
+        }
     }
 
     SDL_free(text);
 }
 
-// BUG
 void editor_paste_line_before(Editor* editor) {
     if (!copiedLine) {
         return; // Do nothing if no line has been copied
@@ -2085,27 +2130,29 @@ void editor_paste_line_before(Editor* editor) {
 
     size_t text_len = strlen(text);
     if (text_len > 0) {
-        // Move cursor to the start of the current line
+        // Find the start of the current line
         size_t start = editor->cursor;
         while (start > 0 && editor->data.items[start - 1] != '\n') {
             start--;
         }
-        editor->cursor = start;
 
-        // Insert the text from the clipboard
-        editor_insert_buf(editor, text, text_len);
+        // Insert the text from the clipboard at the start of the line
+        editor_insert_buf_at(editor, text, text_len, start);
 
         // Optionally, insert a newline after pasting if the text doesn't end with one
         if (text[text_len - 1] != '\n') {
-            editor_insert_buf(editor, "\n", 1);
+            editor_insert_buf_at(editor, "\n", 1, start + text_len);
         }
-    } else {
-        fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
+
+        // Move cursor to the first non-space character of the pasted line
+        editor->cursor = start;
+        while (editor->cursor < editor->data.count && editor->data.items[editor->cursor] == ' ') {
+            editor->cursor++;
+        }
     }
-    editor_move_line_up(editor); // like this the cursor behave like vim HACK TODO
+
     SDL_free(text);
 }
-
 
 
 ssize_t find_matching_parenthesis(Editor *editor, size_t cursor_pos) {
@@ -2200,6 +2247,7 @@ void evil_jump_item(Editor *editor) {
 }
 
 
+//TODO BUG
 void editor_enter(Editor *e) {
     if (e->searching) {
         editor_stop_search_and_mark(e);
@@ -2249,18 +2297,42 @@ void editor_enter(Editor *e) {
 }
 
 
+// Anchor Implementation: Initially, the anchor used a single index from the
+// start of the buffer, requiring updates on text changes. To simplify, we now
+// track two indices (start and end of buffer). The anchor position self-adjusts
+// based on cursor's relative position, ensuring correct placement without
+// modifying all text-manipulating functions.
+
 void editor_set_anchor(Editor *editor) {
-    editor->has_anchor = true;
-    editor->anchor_pos = editor->cursor;
+    if (editor->cursor < editor->data.count) {
+        editor->has_anchor = true;
+        editor->anchor_pos_from_start = editor->cursor;
+        editor->anchor_pos_from_end = editor->data.count - editor->cursor;
+    }
 }
 
 void editor_goto_anchor_and_clear(Editor *editor) {
     if (editor->has_anchor) {
-        editor->cursor = editor->anchor_pos;
+        if (editor->cursor > editor->anchor_pos_from_start) {
+            editor->cursor = editor->anchor_pos_from_start;
+        } else {
+            editor->cursor = editor->data.count - editor->anchor_pos_from_end;
+        }
         editor->has_anchor = false;
     }
 }
 
+void editor_update_anchor(Editor *editor) {
+    if (!editor->has_anchor) return;
+
+    if (editor->cursor > editor->anchor_pos_from_start) {
+        // Cursor is after the anchor, use position from the start
+        editor->anchor_pos = editor->anchor_pos_from_start;
+    } else {
+        // Cursor is before the anchor, use position from the end
+        editor->anchor_pos = editor->data.count - editor->anchor_pos_from_end;
+    }
+}
 
 void editor_drag_line_down(Editor *editor) {
     size_t row = editor_cursor_row(editor);

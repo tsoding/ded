@@ -119,8 +119,14 @@ typedef struct {
 
     String_Builder clipboard;
 
+    /* bool has_anchor; */
+    /* size_t anchor_pos; */
+
     bool has_anchor;
+    size_t anchor_pos_from_start;
+    size_t anchor_pos_from_end;
     size_t anchor_pos;
+    
 
     char *buffer_history[MAX_BUFFER_HISTORY];
     int buffer_history_count;
@@ -188,10 +194,14 @@ size_t editor_row_from_pos(const Editor *e, size_t pos);
 void editor_jump_to_matching_parenthesis(Editor *editor);
 void evil_jump_item(Editor *editor);
 void editor_enter(Editor *e);
+
 void editor_set_anchor(Editor *editor);
 void editor_goto_anchor_and_clear(Editor *editor);
+void editor_update_anchor(Editor *editor);
+
 void editor_drag_line_down(Editor *editor);
 void editor_drag_line_up(Editor *editor);
+/* size_t editor_determine_anchor_position(const Editor *editor); */
 
 void editor_add_to_buffer_history(Editor *e, const char *file_path);
 void editor_remove_from_buffer_history(Editor *e);
@@ -200,6 +210,9 @@ Errno editor_open_buffer(Editor *e, const char *file_path);
 void editor_kill_buffer(Editor *e);
 void editor_previous_buffer(Editor *e);
 void editor_next_buffer(Editor *e);
+
+void editor_insert_buf_at(Editor *e, char *buf, size_t buf_len, size_t pos);
+
 
 
 extern float zoom_factor;
