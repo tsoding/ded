@@ -822,19 +822,6 @@ int main(int argc, char **argv)
                         }
                         break;
 
-                    case SDLK_p:
-                    if (SDL_GetModState() & KMOD_CTRL){
-                      editor_move_line_up(&editor);
-                    } else if (copiedLine) {
-                        if (SDL_GetModState() & KMOD_SHIFT) {
-                            editor_paste_line_before(&editor);
-                        } else {
-                            editor_paste_line_after(&editor);
-                        }
-                    } else {
-                        editor_clipboard_paste(&editor);
-                    }
-                    break;
                     
                   case SDLK_g: {
                     if (SDL_GetModState() & KMOD_SHIFT) {
@@ -866,14 +853,38 @@ int main(int argc, char **argv)
                     if (SDL_GetModState() & KMOD_CTRL) {
                       editor_move_line_down(&editor);
                     }
+
+                    if (SDL_GetModState() & KMOD_ALT) {
+                        editor_next_buffer(&editor);
+                    }
                   } break;
+
+
+                    case SDLK_p:
+                        if (SDL_GetModState() & KMOD_CTRL){
+                            editor_move_line_up(&editor);
+                        } else if (SDL_GetModState() & KMOD_ALT) {
+                            editor_previous_buffer(&editor);
+                        } else if (copiedLine) {
+                            if (SDL_GetModState() & KMOD_SHIFT) {
+                                editor_paste_line_before(&editor);
+                            } else {
+                                editor_paste_line_after(&editor);
+                            }
+                        } else {
+                            editor_clipboard_paste(&editor);
+                        }
+                        break;
+
 
                   case SDLK_b:
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                     if (SDL_GetModState() & KMOD_CTRL){
                       editor_move_char_left(&editor);
+                    } else if (SDL_GetModState() & KMOD_ALT) {
+                        editor_kill_buffer(&editor);
                     } else {
-                      editor_move_word_left(&editor);
+                        editor_move_word_left(&editor);
                     }
                     break;
 
@@ -1093,6 +1104,16 @@ int main(int argc, char **argv)
                         }
                         break;
 
+
+                    case SDLK_RIGHT:
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                        editor_move_char_right(&editor);
+                        break;
+
+                    case SDLK_LEFT:
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                        editor_move_char_left(&editor);
+                        break;
 
 
                   case SDLK_w:

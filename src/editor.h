@@ -93,6 +93,9 @@ typedef struct {
 } Theme;
 
 
+
+#define MAX_BUFFER_HISTORY 100
+
 typedef struct {
     Free_Glyph_Atlas *atlas;
 
@@ -112,14 +115,16 @@ typedef struct {
     size_t mark_start;        // Start of marked search result. TODO support multiple marks
     size_t mark_end;          // End of marked search result.
 
-
     Uint32 last_stroke;
 
     String_Builder clipboard;
 
-    // ANCHOR
-    bool has_anchor;          // Indicates if an anchor is set.
-    size_t anchor_pos;        // Position of the set anchor.
+    bool has_anchor;
+    size_t anchor_pos;
+
+    char *buffer_history[MAX_BUFFER_HISTORY];
+    int buffer_history_count;
+    int buffer_index;
 
 } Editor;
 
@@ -187,6 +192,14 @@ void editor_set_anchor(Editor *editor);
 void editor_goto_anchor_and_clear(Editor *editor);
 void editor_drag_line_down(Editor *editor);
 void editor_drag_line_up(Editor *editor);
+
+void editor_add_to_buffer_history(Editor *e, const char *file_path);
+void editor_remove_from_buffer_history(Editor *e);
+Errno editor_open_buffer(Editor *e, const char *file_path);
+Errno editor_open_buffer(Editor *e, const char *file_path);
+void editor_kill_buffer(Editor *e);
+void editor_previous_buffer(Editor *e);
+void editor_next_buffer(Editor *e);
 
 
 extern float zoom_factor;
