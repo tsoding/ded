@@ -168,6 +168,8 @@ void switch_to_font(FT_Library library, FT_Face *currentFace, Free_Glyph_Atlas *
 
 
 
+
+
 // TODO tomove
 bool extractLine(Editor *editor, size_t cursor, char *line, size_t max_length) {
     size_t start = cursor;
@@ -221,7 +223,6 @@ void getDirectoryFromFilePath(const char *filePath, char *directory) {
     }
 }
 
-// Function to open a local include file
 Errno openLocalIncludeFile(Editor *editor, const char *includePath) {
     char fullPath[512]; // Buffer for the full path
     char directory[256]; // Buffer for the directory
@@ -242,6 +243,62 @@ Errno openLocalIncludeFile(Editor *editor, const char *includePath) {
     printf("Opened file: %s\n", fullPath);
     return 0;
 }
+
+bool extractGlobalIncludePath(Editor *editor, char *includePath) {
+    char line[512];
+    if (!extractLine(editor, editor->cursor, line, sizeof(line))) {
+        return false;
+    }
+
+    if (strncmp(line, "#include <", 10) == 0) {
+        char *start = strchr(line, '<') + 1;
+        char *end = strrchr(line, '>');
+        if (start && end && start < end) {
+            size_t length = end - start;
+            strncpy(includePath, start, length);
+            includePath[length] = '\0';
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+Errno openGlobalIncludeFile(Editor *editor, const char *includePath) {
+    char fullPath[512]; // Buffer for the full path
+
+    // List of standard directories (expandable)
+    const char *standardDirs[] = {"/usr/include", NULL}; // NULL terminated array
+
+    for (int i = 0; standardDirs[i] != NULL; i++) {
+        snprintf(fullPath, sizeof(fullPath), "%s/%s", standardDirs[i], includePath);
+        
+        // Try to load the file using the constructed full path
+        Errno load_err = editor_load_from_file(editor, fullPath);
+        if (load_err == 0) {
+            printf("Opened file: %s\n", fullPath);
+            return 0; // File opened successfully
+        }
+    }
+
+    fprintf(stderr, "Error: File %s not found in standard directories\n", includePath);
+    return -1; // File not found in standard directories
+}
+
+void editor_open_include(Editor *editor) {
+    char includePath[256];
+
+    if (extractLocalIncludePath(editor, includePath)) {
+        openLocalIncludeFile(editor, includePath);
+    } else if (extractGlobalIncludePath(editor, includePath)) {
+        openGlobalIncludeFile(editor, includePath);
+    }
+}
+
+
+
+
 
 
 
@@ -685,17 +742,15 @@ int main(int argc, char **argv)
                     switch (event.key.keysym.sym) {
                     SDL_Event tmpEvent; // Declare once at the beginning of the switch block
 
-                  case SDLK_RETURN: {
-                    if (editor.searching) {
-                      editor_stop_search_and_mark(&editor);
-                      current_mode = NORMAL;
-                    } else {
-                      char includePath[256];
-                      if (extractLocalIncludePath(&editor, includePath)) {
-                        openLocalIncludeFile(&editor, includePath);
-                      }
-                    }
-                  } break;
+                    case SDLK_RETURN: {
+                        if (editor.searching) {
+                            editor_stop_search_and_mark(&editor);
+                            current_mode = NORMAL;
+                        } else {
+                            editor_open_include(&editor);
+                        }
+                    } break;
+
                       
                     case SDLK_ESCAPE: {
                         editor_clear_mark(&editor);

@@ -16,6 +16,8 @@ to get user input for anything and everything popups are for loosers
 ** Minimap
 code minimap from scratch
 ** Lexer
+NULL []
+multi line comments []
 syntax highlighting for : | || & && [x]
 highlight links [x]
 line under links []
@@ -37,6 +39,8 @@ render circles (for whitespaces) []
 opening a file with ded file.c that contain a
 function definition, trow a [1] 35755 segmentation fault (core dumped)
 ** Editor
+goto definition (a dumb version later i will integrate lsp)[]
+Togglable emacs like scroll for when animations are disabled []
 ivy for everything []
 imenu for function definition jump []
 sub-pixel antialiasing []

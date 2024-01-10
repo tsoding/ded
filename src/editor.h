@@ -119,9 +119,6 @@ typedef struct {
 
     String_Builder clipboard;
 
-    /* bool has_anchor; */
-    /* size_t anchor_pos; */
-
     bool has_anchor;
     size_t anchor_pos_from_start;
     size_t anchor_pos_from_end;

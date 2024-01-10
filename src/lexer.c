@@ -26,18 +26,18 @@ Literal_Token literal_tokens[] = {
 #define literal_tokens_count (sizeof(literal_tokens)/sizeof(literal_tokens[0]))
 
 const char *cKeywords[] = {
-    "auto", "break", "case", "char", "const", "continue", "default", "do", "double",
-    "else", "enum", "extern", "float", "for", "goto", "if", "int", "long", "register",
-    "return", "short", "signed", "sizeof", "static", "struct", "switch", "typedef",
-    "union", "unsigned", "void", "volatile", "while", "alignas", "alignof", "and",
+    "auto", "break", "case", "const", "continue", "default", "do",
+    "else", "enum", "extern", "for", "goto", "if", "int", "register",
+    "return", "sizeof", "static", "struct", "switch", "typedef",
+    "union", "volatile", "while", "alignas", "alignof", "and",
     "and_eq", "asm", "atomic_cancel", "atomic_commit", "atomic_noexcept", "bitand",
-    "bitor", "bool", "catch", "char16_t", "char32_t", "char8_t", "class", "co_await",
+    "bitor", "catch", "char16_t", "char32_t", "char8_t", "class", "co_await",
     "co_return", "co_yield", "compl", "concept", "const_cast", "consteval", "constexpr",
-    "constinit", "decltype", "delete", "dynamic_cast", "explicit", "export", "false",
+    "constinit", "decltype", "delete", "dynamic_cast", "explicit", "export",
     "friend", "inline", "mutable", "namespace", "new", "noexcept", "not", "not_eq",
     "nullptr", "operator", "or", "or_eq", "private", "protected", "public", "reflexpr",
     "reinterpret_cast", "requires", "static_assert", "static_cast", "synchronized",
-    "template", "this", "thread_local", "throw", "true", "try", "typeid", "typename",
+    "template", "this", "thread_local", "throw", "try", "typeid", "typename",
     "using", "virtual", "wchar_t", "xor", "xor_eq",
 };
 
@@ -47,7 +47,7 @@ const char *cKeywords[] = {
 
 const char *cTypeKeywords[] = {
     "char", "double", "float", "int", "long", "short", "signed", "unsigned", "void",
-    "_Bool", "_Complex", "_Imaginary", "bool"
+    "_Bool", "_Complex", "_Imaginary", "bool", "Vec4f"
 };
 
 
