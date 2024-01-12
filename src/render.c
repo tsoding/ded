@@ -1,10 +1,13 @@
 #include "render.h"
+#include "editor.h"
+#include "theme.h"
 
+float lineNumberWidth = FREE_GLYPH_FONT_SIZE * 5;
 
 void render_search_text(Free_Glyph_Atlas *minibuffer_atlas, Simple_Renderer *sr, Editor *editor) {
     if (editor->searching) {
         Vec4f color = themes[currentThemeIndex].text;
-        Vec2f searchPos = {0.0f, 0.0f}; // Adjust position as needed
+        Vec2f searchPos = {0.0f, 0.0f};
 
         simple_renderer_set_shader(sr, VERTEX_SHADER_FIXED, SHADER_FOR_TEXT);
         free_glyph_atlas_render_line_sized(minibuffer_atlas, sr, editor->search.items, editor->search.count, &searchPos, color);
@@ -12,6 +15,60 @@ void render_search_text(Free_Glyph_Atlas *minibuffer_atlas, Simple_Renderer *sr,
         simple_renderer_flush(sr);
     }
 }
+
+void render_whitespaces(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor) {
+    if (showWhitespaces) {
+        if (isWave) {
+            simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_COLOR);
+        } else {
+            simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
+        }
+        
+        float squareSize = FREE_GLYPH_FONT_SIZE * 0.2;
+        float brightnessIncreasePercent = themes[currentThemeIndex].whitespace;
+        
+        for (size_t i = 0; i < editor->lines.count; ++i) {
+            Line line = editor->lines.items[i];
+            Vec2f pos = { 0, -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE };
+            
+            if (showLineNumbers) {
+                pos.x += lineNumberWidth;
+            }
+            
+            for (size_t j = line.begin; j < line.end; ++j) {
+                if (editor->data.items[j] == ' ' || editor->data.items[j] == '\t') {
+                    Vec4f backgroundColor = themes[currentThemeIndex].background;
+                    Vec4f whitespaceColor;
+                    
+                    // Increase each RGB component based on the percentage, but not above 1
+                    whitespaceColor.x = backgroundColor.x + brightnessIncreasePercent * (1 - backgroundColor.x);
+                    whitespaceColor.y = backgroundColor.y + brightnessIncreasePercent * (1 - backgroundColor.y);
+                    whitespaceColor.z = backgroundColor.z + brightnessIncreasePercent * (1 - backgroundColor.z);
+                    
+                    // Clamp values to max 1.0
+                    whitespaceColor.x = whitespaceColor.x > 1 ? 1 : whitespaceColor.x;
+                    whitespaceColor.y = whitespaceColor.y > 1 ? 1 : whitespaceColor.y;
+                    whitespaceColor.z = whitespaceColor.z > 1 ? 1 : whitespaceColor.z;
+                    
+                    // Keep the alpha value the same
+                    whitespaceColor.w = backgroundColor.w;
+                    
+                    // Measure the actual character width
+                    Vec2f char_pos = pos;
+                    char_pos.x += (j - line.begin) * squareSize; // Starting position for this character
+                    free_glyph_atlas_measure_line_sized(atlas, editor->data.items + j, 1, &char_pos);
+                    float char_width = char_pos.x - pos.x - (j - line.begin) * squareSize;
+                    
+                    Vec2f rectPos = {pos.x + (j - line.begin) * char_width + (char_width - squareSize) / 2, pos.y + (FREE_GLYPH_FONT_SIZE - squareSize) / 2};
+                    simple_renderer_solid_rect(sr, rectPos, vec2f(squareSize, squareSize), whitespaceColor);
+                }
+            }
+        }
+        simple_renderer_flush(sr);
+    }
+}
+
+
 
 
 
@@ -25,7 +82,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     sr->resolution = vec2f(w, h);
     sr->time = (float) SDL_GetTicks() / 1000.0f;
 
-    float lineNumberWidth = FREE_GLYPH_FONT_SIZE * 5;
+    /* float lineNumberWidth = FREE_GLYPH_FONT_SIZE * 5; */
     /* Vec4f lineNumberColor = vec4f(0.5, 0.5, 0.5, 1);  // A lighter color for line numbers, adjust as needed */
 
     // Calculate the width of a whitespace character
@@ -552,72 +609,31 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     }
 
     
-
-    // WHITESPACES
-    {
-        if (showWhitespaces) {
-            if (isWave) {
-                simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_COLOR);
-            } else {
-                simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
-            }
-            
-            float squareSize = FREE_GLYPH_FONT_SIZE * 0.2;
-            
-            for (size_t i = 0; i < editor->lines.count; ++i) {
-                Line line = editor->lines.items[i];
-                Vec2f pos = { 0, -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE };
-                
-                if (showLineNumbers) {
-                    pos.x += lineNumberWidth;
-                }
-                
-                for (size_t j = line.begin; j < line.end; ++j) {
-                    if (editor->data.items[j] == ' ' || editor->data.items[j] == '\t') {
-                        /* Vec4f whitespaceColor = vec4f(1, 0, 0, 1); // Red color for visibility */
-                        
-                        Vec4f backgroundColor = themes[currentThemeIndex].background;
-                        Vec4f whitespaceColor;
-                        
-                        // Increase each RGB component by 70%, but not above 1
-                        whitespaceColor.x = backgroundColor.x + 0.7 * (1 - backgroundColor.x);
-                        whitespaceColor.y = backgroundColor.y + 0.7 * (1 - backgroundColor.y);
-                        whitespaceColor.z = backgroundColor.z + 0.7 * (1 - backgroundColor.z);
-                        
-                        // Clamp values to max 1.0
-                        whitespaceColor.x = whitespaceColor.x > 1 ? 1 : whitespaceColor.x;
-                        whitespaceColor.y = whitespaceColor.y > 1 ? 1 : whitespaceColor.y;
-                        whitespaceColor.z = whitespaceColor.z > 1 ? 1 : whitespaceColor.z;
-                        
-                        // Keep the alpha value the same
-                        whitespaceColor.w = backgroundColor.w;
-                        
-                        // Measure the actual character width
-                        Vec2f char_pos = pos;
-                        char_pos.x += (j - line.begin) * squareSize; // Starting position for this character
-                        free_glyph_atlas_measure_line_sized(atlas, editor->data.items + j, 1, &char_pos);
-                        float char_width = char_pos.x - pos.x - (j - line.begin) * squareSize;
-                        
-                        Vec2f rectPos = {pos.x + (j - line.begin) * char_width + (char_width - squareSize) / 2, pos.y + (FREE_GLYPH_FONT_SIZE - squareSize) / 2};
-                        simple_renderer_solid_rect(sr, rectPos, vec2f(squareSize, squareSize), whitespaceColor);
-                    }
-                }
-            }
-            simple_renderer_flush(sr);
-        }
-    }
-    
-    
+   render_whitespaces(atlas, sr, editor);
+   
     // Render minibuffer
     {
         if (showMinibuffer) {
             simple_renderer_set_shader(sr, VERTEX_SHADER_FIXED, SHADER_FOR_COLOR);
-            simple_renderer_solid_rect(sr, (Vec2f){0.0f, 0.0f}, (Vec2f){w, 21.0f}, CURRENT_THEME.minibuffer);
+            simple_renderer_solid_rect(sr, (Vec2f){0.0f, 0.0f}, (Vec2f){w, minibufferHeight}, CURRENT_THEME.minibuffer);
             simple_renderer_flush(sr);
         }
     }
 
 
+    // Render modeline
+    {
+        if (showModeline) {
+            simple_renderer_set_shader(sr, VERTEX_SHADER_FIXED, SHADER_FOR_COLOR);
+            simple_renderer_solid_rect(sr, (Vec2f){0.0f, minibufferHeight}, (Vec2f){w, modelineHeight}, CURRENT_THEME.modeline);
+            // render accent
+            simple_renderer_solid_rect(sr, (Vec2f){0.0f, minibufferHeight}, (Vec2f){modelineAccentWidth, modelineHeight}, CURRENT_THEME.modeline_accent);
+            simple_renderer_flush(sr);
+        }
+    }
+
+
+    
     // Render cursor
     if(editor->searching){
         simple_renderer_set_shader(sr, VERTEX_SHADER_FIXED, SHADER_FOR_COLOR);

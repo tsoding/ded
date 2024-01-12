@@ -1,19 +1,36 @@
 #ifndef EDITOR_H_
 #define EDITOR_H_
 
+#include <stddef.h>
 #include <stdlib.h>
 #include "common.h"
 #include "free_glyph.h"
 #include "simple_renderer.h"
 #include "lexer.h"
-
 #include <stdbool.h>
-
 #include <SDL2/SDL.h>
 
 
 extern bool isAnimated;
-extern int indentation;
+extern size_t indentation;
+extern float zoom_factor;
+extern float min_zoom_factor;
+extern float max_zoom_factor;
+extern bool showLineNumbers;
+extern bool isWave;
+extern bool showWhitespaces;
+extern bool copiedLine;
+extern bool hl_line;
+extern bool relativeLineNumbers;
+extern bool highlightCurrentLineNumber;
+extern bool matchParenthesis;
+extern bool superDrammtic;
+
+extern bool showMinibuffer;
+extern bool showModeline;
+extern float minibufferHeight;
+extern float modelineHeight;
+extern float modelineAccentWidth;
 
 typedef struct {
     size_t begin;
@@ -41,57 +58,6 @@ typedef enum {
 } EvilMode;
 
 extern EvilMode current_mode;
-
-typedef struct {
-    Vec4f cursor;
-    Vec4f insert_cursor;
-    Vec4f emacs_cursor;
-    Vec4f text;
-    Vec4f background;
-    Vec4f logic;
-    Vec4f comment;
-    Vec4f hashtag;
-    Vec4f string;
-    Vec4f selection;
-    Vec4f search;
-    Vec4f line_numbers;
-    Vec4f todo;
-    Vec4f fixme;
-    Vec4f note;
-    Vec4f bug;
-    Vec4f equals;
-    Vec4f not_equals;
-    Vec4f exclamation;
-    Vec4f equals_equals;
-    Vec4f less_than;
-    Vec4f greater_than;
-    Vec4f arrow;
-    Vec4f plus;
-    Vec4f minus;
-    Vec4f truee;
-    Vec4f falsee;
-    Vec4f open_square;
-    Vec4f close_square;
-    Vec4f array_content;
-    Vec4f current_line_number;
-    Vec4f marks;
-    Vec4f fb_selection;
-    Vec4f link;
-    Vec4f logic_or;
-    Vec4f pipe;
-    Vec4f logic_and;
-    Vec4f ampersand;
-    Vec4f multiplication;
-    Vec4f pointer;
-    Vec4f modeline;
-    Vec4f minibuffer;
-    Vec4f matching_parenthesis;
-    Vec4f hl_line; 
-    Vec4f type; 
-    Vec4f function_definition; 
-    Vec4f anchor; 
-} Theme;
-
 
 
 #define MAX_BUFFER_HISTORY 100
@@ -174,14 +140,10 @@ void editor_insert_buf_at(Editor *e, char *buf, size_t buf_len, size_t pos);
 void editor_stop_search_and_mark(Editor *e);
 void editor_clear_mark(Editor *editor);
 void move_camera(Simple_Renderer *sr, const char* direction, float amount);
-bool extractWordUnderCursor(Editor *editor, char *word);
 
 void editor_kill_line(Editor *e);
 void editor_backward_kill_word(Editor *e);
-bool editor_is_line_empty(Editor *e, size_t row);
-bool editor_is_line_whitespaced(Editor *e, size_t row);
 ssize_t find_matching_parenthesis(Editor *editor, size_t cursor_pos);
-size_t editor_row_from_pos(const Editor *e, size_t pos);
 void editor_enter(Editor *e);
 
 void editor_set_anchor(Editor *editor);
@@ -191,35 +153,11 @@ void editor_update_anchor(Editor *editor);
 void editor_drag_line_down(Editor *editor);
 void editor_drag_line_up(Editor *editor);
 
-
-
-
-
-
-
-
-extern float zoom_factor;
-extern float min_zoom_factor;
-extern float max_zoom_factor;
-extern bool showLineNumbers;
-extern bool isWave;
-extern bool showWhitespaces;
-extern bool copiedLine;
-extern bool hl_line;
-extern bool relativeLineNumbers;
-extern bool highlightCurrentLineNumber;
-extern bool matchParenthesis;
-extern bool showMinibuffer;
-extern bool superDrammtic;
-
-// THEME
-extern Theme themes[];
-extern int currentThemeIndex;
-void initialize_themes();
-#define CURRENT_THEME (themes[currentThemeIndex])
-
-void theme_next(int *currentThemeIndex);
-void theme_previous(int *currentThemeIndex);
+// UTILITY
+size_t editor_row_from_pos(const Editor *e, size_t pos);
+bool extract_word_under_cursor(Editor *editor, char *word);
+bool editor_is_line_empty(Editor *e, size_t row);
+bool editor_is_line_whitespaced(Editor *e, size_t row);
 
 
 

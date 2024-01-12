@@ -1,4 +1,5 @@
 #include "evil.h"
+#include "editor.h"
 
 void evil_open_below(Editor *editor) {
     size_t row = editor_cursor_row(editor);
@@ -371,3 +372,25 @@ void evil_search_previous(Editor *e) {
         }
     }
 }
+
+
+void evil_search_word_forward(Editor *e) {
+    char word[256];
+
+    e->searching = true;
+    e->search.count = 0;
+
+    // Extract the word under the cursor.
+    if (extract_word_under_cursor(e, word)) {
+        sb_append_buf(&e->search, word, strlen(word));
+        editor_stop_search_and_mark(e);
+        evil_search_next(e);
+    } else {
+        // If no word is extracted, exit search mode
+        e->searching = false;
+    }
+}
+
+
+
+

@@ -35,6 +35,7 @@
 #include "render.h"
 #include "evil.h"
 #include "buffer.h"
+#include "theme.h"
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
@@ -814,6 +815,14 @@ int main(int argc, char **argv)
                         }
                     }
                     break;
+
+                    case SDLK_8: {
+                        if (SDL_GetModState() & KMOD_SHIFT) {
+                            evil_search_word_forward(&editor);
+                        }
+                    }
+                    break;
+
 
                     case SDLK_1: {
                         if (SDL_GetModState() & KMOD_CTRL) {

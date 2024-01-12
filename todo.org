@@ -35,19 +35,15 @@ different font per token []
 syntax highlighting for : | || & && [x]
 highlight links [x]
 ** Evil
-evil-delete-backward-char [x]
 evil-search-backward []
-evil-change-line []
-
+evil-change-line(smarter version, don't delete ";") []
 splits(maybe)   []
 5k should work []
-shift + 8 []
+
+evil-delete-backward-char [x]
+evil-search-word-forward (shift + 8) [x]
 shift + 5 [x]
 ** Editor
-
-a theme should be able to define how much lighter of the bg
-whitespaces indicators are in % (currently hardcoded to 70%)[]
-
 u can only type stuff that exist in the file in the
 search buffer, u should be able to type anything
 (also highlight not found stuff in red like emacs) []
@@ -74,6 +70,10 @@ use window hight and width dinamicly instead of fixed position when animations a
 
 
 
+
+
+a theme should be able to define how much lighter of the bg
+whitespaces indicators are in % (currently hardcoded to 70%)[x]
 keep a list of opened files to quickly
 go to the previous or next "buffer" or kill them [x]
 mismatched cut and selection [x]
