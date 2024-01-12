@@ -26,8 +26,8 @@ CC="${CXX:-cc}"
 PKGS="sdl2 glew freetype2"
 CFLAGS="-Wall -Wextra -std=c11 -pedantic -ggdb -D_DEFAULT_SOURCE"
 LIBS=-lm
-# SRC="src/main.c src/la.c src/editor.c src/file_browser.c src/free_glyph.c src/simple_renderer.c src/common.c src/lexer.c src/keychords.c"
-SRC="src/main.c src/la.c src/editor.c src/file_browser.c src/free_glyph.c src/simple_renderer.c src/common.c src/lexer.c src/yasnippet.c"
+# SRC="src/main.c src/la.c src/editor.c src/file_browser.c src/free_glyph.c src/simple_renderer.c src/common.c src/lexer.c src/yasnippet.c"
+SRC="src/*.c"
 
 if [ `uname` = "Darwin" ]; then
     CFLAGS+=" -framework OpenGL"

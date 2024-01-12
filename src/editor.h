@@ -158,38 +158,30 @@ void editor_move_paragraph_down(Editor *e);
 void editor_insert_char(Editor *e, char x);
 void editor_insert_buf(Editor *e, char *buf, size_t buf_len);
 void editor_retokenize(Editor *e);
-void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor);
 void editor_update_selection(Editor *e, bool shift);
 void editor_clipboard_copy(Editor *e);
 void editor_clipboard_paste(Editor *e);
+
+
+
 void editor_start_search(Editor *e);
 void editor_stop_search(Editor *e);
 bool editor_search_matches_at(Editor *e, size_t pos);
 
+
 // ADDED
+void editor_insert_buf_at(Editor *e, char *buf, size_t buf_len, size_t pos);
 void editor_stop_search_and_mark(Editor *e);
-void editor_search_next(Editor *e);
-void editor_search_previous(Editor *e);
 void editor_clear_mark(Editor *editor);
 void move_camera(Simple_Renderer *sr, const char* direction, float amount);
 bool extractWordUnderCursor(Editor *editor, char *word);
-void editor_start_visual_selection(Editor *e);
-void editor_start_visual_line_selection(Editor *e);
-void editor_cut_char_under_cursor(Editor *e);
-void editor_new_line_down(Editor *editor);
-void editor_new_line_up(Editor *editor);
+
 void editor_kill_line(Editor *e);
 void editor_backward_kill_word(Editor *e);
-void editor_join_lines(Editor *e);
 bool editor_is_line_empty(Editor *e, size_t row);
 bool editor_is_line_whitespaced(Editor *e, size_t row);
-void editor_yank_line(Editor *editor);
-void editor_paste_line_after(Editor *editor);
-void editor_paste_line_before(Editor* editor);
 ssize_t find_matching_parenthesis(Editor *editor, size_t cursor_pos);
 size_t editor_row_from_pos(const Editor *e, size_t pos);
-void editor_jump_to_matching_parenthesis(Editor *editor);
-void evil_jump_item(Editor *editor);
 void editor_enter(Editor *e);
 
 void editor_set_anchor(Editor *editor);
@@ -198,17 +190,11 @@ void editor_update_anchor(Editor *editor);
 
 void editor_drag_line_down(Editor *editor);
 void editor_drag_line_up(Editor *editor);
-/* size_t editor_determine_anchor_position(const Editor *editor); */
 
-void editor_add_to_buffer_history(Editor *e, const char *file_path);
-void editor_remove_from_buffer_history(Editor *e);
-Errno editor_open_buffer(Editor *e, const char *file_path);
-Errno editor_open_buffer(Editor *e, const char *file_path);
-void editor_kill_buffer(Editor *e);
-void editor_previous_buffer(Editor *e);
-void editor_next_buffer(Editor *e);
 
-void editor_insert_buf_at(Editor *e, char *buf, size_t buf_len, size_t pos);
+
+
+
 
 
 
@@ -220,6 +206,11 @@ extern bool isWave;
 extern bool showWhitespaces;
 extern bool copiedLine;
 extern bool hl_line;
+extern bool relativeLineNumbers;
+extern bool highlightCurrentLineNumber;
+extern bool matchParenthesis;
+extern bool showMinibuffer;
+extern bool superDrammtic;
 
 // THEME
 extern Theme themes[];

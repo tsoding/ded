@@ -4,25 +4,12 @@
 every function defined in the code should be callable
 while the app is running emacs style M-x []
 
-** Evil Mode
-splits(maybe)   []
-5k should work []
-shift + 8 []
-shift + 5 [x]
 ** Modeline
 show the current EvilMode, file name, info and cool icons
 ** Minibuffer
 to get user input for anything and everything popups are for loosers
 ** Minimap
 code minimap from scratch
-** Lexer
-NULL []
-multi line comments []
-syntax highlighting for : | || & && [x]
-highlight links [x]
-line under links []
-different vertex and fragment shader per token []
-different font per token []
 ** cursor
 adjust syze based on overed glyph [x]
 ** Font
@@ -35,10 +22,36 @@ make the text disappear []
 use shaders from =~/.config/ded/shaders= instead [x]
 ** Renderer 
 render circles (for whitespaces) []
+line under links (and clickable things)[]
 ** Bugs
 opening a file with ded file.c that contain a
 function definition, trow a [1] 35755 segmentation fault (core dumped)
+** Lexer
+'' []
+NULL []
+multi line comments []
+different vertex and fragment shader per token []
+different font per token []
+syntax highlighting for : | || & && [x]
+highlight links [x]
+** Evil
+evil-delete-backward-char [x]
+evil-search-backward []
+evil-change-line []
+
+splits(maybe)   []
+5k should work []
+shift + 8 []
+shift + 5 [x]
 ** Editor
+
+a theme should be able to define how much lighter of the bg
+whitespaces indicators are in % (currently hardcoded to 70%)[]
+
+u can only type stuff that exist in the file in the
+search buffer, u should be able to type anything
+(also highlight not found stuff in red like emacs) []
+
 goto definition (a dumb version later i will integrate lsp)[]
 Togglable emacs like scroll for when animations are disabled []
 ivy for everything []
@@ -47,8 +60,6 @@ sub-pixel antialiasing []
 multicursor[]
 Iedit[]
 Fringe(showing unsaved changes, and later with git integration )[]
-a theme should be able to define how much lighter of the bg
-whitespaces indicators are in % (currently hardcoded to 70%)[]
 Replace mode []
 Replace character mode []
 Pipe selection to unix command []

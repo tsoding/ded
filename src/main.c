@@ -19,7 +19,6 @@
 #include FT_FREETYPE_H
 
 #include "./editor.h"
-#include "./repl.h"
 #include "./file_browser.h"
 #include "./la.h"
 #include "./free_glyph.h"
@@ -33,6 +32,9 @@
 #include <limits.h>
 #include <stdbool.h>
 #include "yasnippet.h"
+#include "render.h"
+#include "evil.h"
+#include "buffer.h"
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
@@ -297,18 +299,6 @@ void editor_open_include(Editor *editor) {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 // TODO: display errors reported via flash_error right in the text editor window somehow
 #define flash_error(...) do { fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); } while(0)
 
@@ -479,6 +469,53 @@ int main(int argc, char **argv)
                 case SDLK_F3: {
                   file_browser = false;
                 } break;
+
+                case SDLK_RETURN: {
+                    const char *file_path = fb_file_path(&fb);
+                    if (file_path) {
+                        File_Type ft;
+                        err = type_of_file(file_path, &ft);
+                        if (err != 0) {
+                            flash_error("Could not determine type of file %s: %s", file_path, strerror(err));
+                        } else {
+                            switch (ft) {
+                            case FT_DIRECTORY: {
+                                err = fb_change_dir(&fb);
+                                if (err != 0) {
+                                    flash_error("Could not change directory to %s: %s", file_path, strerror(err));
+                                }
+                            }
+                            break;
+
+                                case FT_REGULAR: {
+                                    // TODO: before opening a new file make sure you don't have unsaved changes
+                                    // And if you do, annoy the user about it. (just like all the other editors do)
+                                    err = editor_load_from_file(&editor, file_path);
+                                    if (err != 0) {
+                                        flash_error("Could not open file %s: %s", file_path, strerror(err));
+                                    } else {
+                                        file_browser = false;
+                                    }
+                                }
+                                break;
+
+                                case FT_OTHER: {
+                                    flash_error("%s is neither a regular file nor a directory. We can't open it.", file_path);
+                                }
+                                break;
+
+                                default:
+                                    UNREACHABLE("unknown File_Type");
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+
+
+
+
 
                 case SDLK_EQUALS: {
                   if (SDL_GetModState() & KMOD_ALT) {  // Check if ALT is pressed
@@ -657,9 +694,9 @@ int main(int argc, char **argv)
                         
                     case SDLK_n: {
                         if (SDL_GetModState() & KMOD_SHIFT) {
-                            editor_search_previous(&editor);
-                        } else if(editor.has_mark){
-                            editor_search_next(&editor);
+                            evil_search_previous(&editor);
+                        } else {
+                            evil_search_next(&editor);
                         }
                         if (SDL_GetModState() & KMOD_CTRL) {
                             editor_move_line_down(&editor);
@@ -751,7 +788,7 @@ int main(int argc, char **argv)
                         }
                     } break;
 
-                      
+
                     case SDLK_ESCAPE: {
                         editor_clear_mark(&editor);
                         editor_stop_search(&editor);
@@ -784,25 +821,28 @@ int main(int argc, char **argv)
                         }
                     }
                     break;
-                        
+
 
                     case SDLK_o:
-                      if (SDL_GetModState() & KMOD_SHIFT) {
-                        editor_new_line_up(&editor);
-                      } else {
-                        editor_new_line_down(&editor);
-                      }
-
-                      current_mode = INSERT;
-                      editor.last_stroke = SDL_GetTicks();
-
-                      // Eat up the next SDL_TEXTINPUT event for 'o' or 'O'
-                      SDL_PollEvent(&tmpEvent);
-                      if (tmpEvent.type != SDL_TEXTINPUT ||
-                          (tmpEvent.text.text[0] != 'o' && tmpEvent.text.text[0] != 'O')) {
-                        SDL_PushEvent(&tmpEvent); // Push it back to the event queue if it's not
-                      }
-                      break;
+                        if (superDrammtic) {
+                            isAnimated = true;
+                        }
+                        if (SDL_GetModState() & KMOD_SHIFT) {
+                            evil_open_above(&editor);
+                        } else {
+                            evil_open_below(&editor);
+                        }
+                        
+                        current_mode = INSERT;
+                        editor.last_stroke = SDL_GetTicks();
+                        
+                        // Eat up the next SDL_TEXTINPUT event for 'o' or 'O'
+                        SDL_PollEvent(&tmpEvent);
+                        if (tmpEvent.type != SDL_TEXTINPUT ||
+                            (tmpEvent.text.text[0] != 'o' && tmpEvent.text.text[0] != 'O')) {
+                            SDL_PushEvent(&tmpEvent); // Push it back to the event queue if it's not
+                        }
+                        break;
 
 
                   case SDL_MOUSEWHEEL:
@@ -873,7 +913,7 @@ int main(int argc, char **argv)
                         if (editor.selection) {
                             editor_clipboard_copy(&editor);
                         } else {
-                            editor_yank_line(&editor);
+                            evil_yank_line(&editor);
                         }
                         break;
 
@@ -899,22 +939,22 @@ int main(int argc, char **argv)
                     }
                   } break;
 
-                  case SDLK_n: {
-                    if (SDL_GetModState() & KMOD_SHIFT) {
-                      editor_search_previous(&editor);
-                    } else if(editor.has_mark){
-                      editor_search_next(&editor);
-                    }
-                    if (SDL_GetModState() & KMOD_CTRL) {
-                      editor_move_line_down(&editor);
-                    }
-
-                    if (SDL_GetModState() & KMOD_ALT) {
-                        editor_next_buffer(&editor);
-                    }
-                  } break;
-
-
+                    case SDLK_n: {
+                        if (SDL_GetModState() & KMOD_ALT) {
+                            editor_next_buffer(&editor);
+                        } else {
+                            if (SDL_GetModState() & KMOD_SHIFT) {
+                                evil_search_previous(&editor);
+                            } else {
+                                evil_search_next(&editor);
+                            }
+                            
+                            if (SDL_GetModState() & KMOD_CTRL) {
+                                editor_move_line_down(&editor);
+                            }
+                        }
+                    } break;
+                        
                     case SDLK_p:
                         if (SDL_GetModState() & KMOD_CTRL){
                             editor_move_line_up(&editor);
@@ -922,16 +962,15 @@ int main(int argc, char **argv)
                             editor_previous_buffer(&editor);
                         } else if (copiedLine) {
                             if (SDL_GetModState() & KMOD_SHIFT) {
-                                editor_paste_line_before(&editor);
+                                evil_paste_before(&editor);
                             } else {
-                                editor_paste_line_after(&editor);
+                                evil_paste_after(&editor);
                             }
                         } else {
                             editor_clipboard_paste(&editor);
                         }
                         break;
-
-
+                        
                   case SDLK_b:
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                     if (SDL_GetModState() & KMOD_CTRL){
@@ -996,7 +1035,9 @@ int main(int argc, char **argv)
 
                       // Reset the blink timer
                       editor.last_stroke = SDL_GetTicks();
-                      /* is_animated = true;  // TODO make this an option and smooth */
+                      if (superDrammtic){
+                          isAnimated = true;
+                      }
 
                       // Eat up the next SDL_TEXTINPUT event for 'i'
                       SDL_PollEvent(&tmpEvent); // This will typically be the SDL_TEXTINPUT event for 'i'
@@ -1008,23 +1049,24 @@ int main(int argc, char **argv)
                   case SDLK_v: {
                     if (SDL_GetModState() & KMOD_SHIFT) {
                       current_mode = VISUAL_LINE;
-                      editor_start_visual_line_selection(&editor);  // Initiate line selection.
+                      evil_visual_line(&editor);
                     } else {
                       current_mode = VISUAL;
-                      editor_start_visual_selection(&editor);  // Initiate character selection.
+                      evil_visual_char(&editor);
                     }
                   } break;
-
-
+                      
                   case SDLK_4: {
                     if (SDL_GetModState() & KMOD_SHIFT) {
                       editor_move_to_line_end(&editor);
                     }
                   } break;
-
-
+                      
                   case SDLK_a:
                     editor.last_stroke = SDL_GetTicks();
+                    if (superDrammtic){
+                        isAnimated = true;
+                    }
                     if (SDL_GetModState() & KMOD_SHIFT) { // Check if shift is being held
                       editor_move_to_line_end(&editor);
                     } else {
@@ -1032,7 +1074,6 @@ int main(int argc, char **argv)
                       editor_move_char_right(&editor);
                     }
 
-                    // Enter INSERT mode
                     current_mode = INSERT;
 
                     // Eat up the next SDL_TEXTINPUT event for 'a' or 'A'
@@ -1042,7 +1083,6 @@ int main(int argc, char **argv)
                     }
                     break;
 
-                      // Enter INSERT mode
                       current_mode = INSERT;
 
                       // Eat up the next SDL_TEXTINPUT event for 'a'
@@ -1057,9 +1097,11 @@ int main(int argc, char **argv)
                       editor_clipboard_copy(&editor);
                       editor_delete_selection(&editor);
                       editor.selection = false;
+                    } else if (event.key.keysym.mod & KMOD_SHIFT) {
+                        evil_delete_backward_char(&editor);
                     } else {
                       editor_clipboard_copy(&editor);
-                      editor_cut_char_under_cursor(&editor);
+                      evil_delete_char(&editor);
                     }
                     break;
 
@@ -1104,9 +1146,9 @@ int main(int argc, char **argv)
                     if ((event.key.keysym.mod & KMOD_ALT) && !isAnimated) {
                       move_camera(&sr, "down", 50.0f);
                     } else if (event.key.keysym.mod & KMOD_CTRL) {
-                      editor_new_line_down(&editor);
+                      evil_open_below(&editor);
                     } else if ((event.key.keysym.mod & KMOD_SHIFT) && !(event.key.keysym.mod & KMOD_ALT)) {
-                      editor_join_lines(&editor);
+                      evil_join(&editor);
                     } else if (event.key.keysym.mod & KMOD_ALT) {
                       editor_move_paragraph_down(&editor);
                     } else {
@@ -1194,6 +1236,16 @@ int main(int argc, char **argv)
                 case INSERT:
                   switch (event.key.keysym.sym) {
 
+                  case SDLK_x:
+                    if (editor.selection) {
+                      editor_clipboard_copy(&editor);
+                      editor_delete_selection(&editor);
+                      editor.selection = false;
+                      current_mode = NORMAL;
+
+                    }
+                    break;
+                    
                     case SDLK_SPACE: {
                         if (SDL_GetModState() & KMOD_CTRL) {
                             if (!editor.has_anchor){
@@ -1202,6 +1254,15 @@ int main(int argc, char **argv)
                                 editor_goto_anchor_and_clear(&editor);
                             }
                         }                      
+                    }
+                    break;
+
+                    case SDLK_a: {
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            editor.selection = true;
+                            editor.select_begin = 0;
+                            editor.cursor = editor.data.count;
+                        }
                     }
                     break;
 
@@ -1461,6 +1522,9 @@ int main(int argc, char **argv)
                     break;
 
                     case SDLK_ESCAPE: {
+                        if (superDrammtic){
+                            isAnimated = false;
+                        }
                         current_mode = NORMAL;
                         editor_clear_mark(&editor);
                         editor_stop_search(&editor);
@@ -1706,6 +1770,7 @@ int main(int argc, char **argv)
           fb_render(&fb, window, &atlas, &sr);
         } else {
           editor_render(window, &atlas, &sr, &editor);
+          render_search_text(&atlas, &sr, &editor);
         }
 
         SDL_GL_SwapWindow(window);
