@@ -52,15 +52,16 @@ typedef struct {
     Vec4f type; 
     Vec4f function_definition; 
     Vec4f anchor; 
-    float whitespace; // NOTE: How much brighter than the background from 0.1 to 1.0
+    Vec4f whitespace;
+    Vec4f indentation_line;
 } Theme;
 
 
 extern Theme themes[];
 extern int currentThemeIndex;
-void initialize_themes();
 #define CURRENT_THEME (themes[currentThemeIndex])
 
+void initialize_themes();
 void theme_next(int *currentThemeIndex);
 void theme_previous(int *currentThemeIndex);
 

@@ -20,13 +20,11 @@ make the text disappear []
  (bad when going up) []
 ** Shaders
 use shaders from =~/.config/ded/shaders= instead [x]
-** Renderer 
-render circles (for whitespaces) []
-line under links (and clickable things)[]
 ** Bugs
 opening a file with ded file.c that contain a
 function definition, trow a [1] 35755 segmentation fault (core dumped)
 ** Lexer
+chech for strings in arrays []
 '' []
 NULL []
 multi line comments []
@@ -34,7 +32,15 @@ different vertex and fragment shader per token []
 different font per token []
 syntax highlighting for : | || & && [x]
 highlight links [x]
+** Renderer 
+check if the #include exist in /usr/include
+and if it exist render a line under it to show it's clickable
+also check if the file exist before opening it []
+
+render circles (for whitespaces) []
+line under links (and clickable things)[]
 ** Evil
+evil-find-char-backward []
 evil-search-backward []
 evil-change-line(smarter version, don't delete ";") []
 splits(maybe)   []
@@ -44,6 +50,8 @@ evil-delete-backward-char [x]
 evil-search-word-forward (shift + 8) [x]
 shift + 5 [x]
 ** Editor
+smarter editor_enter and editor_backspace []
+
 u can only type stuff that exist in the file in the
 search buffer, u should be able to type anything
 (also highlight not found stuff in red like emacs) []

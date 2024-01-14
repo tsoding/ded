@@ -1,12 +1,14 @@
 #include "render.h"
 #include "editor.h"
+#include "la.h"
+#include "simple_renderer.h"
 #include "theme.h"
 
 float lineNumberWidth = FREE_GLYPH_FONT_SIZE * 5;
 
 void render_search_text(Free_Glyph_Atlas *minibuffer_atlas, Simple_Renderer *sr, Editor *editor) {
     if (editor->searching) {
-        Vec4f color = themes[currentThemeIndex].text;
+        Vec4f color = CURRENT_THEME.text;
         Vec2f searchPos = {0.0f, 0.0f};
 
         simple_renderer_set_shader(sr, VERTEX_SHADER_FIXED, SHADER_FOR_TEXT);
@@ -25,11 +27,11 @@ void render_whitespaces(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *ed
         }
         
         float squareSize = FREE_GLYPH_FONT_SIZE * 0.2;
-        float brightnessIncreasePercent = themes[currentThemeIndex].whitespace;
+        Vec4f whitespaceColor = CURRENT_THEME.whitespace;
         
         for (size_t i = 0; i < editor->lines.count; ++i) {
             Line line = editor->lines.items[i];
-            Vec2f pos = { 0, -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE };
+            Vec2f pos = {0, -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE};
             
             if (showLineNumbers) {
                 pos.x += lineNumberWidth;
@@ -37,22 +39,6 @@ void render_whitespaces(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *ed
             
             for (size_t j = line.begin; j < line.end; ++j) {
                 if (editor->data.items[j] == ' ' || editor->data.items[j] == '\t') {
-                    Vec4f backgroundColor = themes[currentThemeIndex].background;
-                    Vec4f whitespaceColor;
-                    
-                    // Increase each RGB component based on the percentage, but not above 1
-                    whitespaceColor.x = backgroundColor.x + brightnessIncreasePercent * (1 - backgroundColor.x);
-                    whitespaceColor.y = backgroundColor.y + brightnessIncreasePercent * (1 - backgroundColor.y);
-                    whitespaceColor.z = backgroundColor.z + brightnessIncreasePercent * (1 - backgroundColor.z);
-                    
-                    // Clamp values to max 1.0
-                    whitespaceColor.x = whitespaceColor.x > 1 ? 1 : whitespaceColor.x;
-                    whitespaceColor.y = whitespaceColor.y > 1 ? 1 : whitespaceColor.y;
-                    whitespaceColor.z = whitespaceColor.z > 1 ? 1 : whitespaceColor.z;
-                    
-                    // Keep the alpha value the same
-                    whitespaceColor.w = backgroundColor.w;
-                    
                     // Measure the actual character width
                     Vec2f char_pos = pos;
                     char_pos.x += (j - line.begin) * squareSize; // Starting position for this character
@@ -67,6 +53,84 @@ void render_whitespaces(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *ed
         simple_renderer_flush(sr);
     }
 }
+
+
+
+typedef struct {
+    size_t pos;
+    size_t line;
+    int level;
+    float startX; // X position of the start of the line
+} BraceInfo;
+
+
+// TODO exit early If a line does not contain any braces
+// TODO calculate properly CHARACTER_WIDTH
+void render_indentation_lines(Simple_Renderer *sr, Editor *editor) {
+    if (showIndentationLines) {
+        
+        float LINE_THICKNESS = 4.0f;
+        BraceInfo braceStack[5000]; // Assuming a max of 5000 nested braces
+        int braceCount = 0;
+        float CHARACTER_WIDTH = FREE_GLYPH_FONT_SIZE / 2.0f;
+        
+        for (size_t i = 0; i < editor->lines.count; ++i) {
+            Line line = editor->lines.items[i];
+            for (size_t j = line.begin; j < line.end; ++j) {
+                if (editor->data.items[j] == '{') {
+                    ssize_t matching_pos = find_matching_parenthesis(editor, j);
+                    if (matching_pos != -1) {
+                        size_t matching_line = editor_row_from_pos(editor, matching_pos);
+                        
+                        if (matching_line == i) {
+                            j = matching_pos; // Move past the closing brace on the same line
+                            continue;
+                        }
+                        
+                        // Calculate the position of the first non-whitespace character
+                        size_t first_non_whitespace = line.begin;
+                        while (first_non_whitespace < line.end &&
+                               (editor->data.items[first_non_whitespace] == ' ' || 
+                                editor->data.items[first_non_whitespace] == '\t')) {
+                            first_non_whitespace++;
+                        }
+                        
+                        // Calculate the X position where the line should start
+                        float lineStartX = (first_non_whitespace - line.begin) * CHARACTER_WIDTH;
+                        
+                        braceStack[braceCount] = (BraceInfo){j, i, braceCount, lineStartX};
+                        braceCount++;
+                    }
+                } else if (editor->data.items[j] == '}') {
+                    if (braceCount > 0 && braceStack[braceCount - 1].line < i) {
+                        braceCount--;
+                    }
+                }
+            }
+            
+            // Draw lines for each brace in the stack
+            for (int k = 0; k < braceCount; k++) {
+                if (braceStack[k].line < i) {
+                    Vec2f start_pos = {braceStack[k].startX, -((float)braceStack[k].line + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE};
+                    // Extend the line to include the line with the closing brace
+                    Vec2f end_pos = {start_pos.x, -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE};
+                    
+                    if (showLineNumbers) {
+                        start_pos.x += lineNumberWidth;
+                        end_pos.x += lineNumberWidth;
+                    }
+                    
+                    simple_renderer_solid_rect(sr, start_pos, vec2f(LINE_THICKNESS, end_pos.y - start_pos.y), CURRENT_THEME.indentation_line);
+                }
+            }
+        }
+    }
+}
+
+
+
+
+
 
 
 
@@ -90,7 +154,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     free_glyph_atlas_measure_line_sized(atlas, " ", 1, &whitespace_size);
     float whitespace_width = whitespace_size.x;
 
-
+    render_indentation_lines(sr, editor);
     
     // Render hl_line
     {
@@ -108,7 +172,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 highlightWidth += lineNumberWidth;  // Increase width to include line numbers area
             }
             
-            simple_renderer_solid_rect(sr, highlightPos, vec2f(highlightWidth, FREE_GLYPH_FONT_SIZE), themes[currentThemeIndex].hl_line);
+            simple_renderer_solid_rect(sr, highlightPos, vec2f(highlightWidth, FREE_GLYPH_FONT_SIZE), CURRENT_THEME.hl_line);
             
             simple_renderer_flush(sr);
         }
@@ -139,7 +203,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             anchor_pos_vec.x += lineNumberWidth;
         }
         
-        Vec4f ANCHOR_COLOR = themes[currentThemeIndex].anchor;
+        Vec4f ANCHOR_COLOR = CURRENT_THEME.anchor;
         
         simple_renderer_solid_rect(
                                    sr, anchor_pos_vec, vec2f(whitespace_width, FREE_GLYPH_FONT_SIZE),
@@ -221,7 +285,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     {
         if (editor->searching) {
             simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
-            Vec4f selection_color = themes[currentThemeIndex].search; // or .selection_color if that's what you named it in the struct.
+            Vec4f selection_color = CURRENT_THEME.search; // or .selection_color if that's what you named it in the struct.
 
             Vec2f p1 = cursor_pos;
             Vec2f p2 = p1;
@@ -274,7 +338,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                         mark_end_scr.x += lineNumberWidth;
                     }
 
-                    Vec4f mark_color = themes[currentThemeIndex].marks;
+                    Vec4f mark_color = CURRENT_THEME.marks;
                     simple_renderer_solid_rect(sr, mark_begin_scr, vec2f(mark_end_scr.x - mark_begin_scr.x, FREE_GLYPH_FONT_SIZE), mark_color);
                 }
             }
@@ -296,8 +360,8 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         size_t currentLineNumber = editor_cursor_row(editor);
 
         // Different colors for line numbers
-        Vec4f defaultColor = themes[currentThemeIndex].line_numbers;
-        Vec4f currentLineColor = themes[currentThemeIndex].current_line_number;
+        Vec4f defaultColor = CURRENT_THEME.line_numbers;
+        Vec4f currentLineColor = CURRENT_THEME.current_line_number;
 
         for (size_t i = 0; i < editor->lines.count; ++i) {
             char lineNumberStr[10];
@@ -367,7 +431,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                         // Define the size of the highlight rectangle to match character size
                         Vec2f rect_size = vec2f(char_width, FREE_GLYPH_FONT_SIZE);
                         
-                        simple_renderer_solid_rect(sr, match_pos_screen, rect_size, themes[currentThemeIndex].matching_parenthesis);
+                        simple_renderer_solid_rect(sr, match_pos_screen, rect_size, CURRENT_THEME.matching_parenthesis);
                     }
                 }
             }
@@ -383,12 +447,13 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         } else {
             simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_TEXT);
         }
+
         for (size_t i = 0; i < editor->tokens.count; ++i) {
             Token token = editor->tokens.items[i];
             Vec2f pos = token.position;
             //Vec4f color = vec4fs(1);
             // TODO match color for open and close
-            Vec4f color = themes[currentThemeIndex].text;
+            Vec4f color = CURRENT_THEME.text;
 
             // Adjust for line numbers width if they are displayed
             if (showLineNumbers) {
@@ -410,59 +475,59 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                         if(sscanf(token.text, "#%06x", &hex_value) == 1) {
                             color = hex_to_vec4f(hex_value);
                         } else {
-                            color = themes[currentThemeIndex].hashtag; // Default to the hashtag color if not a valid hex
+                            color = CURRENT_THEME.hashtag; // Default to the hashtag color if not a valid hex
                         }
                     } else {
-                        color = themes[currentThemeIndex].hashtag; // Not a valid hex color
+                        color = CURRENT_THEME.hashtag; // Not a valid hex color
                     }
                 } else {
-                    color = themes[currentThemeIndex].hashtag; // Default color for preprocessor directives
+                    color = CURRENT_THEME.hashtag; // Default color for preprocessor directives
                 }
                 break;
 
             case TOKEN_KEYWORD:
-                color = themes[currentThemeIndex].logic;
+                color = CURRENT_THEME.logic;
                 break;
                 
             case TOKEN_TYPE:
-                color = themes[currentThemeIndex].type;
+                color = CURRENT_THEME.type;
                 break;
                 
             case TOKEN_FUNCTION_DEFINITION:
-                color = themes[currentThemeIndex].function_definition;
+                color = CURRENT_THEME.function_definition;
                 break;
 
             case TOKEN_LINK:
-                color = themes[currentThemeIndex].link;
+                color = CURRENT_THEME.link;
                 break;
 
             case TOKEN_OR:
-                color = themes[currentThemeIndex].logic_or;
+                color = CURRENT_THEME.logic_or;
                 break;
 
             case TOKEN_PIPE:
-                color = themes[currentThemeIndex].pipe;
+                color = CURRENT_THEME.pipe;
                 break;
 
             case TOKEN_AND:
-                color = themes[currentThemeIndex].logic_and;
+                color = CURRENT_THEME.logic_and;
                 break;
 
             case TOKEN_AMPERSAND:
-                color = themes[currentThemeIndex].ampersand;
+                color = CURRENT_THEME.ampersand;
                 break;
 
             case TOKEN_POINTER:
-                color = themes[currentThemeIndex].pointer;
+                color = CURRENT_THEME.pointer;
                 break;
 
             case TOKEN_MULTIPLICATION:
-                color = themes[currentThemeIndex].multiplication;
+                color = CURRENT_THEME.multiplication;
                 break;
 
             case TOKEN_COMMENT:
                 {
-                    color = themes[currentThemeIndex].comment;
+                    color = CURRENT_THEME.comment;
 
                     // Checking for TODOOOO...
                     char* todoLoc = strstr(token.text, "TODO");
@@ -478,7 +543,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                             ptr++;
                         }
 
-                        Vec4f baseColor = themes[currentThemeIndex].todo;
+                        Vec4f baseColor = CURRENT_THEME.todo;
                         float deltaRed = (1.0f - baseColor.x) / 5;  // Adjusting for maximum of TODOOOOO
 
                         color.x = baseColor.x + deltaRed * numOs;
@@ -501,7 +566,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                             ptr++;
                         }
 
-                        Vec4f baseColor = themes[currentThemeIndex].fixme;
+                        Vec4f baseColor = CURRENT_THEME.fixme;
                         float deltaRed = (1.0f - baseColor.x) / 5;  // Adjusting for maximum of FIXMEEEE
 
                         color.x = baseColor.x + deltaRed * numEs;
@@ -514,7 +579,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                     char* bugLoc = strstr(token.text, "BUG");
                     if (bugLoc && (size_t)(bugLoc - token.text + 2) < token.text_len) {
 
-                        color = themes[currentThemeIndex].bug;
+                        color = CURRENT_THEME.bug;
                     }
 
 
@@ -522,7 +587,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                     char* noteLoc = strstr(token.text, "NOTE");
                     if (noteLoc && (size_t)(noteLoc - token.text + 3) < token.text_len) {
 
-                        color = themes[currentThemeIndex].note;
+                        color = CURRENT_THEME.note;
                     }
 
                     // Continue rendering with
@@ -531,62 +596,62 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
 
             case TOKEN_EQUALS:
-                color = themes[currentThemeIndex].equals;
+                color = CURRENT_THEME.equals;
                 break;
 
             case TOKEN_EXCLAMATION:
-                color = themes[currentThemeIndex].exclamation;
+                color = CURRENT_THEME.exclamation;
                 break;
 
             case TOKEN_NOT_EQUALS:
-                color = themes[currentThemeIndex].not_equals;
+                color = CURRENT_THEME.not_equals;
                 break;
 
             case TOKEN_EQUALS_EQUALS:
-                color = themes[currentThemeIndex].equals_equals;
+                color = CURRENT_THEME.equals_equals;
                 break;
 
 
             case TOKEN_LESS_THAN:
-                color = themes[currentThemeIndex].less_than;
+                color = CURRENT_THEME.less_than;
                 break;
 
             case TOKEN_GREATER_THAN:
-                color = themes[currentThemeIndex].greater_than;
+                color = CURRENT_THEME.greater_than;
                 break;
             case TOKEN_ARROW:
-                color = themes[currentThemeIndex].arrow;
+                color = CURRENT_THEME.arrow;
                 break;
 
             case TOKEN_MINUS:
-                color = themes[currentThemeIndex].minus;
+                color = CURRENT_THEME.minus;
                 break;
 
             case TOKEN_PLUS:
-                color = themes[currentThemeIndex].plus;
+                color = CURRENT_THEME.plus;
                 break;
 
             case TOKEN_TRUE:
-                color = themes[currentThemeIndex].truee;
+                color = CURRENT_THEME.truee;
                 break;
             case TOKEN_FALSE:
-                color = themes[currentThemeIndex].falsee;
+                color = CURRENT_THEME.falsee;
                 break;
             case TOKEN_OPEN_SQUARE:
-                color = themes[currentThemeIndex].open_square;
+                color = CURRENT_THEME.open_square;
                 break;
             case TOKEN_CLOSE_SQUARE:
-                color = themes[currentThemeIndex].close_square;
+                color = CURRENT_THEME.close_square;
                 break;
             case TOKEN_ARRAY_CONTENT:
-                color = themes[currentThemeIndex].array_content;
+                color = CURRENT_THEME.array_content;
                 break;
             case TOKEN_BAD_SPELLCHECK:
-                color = themes[currentThemeIndex].bug;
+                color = CURRENT_THEME.bug;
                 break;
             case TOKEN_STRING:
                 /* color = hex_to_vec4f(0x73c936ff); */
-                color = themes[currentThemeIndex].string;
+                color = CURRENT_THEME.string;
                 break;
             case TOKEN_COLOR: // Added case for TOKEN_COLOR
                 {
@@ -608,31 +673,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         simple_renderer_flush(sr);
     }
 
-    
-   render_whitespaces(atlas, sr, editor);
-   
-    // Render minibuffer
-    {
-        if (showMinibuffer) {
-            simple_renderer_set_shader(sr, VERTEX_SHADER_FIXED, SHADER_FOR_COLOR);
-            simple_renderer_solid_rect(sr, (Vec2f){0.0f, 0.0f}, (Vec2f){w, minibufferHeight}, CURRENT_THEME.minibuffer);
-            simple_renderer_flush(sr);
-        }
-    }
-
-
-    // Render modeline
-    {
-        if (showModeline) {
-            simple_renderer_set_shader(sr, VERTEX_SHADER_FIXED, SHADER_FOR_COLOR);
-            simple_renderer_solid_rect(sr, (Vec2f){0.0f, minibufferHeight}, (Vec2f){w, modelineHeight}, CURRENT_THEME.modeline);
-            // render accent
-            simple_renderer_solid_rect(sr, (Vec2f){0.0f, minibufferHeight}, (Vec2f){modelineAccentWidth, modelineHeight}, CURRENT_THEME.modeline_accent);
-            simple_renderer_flush(sr);
-        }
-    }
-
-
+    render_whitespaces(atlas, sr, editor);
     
     // Render cursor
     if(editor->searching){
@@ -654,7 +695,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         const Uint32 CURSOR_BLINK_THRESHOLD = 500;
         const Uint32 CURSOR_BLINK_PERIOD = 1000;
         const Uint32 t = SDL_GetTicks() - editor->last_stroke;
-        Vec4f CURSOR_COLOR = themes[currentThemeIndex].cursor;
+        Vec4f CURSOR_COLOR = CURRENT_THEME.cursor;
         float BORDER_THICKNESS = 3.0f;
         Vec4f INNER_COLOR = vec4f(CURSOR_COLOR.x, CURSOR_COLOR.y, CURSOR_COLOR.z, 0.3);
 
@@ -690,7 +731,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
         case EMACS: {
             float cursor_width;
-            CURSOR_COLOR = themes[currentThemeIndex].emacs_cursor;
+            CURSOR_COLOR = CURRENT_THEME.emacs_cursor;
             // Check if the cursor is on an actual character or an empty line
             if (editor->cursor < editor->data.count &&
                 editor->data.items[editor->cursor] != '\n') {
@@ -714,7 +755,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
             
         case INSERT:
-            CURSOR_COLOR = themes[currentThemeIndex].insert_cursor;
+            CURSOR_COLOR = CURRENT_THEME.insert_cursor;
             CURSOR_WIDTH = 5.0f; // Thin vertical line for INSERT mode
             // Implement blinking for INSERT mode
             if (t < CURSOR_BLINK_THRESHOLD ||
@@ -797,6 +838,30 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         }
         simple_renderer_flush(sr);
     }
+    
+   
+    // Render minibuffer
+    {
+        if (showMinibuffer) {
+            simple_renderer_set_shader(sr, VERTEX_SHADER_FIXED, SHADER_FOR_COLOR);
+            simple_renderer_solid_rect(sr, (Vec2f){0.0f, 0.0f}, (Vec2f){w, minibufferHeight}, CURRENT_THEME.minibuffer);
+            simple_renderer_flush(sr);
+        }
+    }
+
+
+    // Render modeline
+    {
+        if (showModeline) {
+            simple_renderer_set_shader(sr, VERTEX_SHADER_FIXED, SHADER_FOR_COLOR);
+            simple_renderer_solid_rect(sr, (Vec2f){0.0f, minibufferHeight}, (Vec2f){w, modelineHeight}, CURRENT_THEME.modeline);
+            // render accent
+            simple_renderer_solid_rect(sr, (Vec2f){0.0f, minibufferHeight}, (Vec2f){modelineAccentWidth, modelineHeight}, CURRENT_THEME.modeline_accent);
+            simple_renderer_flush(sr);
+        }
+    }
+
+
 
     // Update camera
     {
@@ -844,9 +909,10 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 float cursorPosY = -((float)currentLine + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE;
 
                 // Define the top and bottom edges of the current camera view.
-                float cameraTopEdge = sr->camera_pos.y - (h/2.0f) / sr->camera_scale;
-                float cameraBottomEdge = sr->camera_pos.y + (h/2.0f) / sr->camera_scale;
+                float cameraTopEdge = sr->camera_pos.y - (h * 1/2.3f) / sr->camera_scale;
+                float cameraBottomEdge = sr->camera_pos.y + (h * 1/2.3f) / sr->camera_scale;
 
+        
                 // Adjust the camera's Y position if the cursor is outside the viewport.
                 if (cursorPosY > cameraBottomEdge) {
                     sr->camera_pos.y += cursorPosY - cameraBottomEdge;  // Move camera down just enough

@@ -25,6 +25,7 @@ extern bool relativeLineNumbers;
 extern bool highlightCurrentLineNumber;
 extern bool matchParenthesis;
 extern bool superDrammtic;
+extern bool showIndentationLines;
 
 extern bool showMinibuffer;
 extern bool showModeline;

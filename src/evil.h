@@ -3,6 +3,7 @@
 
 #include "editor.h"
 
+
 void evil_open_below(Editor *editor);
 void evil_open_above(Editor *editor);
 void evil_jump_item(Editor *editor);
@@ -18,6 +19,9 @@ void evil_delete_backward_char(Editor *e);
 void evil_search_next(Editor *e);
 void evil_search_previous(Editor *e);
 void evil_search_word_forward(Editor *e);
+void evil_change_line(Editor *e);
 
+void evil_find_char(Editor *e, char target);
+bool handle_evil_find_char(Editor *editor, SDL_Event *event);
 
 #endif // EVIL_H

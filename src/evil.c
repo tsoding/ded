@@ -1,5 +1,6 @@
 #include "evil.h"
 #include "editor.h"
+#include <stdbool.h>
 
 void evil_open_below(Editor *editor) {
     size_t row = editor_cursor_row(editor);
@@ -86,7 +87,7 @@ void evil_jump_item(Editor *editor) {
 // TODO when there is a {} dont add the space
 void evil_join(Editor *e) {
     size_t row = editor_cursor_row(e);
-    if (row >= e->lines.count - 1) return; // Exit if on the last line
+    if (row >= e->lines.count - 1) return;
 
     // Get the current line and the next line
     size_t current_line_end = e->lines.items[row].end;
@@ -373,7 +374,6 @@ void evil_search_previous(Editor *e) {
     }
 }
 
-
 void evil_search_word_forward(Editor *e) {
     char word[256];
 
@@ -391,6 +391,88 @@ void evil_search_word_forward(Editor *e) {
     }
 }
 
+void evil_change_line(Editor *e) {
+    if (e->searching || e->cursor >= e->data.count) return;
+
+    size_t row = editor_cursor_row(e);
+    size_t line_begin = e->lines.items[row].begin;
+    size_t line_end = e->lines.items[row].end;
+
+    // Calculate the position of the first non-whitespace character
+    size_t first_non_whitespace = line_begin;
+    while (first_non_whitespace < line_end && 
+           (e->data.items[first_non_whitespace] == ' ' || e->data.items[first_non_whitespace] == '\t')) {
+        first_non_whitespace++;
+    }
+
+    // Adjust line_end to stop at the semicolon, if it's the last character
+    if (line_end > first_non_whitespace && e->data.items[line_end - 1] == ';') {
+        line_end--;
+    }
+
+    // Determine the start position for deletion
+    size_t delete_from = e->cursor < first_non_whitespace ? first_non_whitespace : e->cursor;
+
+    // Calculate the length from the deletion start position to the end of the line
+    size_t length = line_end - delete_from;
+
+    // Copy the text to be deleted to the clipboard
+    e->clipboard.count = 0;
+    sb_append_buf(&e->clipboard, &e->data.items[delete_from], length);
+    sb_append_null(&e->clipboard);
+    if (SDL_SetClipboardText(e->clipboard.items) < 0) {
+        fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
+    }
+
+    // Delete the text from the deletion start position to the end of the line
+    memmove(&e->data.items[delete_from], &e->data.items[line_end], e->data.count - line_end);
+    e->data.count -= length;
+
+    // Set the cursor position to the first non-whitespace character if the cursor was on the whitespace
+    e->cursor = e->cursor < first_non_whitespace ? first_non_whitespace : e->cursor;
+
+    current_mode = INSERT;
+
+    editor_retokenize(e);
+}
+
+// TODO Capital char
+void evil_find_char(Editor *e, char target) {
+    if (e->searching || e->cursor >= e->data.count) return;
+
+    size_t row = editor_cursor_row(e);
+    size_t line_begin = e->lines.items[row].begin;
+    size_t line_end = e->lines.items[row].end;
+
+    // Start searching from the character right after the cursor position
+    size_t search_position = e->cursor + 1;
+
+    while (search_position < line_end) {
+        if (e->data.items[search_position] == target) {
+            // If the target character is found, move the cursor to its position
+            e->cursor = search_position;
+            break;
+        }
+        search_position++;
+    }
+}
+
+bool handle_evil_find_char(Editor *editor, SDL_Event *event) {
+    static bool waitingForFindChar = false;  // Static variable inside the function
+
+    if (waitingForFindChar) {
+        // Call evil_find_char with the pressed key
+        evil_find_char(editor, event->key.keysym.sym);
+        waitingForFindChar = false;
+        editor->last_stroke = SDL_GetTicks();
+        return true;  // The key event has been handled
+    } else if (event->key.keysym.sym == SDLK_f && !(SDL_GetModState() & KMOD_CTRL)) {
+        waitingForFindChar = true;
+        editor->last_stroke = SDL_GetTicks();
+        return false;  // The key event has not been fully handled yet
+    }
+    return false;  // The key event has not been fully handled
+}
 
 
 

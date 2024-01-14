@@ -56,7 +56,8 @@ void initialize_themes() {
         .minibuffer = hex_to_vec4f(0x090909FF),
         .modeline = hex_to_vec4f(0x060606FF),
         .modeline_accent = hex_to_vec4f(0x658B5FFF),
-        .whitespace = 0.7,
+        .whitespace = hex_to_vec4f(0x171717FF),
+        .indentation_line = hex_to_vec4f(0x171717FF),
     };
 
     // DOOM one
@@ -109,7 +110,8 @@ void initialize_themes() {
         .minibuffer = hex_to_vec4f(0x21242BFF),
         .modeline = hex_to_vec4f(0x1D2026FF),
         .modeline_accent = hex_to_vec4f(0x51AFEFFF),
-        .whitespace = 0.7,
+        .whitespace = hex_to_vec4f(0x3F444AFF),
+        .indentation_line = hex_to_vec4f(0x3F444AFF),
     };
 
     // Dracula
@@ -162,7 +164,8 @@ void initialize_themes() {
         .minibuffer = hex_to_vec4f(0x1E2029FF), //#1E2029
         .modeline = hex_to_vec4f(0x22232DFF),
         .modeline_accent = hex_to_vec4f(0xBD93F9FF),
-        .whitespace = 0.7,
+        .whitespace = hex_to_vec4f(0x565761FF),
+        .indentation_line = hex_to_vec4f(0x565761FF),
     };
 
     // DOOM city lights
@@ -215,7 +218,8 @@ void initialize_themes() {
         .minibuffer = hex_to_vec4f(0x181E24FF),
         .modeline = hex_to_vec4f(0x181F25FF),
         .modeline_accent = hex_to_vec4f(0x5EC4FFFF),
-        .whitespace = 0.7,
+        .whitespace = hex_to_vec4f(0x384551FF),
+        .indentation_line = hex_to_vec4f(0x384551FF),
     };
 
 
@@ -269,7 +273,8 @@ void initialize_themes() {
         .minibuffer = hex_to_vec4f(0x222323FF),
         .modeline = hex_to_vec4f(0x2D2E2EFF),
         .modeline_accent = hex_to_vec4f(0xB6E63EFF),
-        .whitespace = 0.7,
+        .whitespace = hex_to_vec4f(0x4E4E4EFF),
+        .indentation_line = hex_to_vec4f(0x4E4E4EFF),
     };
 
     
@@ -324,7 +329,8 @@ void initialize_themes() {
         .minibuffer = hex_to_vec4f(0x292D3EFF),
         .modeline = hex_to_vec4f(0x232635FF),
         .modeline_accent = hex_to_vec4f(0xC792EAFF),
-        .whitespace = 0.7,
+        .whitespace = hex_to_vec4f(0x4E5579FF),
+        .indentation_line = hex_to_vec4f(0x4E5579FF),
     };
  }
 

@@ -448,10 +448,7 @@ int main(int argc, char **argv)
     editor.atlas = &atlas;
     editor_retokenize(&editor);
 
-
-
-
-
+    
     bool quit = false;
     bool file_browser = false;
 
@@ -465,6 +462,10 @@ int main(int argc, char **argv)
               break;
 
             case SDL_KEYDOWN:
+              if (handle_evil_find_char(&editor, &event)) {
+                  break; // Skip further processing if the key event was handled
+              }
+
               if (file_browser) {
                 switch (event.key.keysym.sym) {
                 case SDLK_F3: {
@@ -762,13 +763,13 @@ int main(int argc, char **argv)
                         }
                     } break;
                         
-                  case SDLK_f:
-                      if (SDL_GetModState() & KMOD_CTRL){
-                          editor_move_char_right(&editor);
-                      }
-                      editor.last_stroke = SDL_GetTicks();
-                      break;
-                      
+                    case SDLK_f:
+                        if (SDL_GetModState() & KMOD_CTRL) {
+                            editor_move_char_right(&editor);
+                        }
+                        editor.last_stroke = SDL_GetTicks();
+                        break;
+                        
                     case SDLK_s: {
                         if (event.key.keysym.mod & KMOD_CTRL) {
                             editor_start_search(&editor);
@@ -788,6 +789,22 @@ int main(int argc, char **argv)
                             editor_open_include(&editor);
                         }
                     } break;
+
+                        
+                    case SDLK_c:
+                        if (event.key.keysym.mod & KMOD_SHIFT) {
+                            evil_change_line(&editor);
+                        }
+                        
+                        // Eat up the next SDL_TEXTINPUT event for 'C'
+                        SDL_PollEvent(&tmpEvent);
+                        if (tmpEvent.type != SDL_TEXTINPUT ||
+                            (tmpEvent.text.text[0] != 'C')) {
+                            SDL_PushEvent(&tmpEvent); // Push it back to the event queue if it's not
+                        }
+
+                        break;
+
 
 
                     case SDLK_ESCAPE: {
@@ -1029,31 +1046,24 @@ int main(int argc, char **argv)
                     }
                   } break;
 
-                     // TODO mouse support
-                  /* case SDL_MOUSEWHEEL: */
-                  /*   if (event.wheel.y > 0 && SDL_GetModState() & KMOD_CTRL) {  // Mouse wheel scrolled up with Ctrl held */
-                  /*     zoom_factor -= 0.1f;  // Adjust the zoom factor for zooming in */
-                  /*     if (zoom_factor < 1.0f) zoom_factor = 1.0f;  // Ensure zoom_factor doesn't drop below a threshold */
-                  /*   } else if (event.wheel.y < 0 && SDL_GetModState() & KMOD_CTRL) {  // Mouse wheel scrolled down with Ctrl held */
-                  /*     zoom_factor += 0.1f;  // Adjust the zoom factor for zooming out */
-                  /*   } */
-                  /*   break; */
-
                     case SDLK_i:
-                      current_mode = INSERT;
 
-                      // Reset the blink timer
-                      editor.last_stroke = SDL_GetTicks();
-                      if (superDrammtic){
-                          isAnimated = true;
-                      }
-
-                      // Eat up the next SDL_TEXTINPUT event for 'i'
-                      SDL_PollEvent(&tmpEvent); // This will typically be the SDL_TEXTINPUT event for 'i'
-                      if (tmpEvent.type != SDL_TEXTINPUT || tmpEvent.text.text[0] != 'i') {
-                        SDL_PushEvent(&tmpEvent); // If it's not, push it back to the event queue
-                      }
-                      break;
+                        if (SDL_GetModState() & KMOD_CTRL) {
+                            showIndentationLines = !showIndentationLines;
+                        } else {
+                            current_mode = INSERT;
+                            if (superDrammtic){
+                                isAnimated = true;
+                            }
+                            editor.last_stroke = SDL_GetTicks();
+                            
+                            // Eat up the next SDL_TEXTINPUT event for 'i'
+                            SDL_PollEvent(&tmpEvent); // This will typically be the SDL_TEXTINPUT event for 'i'
+                            if (tmpEvent.type != SDL_TEXTINPUT || tmpEvent.text.text[0] != 'i') {
+                                SDL_PushEvent(&tmpEvent); // If it's not, push it back to the event queue
+                            }
+                        } 
+                        break;
 
                   case SDLK_v: {
                     if (SDL_GetModState() & KMOD_SHIFT) {

@@ -18,7 +18,7 @@
 EvilMode current_mode = NORMAL;
 float zoom_factor = 3.0f;
 float min_zoom_factor = 1.0;
-float max_zoom_factor = 10.0;
+float max_zoom_factor = 50.0;
 
 bool isAnimated = true;
 bool isWave = false;
@@ -30,10 +30,11 @@ bool relativeLineNumbers = false;
 
 bool showWhitespaces = false;
 bool copiedLine = false;
-bool matchParenthesis = true; //TODO segfault and highlight size
+bool matchParenthesis = true;
 
 bool hl_line = false;
 bool superDrammtic = false;
+bool showIndentationLines = true;
 
 bool showMinibuffer = true;
 bool showModeline = true;
