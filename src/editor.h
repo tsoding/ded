@@ -32,6 +32,7 @@ extern bool showModeline;
 extern float minibufferHeight;
 extern float modelineHeight;
 extern float modelineAccentWidth;
+extern bool minibuffering;
 
 typedef struct {
     size_t begin;
@@ -137,10 +138,12 @@ bool editor_search_matches_at(Editor *e, size_t pos);
 
 
 // ADDED
-void editor_insert_buf_at(Editor *e, char *buf, size_t buf_len, size_t pos);
 void editor_stop_search_and_mark(Editor *e);
 void editor_clear_mark(Editor *editor);
 void move_camera(Simple_Renderer *sr, const char* direction, float amount);
+
+void editor_insert_buf_at(Editor *e, char *buf, size_t buf_len, size_t pos);
+void editor_insert_char_at(Editor *e, char c, size_t pos);
 
 void editor_kill_line(Editor *e);
 void editor_backward_kill_word(Editor *e);
@@ -154,11 +157,16 @@ void editor_update_anchor(Editor *editor);
 void editor_drag_line_down(Editor *editor);
 void editor_drag_line_up(Editor *editor);
 
+void add_one_indentation(Editor *editor);
+void indent(Editor *editor);
+
 // UTILITY
 size_t editor_row_from_pos(const Editor *e, size_t pos);
 bool extract_word_under_cursor(Editor *editor, char *word);
 bool editor_is_line_empty(Editor *e, size_t row);
 bool editor_is_line_whitespaced(Editor *e, size_t row);
+float measure_whitespace_width(Free_Glyph_Atlas *atlas);
+float measure_whitespace_height(Free_Glyph_Atlas *atlas);
 
 
 

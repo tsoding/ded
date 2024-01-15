@@ -7,25 +7,8 @@
 #include "./simple_renderer.h"
 #include "./common.h"
 #include "./editor.h"
-
 #include <dirent.h>
 
-// hardcoded
-/* #define vert_shader_file_path "./shaders/simple.vert" */
-
-/* static_assert(COUNT_SIMPLE_SHADERS == 5, "The amount of fragment shaders has changed"); */
-/* const char *frag_shader_file_paths[COUNT_SIMPLE_SHADERS] = { */
-/*     [SHADER_FOR_COLOR] = "./shaders/simple_color.frag", */
-/*     [SHADER_FOR_IMAGE] = "./shaders/simple_image.frag", */
-/*     [SHADER_FOR_TEXT] = "./shaders/simple_text.frag", */
-/*     [SHADER_FOR_EPICNESS] = "./shaders/simple_epic.frag", */
-/*     [SHADER_FOR_GLOW] = "./shaders/simple_glow.frag", */
-/* }; */
-
-
-
-// still hardcoded but ~/.config is cool
-/* char vert_shader_file_path[MAX_SHADER_PATH_LENGTH]; */
 char vert_shader_file_path[COUNT_VERTEX_SHADERS][MAX_SHADER_PATH_LENGTH];
 char frag_shader_file_paths[COUNT_FRAGMENT_SHADERS][MAX_SHADER_PATH_LENGTH];
 
@@ -35,9 +18,9 @@ void set_shader_path(char* buffer, const char* shaderName) {
 }
 
 void initialize_shader_paths() {
-    /* set_shader_path(vert_shader_file_path, "simple.vert"); */
     set_shader_path(vert_shader_file_path[VERTEX_SHADER_SIMPLE], "simple.vert");
     set_shader_path(vert_shader_file_path[VERTEX_SHADER_FIXED], "fixed.vert");
+    set_shader_path(vert_shader_file_path[VERTEX_SHADER_MINIBUFFER], "minibuffer.vert");
     set_shader_path(vert_shader_file_path[VERTEX_SHADER_WAVE], "wave.vert");
 
     set_shader_path(frag_shader_file_paths[SHADER_FOR_COLOR], "simple_color.frag");
@@ -47,12 +30,6 @@ void initialize_shader_paths() {
     set_shader_path(frag_shader_file_paths[SHADER_FOR_GLOW], "simple_glow.frag");
     set_shader_path(frag_shader_file_paths[SHADER_FOR_CURSOR], "cursor.frag");
 }
-
-// Call initialize_shader_paths() early in your program.
-
-
-
-
 
 static const char *shader_type_as_cstr(GLuint shader)
 {
@@ -479,6 +456,23 @@ void simple_renderer_solid_rect(Simple_Renderer *sr, Vec2f p, Vec2f s, Vec4f c)
         c, c, c, c,
         uv, uv, uv, uv);
 }
+
+void simple_renderer_circle(Simple_Renderer *sr, Vec2f center, float radius, Vec4f color, int segments) {
+    float angleStep = 2.0f * M_PI / segments;
+    
+    // Generate vertices for the circle
+    Vec2f lastVertex = {center.x + radius, center.y};
+    for (int i = 1; i <= segments; ++i) {
+        float angle = i * angleStep;
+        Vec2f newVertex = {center.x + cosf(angle) * radius, center.y + sinf(angle) * radius};
+
+        // Add the triangle for this segment
+        simple_renderer_triangle(sr, center, lastVertex, newVertex, color, color, color, vec2fs(0), vec2fs(0), vec2fs(0));
+        lastVertex = newVertex;
+    }
+}
+
+
 
 void simple_renderer_sync(Simple_Renderer *sr)
 {

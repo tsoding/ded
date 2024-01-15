@@ -41,6 +41,7 @@ bool showModeline = true;
 float minibufferHeight = 21.0f;
 float modelineHeight = 35.0f;
 float modelineAccentWidth = 5.0f;
+bool minibuffering = false;
 
 
 
@@ -76,8 +77,6 @@ bool extract_word_under_cursor(Editor *editor, char *word) {
 }
 
 
-
-// TODO
 void move_camera(Simple_Renderer *sr, const char* direction, float amount) {
     if(sr == NULL) return;
 
@@ -96,7 +95,7 @@ void move_camera(Simple_Renderer *sr, const char* direction, float amount) {
 }
 
 
-// TODO BUG
+// TODO smarter
 void editor_backspace(Editor *e) {
     // If in search mode, reduce the search query length
     if (e->searching) {
@@ -359,6 +358,12 @@ void editor_insert_char(Editor *e, char x)
     editor_insert_buf(e, &x, 1);
 }
 
+void editor_insert_char_at(Editor *e, char c, size_t pos) {
+    editor_insert_buf_at(e, &c, 1, pos);
+}
+
+
+
 void editor_insert_buf(Editor *e, char *buf, size_t buf_len)
 {
     if (e->searching) {
@@ -391,6 +396,7 @@ void editor_insert_buf(Editor *e, char *buf, size_t buf_len)
     }
 }
 
+
 void editor_insert_buf_at(Editor *e, char *buf, size_t buf_len, size_t pos) {
     // Ensure the position is within bounds
     if (pos > e->data.count) {
@@ -399,7 +405,7 @@ void editor_insert_buf_at(Editor *e, char *buf, size_t buf_len, size_t pos) {
 
     // Expand the buffer to accommodate the new text
     for (size_t i = 0; i < buf_len; ++i) {
-        da_append(&e->data, '\0'); // Assuming da_append is a function to expand the buffer
+        da_append(&e->data, '\0');
     }
 
     // Shift existing text to make room for the new text
@@ -628,6 +634,7 @@ void editor_move_paragraph_down(Editor *e)
     e->cursor = e->lines.items[row].begin;
 }
 
+// TODO BUG
 void editor_kill_line(Editor *e) {
     if (e->searching || e->cursor >= e->data.count) return;
 
@@ -952,4 +959,96 @@ void editor_drag_line_up(Editor *editor) {
 
     // Retokenize
     editor_retokenize(editor);
+}
+
+float measure_whitespace_width(Free_Glyph_Atlas *atlas) {
+    Vec2f whitespaceSize = {0.0f, 0.0f};
+    free_glyph_atlas_measure_line_sized(atlas, " ", 1, &whitespaceSize);
+    return whitespaceSize.x;
+}
+
+float measure_whitespace_height(Free_Glyph_Atlas *atlas) {
+    Vec2f whitespaceSize = {0.0f, 0.0f};
+    free_glyph_atlas_measure_line_sized(atlas, " ", 1, &whitespaceSize);
+    return whitespaceSize.y;
+}
+
+void add_one_indentation(Editor *editor) {
+    for (size_t i = 0; i < indentation; ++i) {
+        editor_insert_char(editor, ' ');
+    }
+}
+
+
+
+
+
+// TODO empty line
+void indent(Editor *editor) {
+    size_t cursor_row = editor_cursor_row(editor);
+    int braceLevel = 0;
+
+    // Calculate brace level up to the current line
+    for (size_t i = 0; i < cursor_row; ++i) {
+        Line line = editor->lines.items[i];
+        for (size_t j = line.begin; j < line.end; ++j) {
+            char c = editor->data.items[j];
+            if (c == '{') {
+                braceLevel++;
+            } else if (c == '}') {
+                braceLevel = (braceLevel > 0) ? braceLevel - 1 : 0;
+            }
+        }
+    }
+
+    Line currentLineData = editor->lines.items[cursor_row];
+    bool decreaseIndentation = false;
+    size_t firstNonWhitespace = currentLineData.begin;
+    for (size_t j = currentLineData.begin; j < currentLineData.end; ++j) {
+        char c = editor->data.items[j];
+        if (!isspace(c)) {
+            firstNonWhitespace = j;
+            if (c == '}') {
+                decreaseIndentation = true;
+            }
+            break;
+        }
+    }
+
+    // Adjust brace level for current line if it starts with a closing brace
+    if (decreaseIndentation) {
+        braceLevel = (braceLevel > 0) ? braceLevel - 1 : 0;
+    }
+
+    // Calculate required and current indentation
+    size_t requiredIndentation = braceLevel * indentation;
+    size_t currentIndentation = 0;
+    for (size_t i = currentLineData.begin; i < currentLineData.end && (editor->data.items[i] == ' ' || editor->data.items[i] == '\t'); ++i) {
+        currentIndentation++;
+    }
+
+    // Save the current cursor position
+    size_t originalCursorPosition = editor->cursor;
+
+    // Adjust indentation
+    editor->cursor = currentLineData.begin;
+    while (currentIndentation < requiredIndentation) {
+        editor_insert_char(editor, ' ');
+        currentIndentation++;
+    }
+
+    while (currentIndentation > requiredIndentation && currentIndentation > 0) {
+        editor_delete(editor); // or evil_delete_char(editor);
+        currentIndentation--;
+    }
+
+    // Adjust cursor position based on initial condition
+    if (originalCursorPosition <= firstNonWhitespace) {
+        // Cursor was on or before the first non-whitespace character
+        editor->cursor = currentLineData.begin + requiredIndentation;
+    } else {
+        // Cursor was on a character, maintain its relative position
+        size_t characterOffset = originalCursorPosition - firstNonWhitespace;
+        editor->cursor = currentLineData.begin + requiredIndentation + characterOffset;
+    }
 }

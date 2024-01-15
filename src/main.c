@@ -36,6 +36,7 @@
 #include "evil.h"
 #include "buffer.h"
 #include "theme.h"
+#include "unistd.h"
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
@@ -267,7 +268,6 @@ bool extractGlobalIncludePath(Editor *editor, char *includePath) {
     return false;
 }
 
-
 Errno openGlobalIncludeFile(Editor *editor, const char *includePath) {
     char fullPath[512]; // Buffer for the full path
 
@@ -276,18 +276,25 @@ Errno openGlobalIncludeFile(Editor *editor, const char *includePath) {
 
     for (int i = 0; standardDirs[i] != NULL; i++) {
         snprintf(fullPath, sizeof(fullPath), "%s/%s", standardDirs[i], includePath);
-        
-        // Try to load the file using the constructed full path
-        Errno load_err = editor_load_from_file(editor, fullPath);
-        if (load_err == 0) {
-            printf("Opened file: %s\n", fullPath);
-            return 0; // File opened successfully
+
+        // Check if the file exists and is accessible
+        if (access(fullPath, F_OK) != -1) {
+            // Try to load the file using the constructed full path
+            Errno load_err = editor_load_from_file(editor, fullPath);
+            if (load_err == 0) {
+                printf("Opened file: %s\n", fullPath);
+                return 0; // File opened successfully
+            }
         }
     }
 
-    fprintf(stderr, "Error: File %s not found in standard directories\n", includePath);
-    return -1; // File not found in standard directories
+    // Print the error message only if the file is not found in /usr/include
+    fprintf(stderr, "Error: File %s not found in /usr/include\n", includePath);
+    return -1; // File not found in /usr/include
 }
+
+
+
 
 void editor_open_include(Editor *editor) {
     char includePath[256];
@@ -808,6 +815,10 @@ int main(int argc, char **argv)
 
 
                     case SDLK_ESCAPE: {
+                        if (minibuffering) {
+                            minibufferHeight -= 189;
+                            minibuffering = false;
+                        }
                         editor_clear_mark(&editor);
                         editor_stop_search(&editor);
                         editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
@@ -822,7 +833,11 @@ int main(int argc, char **argv)
                             } else {
                                 editor_goto_anchor_and_clear(&editor);
                             }
-                        }                      
+                        } else if (!minibuffering) {
+                            // TODO time delay whichkey
+                            minibufferHeight += 189;
+                            minibuffering = true;
+                        }
                     }
                     break;
 
@@ -870,18 +885,6 @@ int main(int argc, char **argv)
                         }
                         break;
 
-
-                  case SDL_MOUSEWHEEL:
-                    if (event.wheel.y > 0) { // Scroll up
-                      printf("Scroll Up event captured\n"); // Debug print
-                      move_camera(&sr, "up", 20.0f); // Notice &sr, passed the address of sr
-                    } else if (event.wheel.y < 0) { // Scroll down
-                      printf("Scroll Down event captured\n"); // Debug print
-                      move_camera(&sr, "down", 20.0f); // Notice &sr, passed the address of sr
-                    }
-                    break;
-
-
                   case SDLK_LEFTBRACKET:
                     if (SDL_GetModState() & KMOD_ALT) {
                       switch_to_font(library, &face, &atlas, -1);
@@ -900,18 +903,7 @@ int main(int argc, char **argv)
 
 
                     case SDLK_TAB: {
-                        // TODO: indent on Tab instead of just inserting 4 spaces at the cursor
-                        // That is insert the spaces at the beginning of the line. Shift+TAB should
-                        // do unindent, that is remove 4 spaces from the beginning of the line.
-                        // TODO: customizable indentation style
-                        // - tabs/spaces
-                        // - tab width
-                        // - etc.
-                        for (size_t i = 0; i < indentation; ++i) {
-                            editor_insert_char(&editor, ' ');
-                        }
-                        
-                        /* activate_snippet(&editor); */
+                        indent(&editor);
                     }
                     break;
 
@@ -966,18 +958,14 @@ int main(int argc, char **argv)
                   } break;
 
                     case SDLK_n: {
-                        if (SDL_GetModState() & KMOD_ALT) {
+                        if (SDL_GetModState() & KMOD_CTRL) {
+                            editor_move_line_down(&editor);
+                        } else if (SDL_GetModState() & KMOD_ALT) {
                             editor_next_buffer(&editor);
+                        } else if (SDL_GetModState() & KMOD_SHIFT) {
+                            evil_search_previous(&editor);
                         } else {
-                            if (SDL_GetModState() & KMOD_SHIFT) {
-                                evil_search_previous(&editor);
-                            } else {
-                                evil_search_next(&editor);
-                            }
-                            
-                            if (SDL_GetModState() & KMOD_CTRL) {
-                                editor_move_line_down(&editor);
-                            }
+                            evil_search_next(&editor);
                         }
                     } break;
                         
@@ -1050,7 +1038,10 @@ int main(int argc, char **argv)
 
                         if (SDL_GetModState() & KMOD_CTRL) {
                             showIndentationLines = !showIndentationLines;
-                        } else {
+                        } else if (SDL_GetModState() & KMOD_ALT) {
+                           add_one_indentation(&editor);
+                        }
+                        else {
                             current_mode = INSERT;
                             if (superDrammtic){
                                 isAnimated = true;
@@ -1116,6 +1107,11 @@ int main(int argc, char **argv)
                       editor_clipboard_copy(&editor);
                       editor_delete_selection(&editor);
                       editor.selection = false;
+                    } else if (event.key.keysym.mod & KMOD_ALT) {
+                        if (!minibuffering) {
+                            minibufferHeight += 189;
+                            minibuffering = true;
+                        }
                     } else if (event.key.keysym.mod & KMOD_SHIFT) {
                         evil_delete_backward_char(&editor);
                     } else {

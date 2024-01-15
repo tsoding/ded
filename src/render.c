@@ -1,52 +1,90 @@
 #include "render.h"
 #include "editor.h"
+#include "free_glyph.h"
 #include "la.h"
 #include "simple_renderer.h"
 #include "theme.h"
 
 float lineNumberWidth = FREE_GLYPH_FONT_SIZE * 5;
 
+// TODO cursor
+// TODO sub-pixel rendering
 void render_search_text(Free_Glyph_Atlas *minibuffer_atlas, Simple_Renderer *sr, Editor *editor) {
     if (editor->searching) {
         Vec4f color = CURRENT_THEME.text;
-        Vec2f searchPos = {0.0f, 0.0f};
+        Vec2f searchPos = {30.0f, 20.0f};
 
-        simple_renderer_set_shader(sr, VERTEX_SHADER_FIXED, SHADER_FOR_TEXT);
+        simple_renderer_set_shader(sr, VERTEX_SHADER_MINIBUFFER, SHADER_FOR_TEXT);
         free_glyph_atlas_render_line_sized(minibuffer_atlas, sr, editor->search.items, editor->search.count, &searchPos, color);
 
         simple_renderer_flush(sr);
     }
 }
 
+
+/* void render_whitespaces(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor) { */
+/*     if (showWhitespaces) { */
+/*         if (isWave) { */
+/*             simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_COLOR); */
+/*         } else { */
+/*             simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR); */
+/*         } */
+        
+/*         float squareSize = FREE_GLYPH_FONT_SIZE * 0.2; */
+/*         Vec4f whitespaceColor = CURRENT_THEME.whitespace; */
+        
+/*         for (size_t i = 0; i < editor->lines.count; ++i) { */
+/*             Line line = editor->lines.items[i]; */
+/*             Vec2f pos = {0, -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE}; */
+            
+/*             if (showLineNumbers) { */
+/*                 pos.x += lineNumberWidth; */
+/*             } */
+            
+/*             for (size_t j = line.begin; j < line.end; ++j) { */
+/*                 if (editor->data.items[j] == ' ' || editor->data.items[j] == '\t') { */
+/*                     // Measure the actual character width */
+/*                     Vec2f char_pos = pos; */
+/*                     char_pos.x += (j - line.begin) * squareSize; // Starting position for this character */
+/*                     free_glyph_atlas_measure_line_sized(atlas, editor->data.items + j, 1, &char_pos); */
+/*                     float char_width = char_pos.x - pos.x - (j - line.begin) * squareSize; */
+                    
+/*                     Vec2f rectPos = {pos.x + (j - line.begin) * char_width + (char_width - squareSize) / 2, pos.y + (FREE_GLYPH_FONT_SIZE - squareSize) / 2}; */
+/*                     simple_renderer_solid_rect(sr, rectPos, vec2f(squareSize, squareSize), whitespaceColor); */
+/*                 } */
+/*             } */
+/*         } */
+/*         simple_renderer_flush(sr); */
+/*     } */
+/* } */
+
+
 void render_whitespaces(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor) {
     if (showWhitespaces) {
-        if (isWave) {
-            simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_COLOR);
-        } else {
-            simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
-        }
-        
-        float squareSize = FREE_GLYPH_FONT_SIZE * 0.2;
+        float circleRadius = FREE_GLYPH_FONT_SIZE * 0.1; // Adjust the radius as needed
         Vec4f whitespaceColor = CURRENT_THEME.whitespace;
-        
+        int circleSegments = 20; // Adjust the number of segments for smoother circles
+
         for (size_t i = 0; i < editor->lines.count; ++i) {
             Line line = editor->lines.items[i];
             Vec2f pos = {0, -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE};
-            
+
             if (showLineNumbers) {
                 pos.x += lineNumberWidth;
             }
-            
+
             for (size_t j = line.begin; j < line.end; ++j) {
                 if (editor->data.items[j] == ' ' || editor->data.items[j] == '\t') {
-                    // Measure the actual character width
                     Vec2f char_pos = pos;
-                    char_pos.x += (j - line.begin) * squareSize; // Starting position for this character
+                    char_pos.x += (j - line.begin) * circleRadius * 2;
                     free_glyph_atlas_measure_line_sized(atlas, editor->data.items + j, 1, &char_pos);
-                    float char_width = char_pos.x - pos.x - (j - line.begin) * squareSize;
-                    
-                    Vec2f rectPos = {pos.x + (j - line.begin) * char_width + (char_width - squareSize) / 2, pos.y + (FREE_GLYPH_FONT_SIZE - squareSize) / 2};
-                    simple_renderer_solid_rect(sr, rectPos, vec2f(squareSize, squareSize), whitespaceColor);
+                    float char_width = char_pos.x - pos.x - (j - line.begin) * circleRadius * 2;
+
+                    Vec2f circleCenter = {pos.x + (j - line.begin) * char_width + char_width / 2, pos.y + FREE_GLYPH_FONT_SIZE / 2};
+
+                    // Draw the circle for whitespace
+                    simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
+                    simple_renderer_circle(sr, circleCenter, circleRadius, whitespaceColor, circleSegments);
                 }
             }
         }
@@ -63,16 +101,15 @@ typedef struct {
     float startX; // X position of the start of the line
 } BraceInfo;
 
-
 // TODO exit early If a line does not contain any braces
 // TODO calculate properly CHARACTER_WIDTH
-void render_indentation_lines(Simple_Renderer *sr, Editor *editor) {
+void render_indentation_lines(Simple_Renderer *sr, Free_Glyph_Atlas *atlas,  Editor *editor) {
     if (showIndentationLines) {
         
         float LINE_THICKNESS = 4.0f;
         BraceInfo braceStack[5000]; // Assuming a max of 5000 nested braces
         int braceCount = 0;
-        float CHARACTER_WIDTH = FREE_GLYPH_FONT_SIZE / 2.0f;
+        float CHARACTER_WIDTH = measure_whitespace_width(atlas);
         
         for (size_t i = 0; i < editor->lines.count; ++i) {
             Line line = editor->lines.items[i];
@@ -146,16 +183,8 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     sr->resolution = vec2f(w, h);
     sr->time = (float) SDL_GetTicks() / 1000.0f;
 
-    /* float lineNumberWidth = FREE_GLYPH_FONT_SIZE * 5; */
-    /* Vec4f lineNumberColor = vec4f(0.5, 0.5, 0.5, 1);  // A lighter color for line numbers, adjust as needed */
+    float whitespace_width = measure_whitespace_width(atlas);
 
-    // Calculate the width of a whitespace character
-    Vec2f whitespace_size = vec2fs(0.0f);
-    free_glyph_atlas_measure_line_sized(atlas, " ", 1, &whitespace_size);
-    float whitespace_width = whitespace_size.x;
-
-    render_indentation_lines(sr, editor);
-    
     // Render hl_line
     {
         if (hl_line){
@@ -265,6 +294,18 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         }
         simple_renderer_flush(sr);
     }
+
+    {
+        if (isWave) {
+            simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_COLOR);
+        } else {
+            simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
+        }
+    
+        render_indentation_lines(sr, atlas, editor);
+    }
+
+
 
     Vec2f cursor_pos = vec2fs(0.0f);
     {
@@ -674,6 +715,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     }
 
     render_whitespaces(atlas, sr, editor);
+    
     
     // Render cursor
     if(editor->searching){

@@ -50,6 +50,9 @@ evil-delete-backward-char [x]
 evil-search-word-forward (shift + 8) [x]
 shift + 5 [x]
 ** Editor
+org mode []
+md mode rendered as you type []
+refactor on write(save) []
 smarter editor_enter and editor_backspace []
 
 u can only type stuff that exist in the file in the
