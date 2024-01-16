@@ -164,6 +164,8 @@ void evil_yank_line(Editor* editor) {
     copiedLine = true;
 }
 
+
+// TODO handle !copiedline not in the keybind and behave like vim
 void evil_paste_after(Editor* editor) {
     if (!copiedLine) {
         return; // Do nothing if no line has been copied
@@ -206,6 +208,7 @@ void evil_paste_after(Editor* editor) {
     SDL_free(text);
 }
 
+// TODO handle !copiedline not in the keybind and behave like vim
 void evil_paste_before(Editor* editor) {
     if (!copiedLine) {
         return; // Do nothing if no line has been copied
@@ -474,5 +477,66 @@ bool handle_evil_find_char(Editor *editor, SDL_Event *event) {
     return false;  // The key event has not been fully handled
 }
 
+
+
+void evil_substitute(Editor *e) {
+    if (e->searching) return; // Check if editor is in search mode
+
+    if (e->selection) {
+        // If there is an active selection, delete the selected text
+        editor_delete_selection(e);
+    } else if (e->cursor < e->data.count) {
+        // If no selection and cursor is within bounds, delete the character at cursor
+        memmove(&e->data.items[e->cursor],
+                &e->data.items[e->cursor + 1],
+                (e->data.count - e->cursor - 1) * sizeof(e->data.items[0]));
+        e->data.count -= 1;
+    }
+
+    // Switch to insert mode
+    current_mode = INSERT;
+
+    // Re-tokenize if needed
+    editor_retokenize(e);
+}
+
+
+
+void evil_change_whole_line(Editor *e) {
+    if (e->searching || e->cursor >= e->data.count) return;
+
+    size_t row = editor_cursor_row(e);
+    size_t line_begin = e->lines.items[row].begin;
+    size_t line_end = e->lines.items[row].end;
+
+    // Find the first non-whitespace character
+    size_t first_non_whitespace = line_begin;
+    while (first_non_whitespace < line_end && 
+           (e->data.items[first_non_whitespace] == ' ' || e->data.items[first_non_whitespace] == '\t')) {
+        first_non_whitespace++;
+    }
+
+    // If entire line is whitespace, first_non_whitespace will be line_end
+    if (first_non_whitespace < line_end) {
+        // Delete from the first non-whitespace character to the end of the line
+        size_t length = line_end - first_non_whitespace;
+        memmove(&e->data.items[first_non_whitespace],
+                &e->data.items[line_end],
+                e->data.count - line_end);
+        e->data.count -= length;
+
+        // Set cursor to the first non-whitespace character
+        e->cursor = first_non_whitespace;
+    } else {
+        // If the line is all whitespace, just place the cursor at the end
+        e->cursor = line_end;
+    }
+
+    // Switch to insert mode
+    current_mode = INSERT;
+
+    // Re-tokenize if needed
+    editor_retokenize(e);
+}
 
 

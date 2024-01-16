@@ -242,6 +242,9 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         simple_renderer_flush(sr);
     }
 
+
+    // TODO shader switch
+    render_indentation_lines(sr, atlas, editor);
     
     // Render selection
 
@@ -293,16 +296,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             }
         }
         simple_renderer_flush(sr);
-    }
-
-    {
-        if (isWave) {
-            simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_COLOR);
-        } else {
-            simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
-        }
-    
-        render_indentation_lines(sr, atlas, editor);
     }
 
 
@@ -716,7 +709,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
     render_whitespaces(atlas, sr, editor);
     
-    
     // Render cursor
     if(editor->searching){
         simple_renderer_set_shader(sr, VERTEX_SHADER_FIXED, SHADER_FOR_COLOR);
@@ -727,7 +719,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     }
 
     {
-        // Adjust cursor position if line numbers are shown
         if (showLineNumbers) {
             cursor_pos.x += lineNumberWidth;
         }
@@ -754,8 +745,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         case NORMAL: {
             float cursor_width;
             // Check if the cursor is on an actual character or an empty line
-            if (editor->cursor < editor->data.count &&
-                editor->data.items[editor->cursor] != '\n') {
+            if (editor->cursor < editor->data.count && editor->data.items[editor->cursor] != '\n') {
                     Vec2f next_char_pos = cursor_pos;
                     free_glyph_atlas_measure_line_sized(
                         atlas, editor->data.items + editor->cursor,
@@ -798,8 +788,22 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             
         case INSERT:
             CURSOR_COLOR = CURRENT_THEME.insert_cursor;
-            CURSOR_WIDTH = 5.0f; // Thin vertical line for INSERT mode
-            // Implement blinking for INSERT mode
+            if (BlockInsertCurosr) {
+                // Check if the cursor is on an actual character or an empty line
+                if (editor->cursor < editor->data.count && editor->data.items[editor->cursor] != '\n') {
+                    Vec2f next_char_pos = cursor_pos;
+                    free_glyph_atlas_measure_line_sized(
+                                                        atlas, editor->data.items + editor->cursor,
+                                                        1, // Measure the actual character at the cursor
+                                                        &next_char_pos);
+                    CURSOR_WIDTH = next_char_pos.x - cursor_pos.x;
+                } else {
+                    CURSOR_WIDTH = whitespace_width;
+                }
+            } else {
+                CURSOR_WIDTH = 5.0f; // Thin vertical line for INSERT mode
+            }
+            // blinking for INSERT mode
             if (t < CURSOR_BLINK_THRESHOLD ||
                 (t / CURSOR_BLINK_PERIOD) % 2 != 0) {
                     simple_renderer_solid_rect(

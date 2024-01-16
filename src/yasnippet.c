@@ -77,33 +77,6 @@ void load_snippets_from_directory() {
 }
 
 
-
-/* bool get_word_left_of_cursor(Editor *e, char *word, size_t max_word_length) { */
-/*     if (e->cursor == 0 || !isalnum(e->data.items[e->cursor - 1])) { */
-/*         return false; // No word directly to the left of the cursor */
-/*     } */
-
-/*     size_t end = e->cursor; */
-/*     size_t start = end; */
-
-/*     while (start > 0 && isalnum(e->data.items[start - 1])) { */
-/*         start--; */
-/*     } */
-
-/*     size_t word_length = end - start; */
-/*     if (word_length >= max_word_length) { */
-/*         return false; // Word is too long for the buffer */
-/*     } */
-
-/*     memcpy(word, &e->data.items[start], word_length); */
-/*     word[word_length] = '\0'; // Null-terminate the word */
-
-/*     e->cursor = start; // Move cursor to the start of the word */
-/*     printf("Extracted word: '%s'\n", word);  // Debug print */
-/*     return true; */
-/* } */
-
-
 bool get_word_left_of_cursor(Editor *e, char *word, size_t max_word_length) {
     if (e->cursor == 0 || !(isalnum(e->data.items[e->cursor - 1]) || e->data.items[e->cursor - 1] == '<')) {
         return false; // No word or symbol directly to the left of the cursor

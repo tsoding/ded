@@ -34,6 +34,7 @@
 #include "yasnippet.h"
 #include "render.h"
 #include "evil.h"
+#include "emacs.h"
 #include "buffer.h"
 #include "theme.h"
 #include "unistd.h"
@@ -150,8 +151,6 @@ void populate_font_list() {
     }
     closedir(dir);
 }
-
-
 
 void switch_to_font(FT_Library library, FT_Face *currentFace, Free_Glyph_Atlas *atlas, int direction) {
     if (direction > 0) {
@@ -521,18 +520,12 @@ int main(int argc, char **argv)
                     }
                     break;
 
-
-
-
-
-
                 case SDLK_EQUALS: {
                   if (SDL_GetModState() & KMOD_ALT) {  // Check if ALT is pressed
                     theme_next(&currentThemeIndex);
                     printf("Changed theme to %d\n", currentThemeIndex); // Logging the theme change for debugging
                   } else if (SDL_GetModState() & KMOD_CTRL) {  // Check if CTRL is pressed
-                    zoom_factor -= 0.8f;
-
+                      zoom_factor -= 0.8f;
                     if (zoom_factor < min_zoom_factor) {
                       zoom_factor = min_zoom_factor;
                     }
@@ -545,7 +538,6 @@ int main(int argc, char **argv)
                     printf("Changed theme back to %d\n", currentThemeIndex); // Logging the theme change for debugging
                   } else if (SDL_GetModState() & KMOD_CTRL) {  // Check if CTRL is pressed
                     zoom_factor += 0.8f;
-
                     if (zoom_factor > max_zoom_factor) {
                       zoom_factor = max_zoom_factor;
                     }
@@ -590,6 +582,7 @@ int main(int argc, char **argv)
                     fb.cursor += 1;
                 } break;
 
+                 // TODO cant go back more than the original direcory
                 case SDLK_h: {
                   // Copy current directory path
                   char current_dir[PATH_MAX];
@@ -666,10 +659,20 @@ int main(int argc, char **argv)
                 case EMACS:
                     // TODO add all keybinds
                     switch (event.key.keysym.sym) {
-                        
+
+                    
+                    case SDLK_z: {
+                        if (SDL_GetModState() & KMOD_CTRL) {
+                            current_mode = NORMAL;
+                            editor.last_stroke = SDL_GetTicks();
+                        }
+                    }
+                    break;
+
+                    
                     case SDLK_BACKSPACE:
                         if (event.key.keysym.mod & KMOD_CTRL) {
-                            editor_backward_kill_word(&editor);
+                            emacs_backward_kill_word(&editor);
                             editor.last_stroke = SDL_GetTicks();
                         }else{
                             editor_backspace(&editor);
@@ -685,7 +688,7 @@ int main(int argc, char **argv)
                     }
                     break;
 
-
+                    // TODO check if the snippet activated if not indent
                     case SDLK_TAB: {
                         activate_snippet(&editor);
                         for (size_t i = 0; i < indentation; ++i) {
@@ -702,11 +705,6 @@ int main(int argc, char **argv)
                         break;
                         
                     case SDLK_n: {
-                        if (SDL_GetModState() & KMOD_SHIFT) {
-                            evil_search_previous(&editor);
-                        } else {
-                            evil_search_next(&editor);
-                        }
                         if (SDL_GetModState() & KMOD_CTRL) {
                             editor_move_line_down(&editor);
                             editor.last_stroke = SDL_GetTicks();
@@ -809,7 +807,12 @@ int main(int argc, char **argv)
                             (tmpEvent.text.text[0] != 'C')) {
                             SDL_PushEvent(&tmpEvent); // Push it back to the event queue if it's not
                         }
+                        break;
 
+                    case SDLK_m:
+                        if (event.key.keysym.mod & KMOD_ALT) {
+                            emacs_back_to_indentation(&editor);
+                        }
                         break;
 
 
@@ -907,11 +910,11 @@ int main(int argc, char **argv)
                     }
                     break;
 
-                  case SDLK_z: {
-                    if (SDL_GetModState() & KMOD_CTRL) {
-                      showLineNumbers = !showLineNumbers;  // Toggle the state of showLineNumbers
+                    case SDLK_z: {
+                        if (SDL_GetModState() & KMOD_CTRL) {
+                            current_mode = EMACS;
+                        }
                     }
-                  }
                     break;
 
                   case SDLK_t: {
@@ -1003,13 +1006,29 @@ int main(int argc, char **argv)
                     break;
 
                     case SDLK_s: {
-                      if (event.key.keysym.mod & KMOD_CTRL) {
-                          editor_start_search(&editor);
-                          current_mode = INSERT;
-                      }
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            // Ctrl+S is pressed
+                            editor_start_search(&editor);
+                            current_mode = INSERT;
+                        } else {
+                            // Either S or Shift+S is pressed
+                            if (event.key.keysym.mod & KMOD_SHIFT) {
+                                evil_change_whole_line(&editor);
+                            } else {
+                                evil_substitute(&editor);
+                            }
+                            editor.selection = false;
+                            // Eat up the next SDL_TEXTINPUT event for 's' or 'S'
+                            SDL_PollEvent(&tmpEvent);
+                            if (tmpEvent.type != SDL_TEXTINPUT ||
+                                (tmpEvent.text.text[0] != 's' && tmpEvent.text.text[0] != 'S')) {
+                                SDL_PushEvent(&tmpEvent); // Push it back to the event queue if it's not
+                            }
+                            editor.last_stroke = SDL_GetTicks();
+                        }
+                        break;
                     }
-                    break;
-
+                        
                   case SDLK_EQUALS: {
                     if (SDL_GetModState() & KMOD_ALT) {  // Check if ALT is pressed
                       theme_next(&currentThemeIndex);
@@ -1035,11 +1054,14 @@ int main(int argc, char **argv)
                   } break;
 
                     case SDLK_i:
-
                         if (SDL_GetModState() & KMOD_CTRL) {
                             showIndentationLines = !showIndentationLines;
                         } else if (SDL_GetModState() & KMOD_ALT) {
-                           add_one_indentation(&editor);
+                            if (SDL_GetModState() & KMOD_SHIFT) {
+                                remove_one_indentation(&editor);
+                            } else {
+                                add_one_indentation(&editor);
+                            }
                         }
                         else {
                             current_mode = INSERT;
@@ -1140,28 +1162,33 @@ int main(int argc, char **argv)
                       editor_delete_selection(&editor);
                       editor.selection = false;
                     } else if (event.key.keysym.mod & KMOD_CTRL) {
-                      editor_backward_kill_word(&editor);
+                      emacs_backward_kill_word(&editor);
                     } else {
                       editor_backspace(&editor);
                     }
                     break;
+                    
+                    case SDLK_h:
+                        if (event.key.keysym.mod & KMOD_ALT) {
+                            emacs_mark_paragraph(&editor, true);
+                        } else {
+                            editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                            if (event.key.keysym.mod & KMOD_CTRL) {
+                                editor_move_word_left(&editor);
+                            } else {
+                                editor_move_char_left(&editor);
+                            }
+                        }
+                        editor.last_stroke = SDL_GetTicks();
+                        break;
 
-                  case SDLK_h:
-                    editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                    if (event.key.keysym.mod & KMOD_CTRL) {
-                      editor_move_word_left(&editor);
-                    } else {
-                      editor_move_char_left(&editor);
-                    }
-                    editor.last_stroke = SDL_GetTicks();
-                    break;
-
+                        
                   case SDLK_j:
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                     if ((event.key.keysym.mod & KMOD_ALT) && !isAnimated) {
                       move_camera(&sr, "down", 50.0f);
                     } else if (event.key.keysym.mod & KMOD_CTRL) {
-                      evil_open_below(&editor);
+                      evil_open_above(&editor);
                     } else if ((event.key.keysym.mod & KMOD_SHIFT) && !(event.key.keysym.mod & KMOD_ALT)) {
                       evil_join(&editor);
                     } else if (event.key.keysym.mod & KMOD_ALT) {
@@ -1177,7 +1204,7 @@ int main(int argc, char **argv)
                     if ((event.key.keysym.mod & KMOD_ALT) && !isAnimated) {
                       move_camera(&sr, "up", 50.0f);
                     } else if (event.key.keysym.mod & KMOD_CTRL) {
-                      editor_kill_line(&editor);
+                      emacs_kill_line(&editor);
                     } else if (event.key.keysym.mod & KMOD_ALT) {
                       editor_move_paragraph_up(&editor);
                     } else {
@@ -1186,15 +1213,17 @@ int main(int argc, char **argv)
                     editor.last_stroke = SDL_GetTicks();
                     break;
 
-                  case SDLK_l:
-                    editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                    if (event.key.keysym.mod & KMOD_CTRL) {
-                      editor_move_word_right(&editor);
-                    } else {
-                      editor_move_char_right(&editor);
-                    }
-                    editor.last_stroke = SDL_GetTicks();
-                    break;
+                    case SDLK_l:
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            showLineNumbers = !showLineNumbers;
+                        } else if (event.key.keysym.mod & KMOD_ALT) {
+                            select_region_from_inside_braces(&editor); 
+                        } else {
+                            editor_move_char_right(&editor);
+                        }
+                        editor.last_stroke = SDL_GetTicks();
+                        break;
 
                     
                     case SDLK_DOWN:
@@ -1202,7 +1231,11 @@ int main(int argc, char **argv)
                             editor_drag_line_down(&editor);
                         } else {
                             editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                            editor_move_line_down(&editor);
+                            if (event.key.keysym.mod & KMOD_CTRL) {
+                                editor_move_paragraph_down(&editor);
+                            } else {
+                                editor_move_line_down(&editor);
+                            }
                         }
                         break;
                         
@@ -1213,8 +1246,13 @@ int main(int argc, char **argv)
                         } else {
                             editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                             editor_move_line_up(&editor);
+
+                            if (event.key.keysym.mod & KMOD_CTRL) {
+                                editor_move_paragraph_up(&editor);
+                            }
                         }
                         break;
+    
 
 
                     case SDLK_RIGHT:
@@ -1245,11 +1283,12 @@ int main(int argc, char **argv)
                     }
                     break;
 
-                    // Add additional NORMAL mode keybinds here...
+                    // additional NORMAL mode keybinds here...
                   } break;
 
                 case INSERT:
                   switch (event.key.keysym.sym) {
+                      SDL_Event tmpEvent;
 
                   case SDLK_x:
                     if (editor.selection) {
@@ -1271,7 +1310,38 @@ int main(int argc, char **argv)
                         }                      
                     }
                     break;
+                    
+                  case SDLK_i:
+                      if (SDL_GetModState() & KMOD_ALT) {
+                          if (SDL_GetModState() & KMOD_SHIFT) {
+                              remove_one_indentation(&editor);
+                          } else {
+                              add_one_indentation(&editor);
+                          }
 
+                          editor.last_stroke = SDL_GetTicks();
+                          // Eat up the next SDL_TEXTINPUT event for 'i' or 'I'
+                          SDL_PollEvent(&tmpEvent);
+                          if (tmpEvent.type != SDL_TEXTINPUT ||
+                              (tmpEvent.text.text[0] != 'i' && tmpEvent.text.text[0] != 'I')) {
+                              SDL_PushEvent(&tmpEvent); // Push it back to the event queue if it's not
+                          }
+                      }
+                      break;
+                      
+                  case SDLK_o:
+                      if (SDL_GetModState() & KMOD_CTRL) {
+                          evil_open_below(&editor);
+                          // Eat up the next SDL_TEXTINPUT event for 'o'
+                          SDL_PollEvent(&tmpEvent);
+                          if (tmpEvent.type != SDL_TEXTINPUT ||
+                              (tmpEvent.text.text[0] != '0')) {
+                              SDL_PushEvent(&tmpEvent); // Push it back to the event queue if it's not
+                          }
+                      }                          
+                      editor.last_stroke = SDL_GetTicks();
+                      break;
+                      
                     case SDLK_a: {
                         if (event.key.keysym.mod & KMOD_CTRL) {
                             editor.selection = true;
@@ -1280,51 +1350,52 @@ int main(int argc, char **argv)
                         }
                     }
                     break;
-
                     
                   case SDLK_h:
-                    if (event.key.keysym.mod & KMOD_CTRL) {
-                      editor_move_char_left(&editor);
-                    }
-                    editor.last_stroke = SDL_GetTicks();
-                    break;
-
+                      if (event.key.keysym.mod & KMOD_CTRL) {
+                          editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                          editor_move_char_left(&editor);
+                      }
+                      editor.last_stroke = SDL_GetTicks();
+                      break;
+                      
                   case SDLK_j:
-                    if (event.key.keysym.mod & KMOD_CTRL) {
-                      editor_move_line_down(&editor);
-                    }
-                    editor.last_stroke = SDL_GetTicks();
-                    break;
-
+                      if (event.key.keysym.mod & KMOD_CTRL) {
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                        editor_move_line_down(&editor);
+                      }
+                      editor.last_stroke = SDL_GetTicks();
+                      break;
+                      
                   case SDLK_k:
-                    if (event.key.keysym.mod & KMOD_CTRL) {
-                      editor_move_line_up(&editor);
-                    }
-                    editor.last_stroke = SDL_GetTicks();
-                    break;
-
+                      if (event.key.keysym.mod & KMOD_CTRL) {
+                          editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                          editor_move_line_up(&editor);
+                      }
+                      editor.last_stroke = SDL_GetTicks();
+                      break;
+                      
                   case SDLK_l:
-                    if (event.key.keysym.mod & KMOD_CTRL) {
-                      editor_move_char_right(&editor);
-                    }
-                    editor.last_stroke = SDL_GetTicks();
-                    break;
+                      if (event.key.keysym.mod & KMOD_CTRL) {
+                          editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                          editor_move_char_right(&editor);
+                      }
+                      editor.last_stroke = SDL_GetTicks();
+                      break;
 
-                    case SDLK_TAB: {
-                        // TODO: indent on Tab instead of just inserting 4 spaces at the cursor
-                        // That is insert the spaces at the beginning of the line. Shift+TAB should
-                        // do unindent, that is remove 4 spaces from the beginning of the line.
-                        // TODO: customizable indentation style
-                        // - tabs/spaces [ ]
-                        // - tab width [x]
-                        // - etc.
-                        /* for (size_t i = 0; i < indentation; ++i) { */
-                        /*     editor_insert_char(&editor, ' '); */
-                        /* } */
+                      
+                  // TODO if no snippet was activated indent()
+                  // TODO if no snippet was activated dont move the cursor
+                  case SDLK_TAB: {
+                      /* char word[MAX_SNIPPET_KEY_LENGTH]; */
+                      /* if (get_word_left_of_cursor(&editor, word, sizeof(word))) { */
+                      activate_snippet(&editor);
+                      /* } else { */
+                      /*     indent(&editor); */
+                      /* } */
+                      break;
+                  }
 
-                        activate_snippet(&editor);
-                    }
-                    break;
 
                   case SDLK_F3:
                     file_browser = true;
@@ -1459,28 +1530,20 @@ int main(int argc, char **argv)
                     break;
 
                   case SDLK_BACKSPACE:
-                    if (event.key.keysym.mod & KMOD_CTRL) {
-                      editor_backward_kill_word(&editor);
+                      if (editor.selection) {
+                          editor_clipboard_copy(&editor);
+                          editor_delete_selection(&editor);
+                          editor.selection = false;
+                      } else if (event.key.keysym.mod & KMOD_CTRL) {
+                          emacs_backward_kill_word(&editor);
+                          editor.last_stroke = SDL_GetTicks();
+                      }else{
+                          editor_backspace(&editor);
+                      }
                       editor.last_stroke = SDL_GetTicks();
-                    }else{
-                      editor_backspace(&editor);
-                      editor.last_stroke = SDL_GetTicks();
-                    }
-                    break;
+                      break;
 
-                  /* case SDLK_RETURN: { */
-                  /*     if (editor.searching) { */
-                  /*          editor_stop_search_and_mark(&editor); */
-                  /*          current_mode = NORMAL; */
-
-                  /*      } else { */
-                  /*          editor_insert_char(&editor, '\n'); */
-                  /*          editor.last_stroke = SDL_GetTicks(); */
-                  /*      } */
-                  /*  } */
-                  /*  break; */
-
-
+                  // TODO use editor_return()
                   case SDLK_RETURN: {
                     if (editor.searching) {
                       editor_stop_search_and_mark(&editor);
@@ -1644,9 +1707,8 @@ int main(int argc, char **argv)
 
                     }
                     break;
-
-
-                  case SDLK_j:  // Down
+                    
+                  case SDLK_j:
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                     if (event.key.keysym.mod & KMOD_CTRL) {
                       editor_move_paragraph_down(&editor);
@@ -1655,9 +1717,8 @@ int main(int argc, char **argv)
                     }
                     editor.last_stroke = SDL_GetTicks();
                     break;
-
-
-                  case SDLK_h:  // Left
+                    
+                  case SDLK_h:
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                     if (event.key.keysym.mod & KMOD_CTRL) {
                       editor_move_word_left(&editor);
@@ -1667,7 +1728,7 @@ int main(int argc, char **argv)
                     editor.last_stroke = SDL_GetTicks();
                     break;
 
-                  case SDLK_k:  // Up
+                  case SDLK_k:
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                     if (event.key.keysym.mod & KMOD_CTRL) {
                       editor_move_paragraph_up(&editor);
@@ -1677,7 +1738,7 @@ int main(int argc, char **argv)
                     editor.last_stroke = SDL_GetTicks();
                     break;
 
-                  case SDLK_l:  // Right
+                  case SDLK_l:
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                     if (event.key.keysym.mod & KMOD_CTRL) {
                       editor_move_word_right(&editor);
@@ -1687,7 +1748,6 @@ int main(int argc, char **argv)
                     editor.last_stroke = SDL_GetTicks();
                     break;
 
-                  //  transition back to NORMAL mode
                   case SDLK_ESCAPE:
                     editor.selection = false;
                     current_mode = NORMAL;
@@ -1695,12 +1755,12 @@ int main(int argc, char **argv)
                   }
                   break;
 
-                    // Add additional VISUAL mode keybinds here...
+                  // additional VISUAL mode keybinds here...
 
             case VISUAL_LINE:
               switch (event.key.keysym.sym) {
 
-              case SDLK_j:  // Down
+              case SDLK_j:
                 editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                 if (event.key.keysym.mod & KMOD_CTRL) {
                   editor_move_paragraph_down(&editor);
@@ -1710,7 +1770,7 @@ int main(int argc, char **argv)
                 editor.last_stroke = SDL_GetTicks();
                 break;
 
-              case SDLK_h:  // Left
+              case SDLK_h:
                 editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                 if (event.key.keysym.mod & KMOD_CTRL) {
                   editor_move_word_left(&editor);
@@ -1777,7 +1837,7 @@ int main(int argc, char **argv)
         SDL_GetWindowSize(window, &w, &h);
         glViewport(0, 0, w, h);
         Vec4f bg = themes[currentThemeIndex].background;
-
+        bg.w = 0.0f;
         glClearColor(bg.x, bg.y, bg.z, bg.w);
         glClear(GL_COLOR_BUFFER_BIT);
 

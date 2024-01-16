@@ -11,7 +11,6 @@
 #include "lexer.h"
 #include "simple_renderer.h"
 #include <ctype.h> // For isalnum
-
 #include "evil.h"
 
 
@@ -44,8 +43,10 @@ float modelineAccentWidth = 5.0f;
 bool minibuffering = false;
 
 
+bool BlockInsertCurosr = true;
 
-// TODO bad implementation
+
+
 bool extract_word_under_cursor(Editor *editor, char *word) {
     // Make a copy of cursor position to avoid modifying the actual cursor
     size_t cursor = editor->cursor;
@@ -78,9 +79,6 @@ bool extract_word_under_cursor(Editor *editor, char *word) {
 
 
 void move_camera(Simple_Renderer *sr, const char* direction, float amount) {
-    if(sr == NULL) return;
-
-    // Check the direction and adjust the camera position accordingly.
     if(strcmp(direction, "up") == 0) {
         sr->camera_pos.y -= amount;
     } else if(strcmp(direction, "down") == 0) {
@@ -514,13 +512,11 @@ void editor_clipboard_paste(Editor *e)
 
 void editor_update_selection(Editor *e, bool shift) {
     if (e->searching) return;
-
+    
     if (current_mode == VISUAL) {
         if (!e->selection) {
             evil_visual_char(e);
         }
-        // If you want the selection to end when you leave VISUAL mode,
-        // you will need to handle that logic elsewhere (perhaps where mode changes are managed).
     } else if (shift) {
         if (!e->selection) {
             e->selection = true;
@@ -634,82 +630,6 @@ void editor_move_paragraph_down(Editor *e)
     e->cursor = e->lines.items[row].begin;
 }
 
-// TODO BUG
-void editor_kill_line(Editor *e) {
-    if (e->searching || e->cursor >= e->data.count) return;
-
-    size_t row = editor_cursor_row(e);
-    size_t line_begin = e->lines.items[row].begin;
-    size_t line_end = e->lines.items[row].end;
-
-    // Check if the line is empty or if the cursor is at the end of the line
-    if (line_begin == line_end || e->cursor == line_end) {
-        // If the line is empty or the cursor is at the end of the line
-        // Remove the newline character if it's not the first line
-        if (row < e->lines.count - 1) {
-            memmove(&e->data.items[line_begin], &e->data.items[line_end + 1], e->data.count - line_end - 1);
-            e->data.count -= (line_end - line_begin + 1);
-        } else if (row > 0 && e->data.items[line_begin - 1] == '\n') {
-            // If it's the last line, remove the preceding newline character
-            e->data.count -= 1;
-            memmove(&e->data.items[line_begin - 1], &e->data.items[line_end], e->data.count - line_end);
-        }
-    } else {
-        // If the line is not empty, kill the text from the cursor to the end of the line
-        size_t length = line_end - e->cursor;
-
-        // Copy the text to be killed to the clipboard
-        e->clipboard.count = 0;
-        sb_append_buf(&e->clipboard, &e->data.items[e->cursor], length);
-        sb_append_null(&e->clipboard);
-        if (SDL_SetClipboardText(e->clipboard.items) < 0) {
-            fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
-        }
-
-        // Delete the range from the editor
-        memmove(&e->data.items[e->cursor], &e->data.items[line_end], e->data.count - line_end);
-        e->data.count -= length;
-    }
-
-    editor_retokenize(e);
-}
-
-
-void editor_backward_kill_word(Editor *e) {
-    editor_stop_search(e);
-
-    // Remember the start position of the deletion
-    size_t start_pos = e->cursor;
-
-    // Move cursor left to the start of the previous word
-    while (e->cursor > 0 && !isalnum(e->data.items[e->cursor - 1])) {
-        e->cursor -= 1;
-    }
-    while (e->cursor > 0 && isalnum(e->data.items[e->cursor - 1])) {
-        e->cursor -= 1;
-    }
-
-    // Remember the end position of the deletion
-    size_t end_pos = e->cursor;
-
-    // Check if there is anything to delete
-    if (start_pos > end_pos) {
-        // Copy the deleted text to clipboard
-        size_t length = start_pos - end_pos;
-        e->clipboard.count = 0;
-        sb_append_buf(&e->clipboard, &e->data.items[end_pos], length);
-        sb_append_null(&e->clipboard);
-        if (SDL_SetClipboardText(e->clipboard.items) < 0) {
-            fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
-        }
-
-        // Perform the deletion
-        memmove(&e->data.items[end_pos], &e->data.items[start_pos], e->data.count - start_pos);
-        e->data.count -= length;
-    }
-
-    editor_retokenize(e);
-}
 
 bool editor_is_line_empty(Editor *e, size_t row) {
     if (row >= e->lines.count) return true; // Non-existent lines are considered empty
@@ -973,17 +893,86 @@ float measure_whitespace_height(Free_Glyph_Atlas *atlas) {
     return whitespaceSize.y;
 }
 
-void add_one_indentation(Editor *editor) {
+void add_one_indentation_here(Editor *editor) {
     for (size_t i = 0; i < indentation; ++i) {
         editor_insert_char(editor, ' ');
     }
 }
 
+void remove_one_indentation_here(Editor *editor) {
+    for (size_t i = 0; i < indentation; ++i) {
+        editor_delete(editor);
+    }
+}
+
+void add_one_indentation(Editor *editor) {
+    size_t cursor_row = editor_cursor_row(editor);
+    Line currentLineData = editor->lines.items[cursor_row];
+    size_t originalCursorPosition = editor->cursor;
+
+    // Calculate current indentation of the line
+    size_t currentIndentation = 0;
+    for (size_t i = currentLineData.begin; i < currentLineData.end && isspace(editor->data.items[i]); ++i) {
+        currentIndentation++;
+    }
+
+    // Move cursor to the beginning of the current line
+    editor->cursor = currentLineData.begin;
+
+    // Add one level of indentation at the beginning of the line
+    for (size_t i = 0; i < indentation; ++i) {
+        editor_insert_char(editor, ' ');
+    }
+
+    // Adjust cursor position
+    if (originalCursorPosition <= currentLineData.begin + currentIndentation) {
+        // If the cursor was at or before the first non-whitespace character, move it right after the added indentation
+        editor->cursor = currentLineData.begin + currentIndentation + indentation;
+    } else {
+        // If the cursor was on a non-whitespace character, maintain relative position
+        editor->cursor = originalCursorPosition + indentation;
+    }
+}
+
+void remove_one_indentation(Editor *editor) {
+    size_t cursor_row = editor_cursor_row(editor);
+    Line currentLineData = editor->lines.items[cursor_row];
+
+    // Save the current cursor position
+    size_t originalCursorPosition = editor->cursor;
+
+    // Calculate current indentation of the line
+    size_t currentIndentation = 0;
+    size_t firstNonWhitespace = currentLineData.begin;
+    while (firstNonWhitespace < currentLineData.end && isspace(editor->data.items[firstNonWhitespace])) {
+        currentIndentation++;
+        firstNonWhitespace++;
+    }
+
+    // Check if there's at least one indentation level to remove
+    if (currentIndentation >= indentation) {
+        // Move cursor to the beginning of the current line
+        editor->cursor = currentLineData.begin;
+
+        // Remove one level of indentation from the beginning of the line
+        for (size_t i = 0; i < indentation; ++i) {
+            editor_delete(editor); // Assuming delete removes one character.
+        }
+
+        // Adjust cursor position
+        if (originalCursorPosition <= currentLineData.begin + currentIndentation) {
+            // If the cursor was within the leading whitespace, move it to the first non-whitespace character
+            editor->cursor = firstNonWhitespace - indentation;
+        } else {
+            // If the cursor was on a non-whitespace character, maintain relative position
+            editor->cursor = originalCursorPosition - indentation;
+        }
+    }
+}
 
 
 
-
-// TODO empty line
+// TODO slow calculation on whitespaces
 void indent(Editor *editor) {
     size_t cursor_row = editor_cursor_row(editor);
     int braceLevel = 0;
@@ -1004,10 +993,12 @@ void indent(Editor *editor) {
     Line currentLineData = editor->lines.items[cursor_row];
     bool decreaseIndentation = false;
     size_t firstNonWhitespace = currentLineData.begin;
+    bool isLineEmpty = true;
     for (size_t j = currentLineData.begin; j < currentLineData.end; ++j) {
         char c = editor->data.items[j];
         if (!isspace(c)) {
             firstNonWhitespace = j;
+            isLineEmpty = false;
             if (c == '}') {
                 decreaseIndentation = true;
             }
@@ -1043,12 +1034,139 @@ void indent(Editor *editor) {
     }
 
     // Adjust cursor position based on initial condition
-    if (originalCursorPosition <= firstNonWhitespace) {
-        // Cursor was on or before the first non-whitespace character
+    if (isLineEmpty || originalCursorPosition <= firstNonWhitespace) {
+        // If the line is empty or the cursor was on or before the first non-whitespace character
         editor->cursor = currentLineData.begin + requiredIndentation;
     } else {
-        // Cursor was on a character, maintain its relative position
+        // If the cursor was on a non-whitespace character, maintain relative position
         size_t characterOffset = originalCursorPosition - firstNonWhitespace;
         editor->cursor = currentLineData.begin + requiredIndentation + characterOffset;
     }
 }
+
+
+size_t find_first_non_whitespace(const char* items, size_t begin, size_t end) {
+    size_t pos = begin;
+    while (pos < end && isspace((unsigned char)items[pos])) {
+        pos++;
+    }
+    return pos;
+}
+
+
+
+// CLANG FORMAT TODO
+#include <stdlib.h>
+
+int is_clang_format_installed() {
+    if (system("clang-format --version") != 0) {
+        return 0;
+    }
+    return 1;
+}
+
+void clang_format(const char *filename, const char *arguments) {
+    if (!is_clang_format_installed()) {
+        printf("clang-format is not installed.\n");
+        return;
+    }
+
+    char command[1024];
+    snprintf(command, sizeof(command), "clang-format %s %s", arguments, filename);
+
+    // Execute the command
+    int result = system(command);
+    if (result != 0) {
+        printf("Error executing clang-format.\n");
+    }
+}
+
+
+// TODO select more after end brace
+void select_region_from_inside_braces(Editor *editor) {
+    if (editor->cursor >= editor->data.count) return;
+
+    size_t row = editor_cursor_row(editor);
+    size_t start = row;
+    size_t end = row;
+
+    // Find the start of the function
+    while (start > 0) {
+        start--;
+        size_t line_begin = editor->lines.items[start].begin;
+        size_t line_end = editor->lines.items[start].end;
+
+        // Simple heuristic: a line ending with '{' might be the start of a function
+        if (editor->data.items[line_end - 1] == '{') {
+            break;
+        }
+    }
+
+    // Find the end of the function
+    int brace_count = 1; // Start after finding the opening brace
+    while (end < editor->lines.count - 1) {
+        end++;
+        size_t line_begin = editor->lines.items[end].begin;
+        size_t line_end = editor->lines.items[end].end;
+
+        for (size_t i = line_begin; i < line_end; i++) {
+            if (editor->data.items[i] == '{') {
+                brace_count++;
+            } else if (editor->data.items[i] == '}') {
+                brace_count--;
+                if (brace_count == 0) {
+                    // Found the matching closing brace
+                    goto found_end;
+                }
+            }
+        }
+    }
+found_end:
+
+    // Update the selection
+    editor->selection = true;
+    editor->select_begin = editor->lines.items[start].begin;
+    editor->cursor = editor->lines.items[end].end;
+}
+
+
+// TODO should not run from anywhere just curly braces
+// TODO dont move the cursor on open brace like it does for closing brace
+void select_region_from_brace(Editor *editor) {
+    if (editor->cursor >= editor->data.count) return;
+
+    char current_char = editor->data.items[editor->cursor];
+
+    if (strchr("})", current_char)) {
+        // Called from a closing brace
+        editor->select_begin = editor->cursor;
+        evil_jump_item(editor);
+        size_t row = editor_cursor_row(editor);
+        editor->cursor = editor->lines.items[row].begin; // Extend to the beginning of the line
+    } else if (strchr("({", current_char)) {
+        // Called from an opening brace
+        size_t row = editor_cursor_row(editor);
+        editor->select_begin = editor->lines.items[row].begin; // Start from the beginning of the line
+        evil_jump_item(editor);
+        row = editor_cursor_row(editor);
+        editor->cursor = editor->lines.items[row].end; // Extend to the end of the line with the closing brace
+    }
+
+    // Update the selection
+    editor->selection = true;
+    if (editor->select_begin > editor->cursor) {
+        // Ensure select_begin is always before the cursor
+        size_t temp = editor->select_begin;
+        editor->select_begin = editor->cursor;
+        editor->cursor = temp;
+    }
+}
+
+
+// TODO select_function
+
+
+
+
+
+

@@ -40,6 +40,7 @@ also check if the file exist before opening it []
 render circles (for whitespaces) []
 line under links (and clickable things)[]
 ** Evil
+shift + i []
 evil-find-char-backward []
 evil-search-backward []
 evil-change-line(smarter version, don't delete ";") []
@@ -49,7 +50,13 @@ splits(maybe)   []
 evil-delete-backward-char [x]
 evil-search-word-forward (shift + 8) [x]
 shift + 5 [x]
+** Addresses
+ showIndentationLines = 5555555792d2 i8
+ currentThemeIndex    = 555559015340
+
 ** Editor
+find_first_non_whitespace(and refactor) []
+select_function []
 org mode []
 md mode rendered as you type []
 refactor on write(save) []

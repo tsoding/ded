@@ -10,7 +10,7 @@ void initialize_themes() {
     themes[0] = (Theme) {
         .cursor = hex_to_vec4f(0x658B5FFF),
         .insert_cursor = hex_to_vec4f(0x514B8EFF),
-        .emacs_cursor = hex_to_vec4f(0x834EB6FF),
+        .emacs_cursor = hex_to_vec4f(0x565663FF),
         .text = hex_to_vec4f(0xC0ACD1FF),
         .background = hex_to_vec4f(0x090909FF),
         .comment = hex_to_vec4f(0x867892FF),
