@@ -1,5 +1,7 @@
 #include "emacs.h"
 
+
+// TODO it delete the line if it is on whitespaces even if there is text
 void emacs_kill_line(Editor *e) {
     if (e->searching || e->cursor >= e->data.count) return;
 

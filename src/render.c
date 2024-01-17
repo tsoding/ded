@@ -7,21 +7,74 @@
 
 float lineNumberWidth = FREE_GLYPH_FONT_SIZE * 5;
 
-// TODO cursor
 // TODO sub-pixel rendering
-void render_search_text(Free_Glyph_Atlas *minibuffer_atlas, Simple_Renderer *sr, Editor *editor) {
+void render_search_text(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor) {
     if (editor->searching) {
-        Vec4f color = CURRENT_THEME.text;
+        Vec4f cursorColor = CURRENT_THEME.cursor;
+        Vec4f textColor = CURRENT_THEME.text;
         Vec2f searchPos = {30.0f, 20.0f};
+        float minibufferCursorOffsett = 5.0f;
 
+        // Render the search text
         simple_renderer_set_shader(sr, VERTEX_SHADER_MINIBUFFER, SHADER_FOR_TEXT);
-        free_glyph_atlas_render_line_sized(minibuffer_atlas, sr, editor->search.items, editor->search.count, &searchPos, color);
+        free_glyph_atlas_render_line_sized(atlas, sr, editor->search.items, editor->search.count, &searchPos, textColor);
 
+        // Set cursor position at the start of the text (we already used those we can change them)
+        searchPos.y = 0.0f;
+        searchPos.x += minibufferCursorOffsett;
+        Vec2f cursorPos = searchPos;
+
+        // Set cursor size
+        float cursor_width = measure_whitespace_width(atlas);
+        Vec2f cursorSize = {cursor_width, 21.0f * 4.0f}; // 21 is the minibufferHeight
+
+        // Render the cursor
+        simple_renderer_flush(sr);
+        simple_renderer_set_shader(sr, VERTEX_SHADER_MINIBUFFER, SHADER_FOR_COLOR);
+        simple_renderer_solid_rect(sr, cursorPos, cursorSize, cursorColor);
+
+        // Flush the renderer
         simple_renderer_flush(sr);
     }
 }
 
 
+void render_M_x(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor) {
+    if (editor->minibuffer_active) {
+        Vec4f cursorColor = CURRENT_THEME.cursor;
+        Vec4f textColor = CURRENT_THEME.text;
+        Vec2f searchPos = {30.0f, 20.0f};
+        float minibufferCursorOffsett = 5.0f;
+
+        // Render the search text
+        simple_renderer_set_shader(sr, VERTEX_SHADER_MINIBUFFER, SHADER_FOR_TEXT);
+        free_glyph_atlas_render_line_sized(atlas, sr, editor->minibuffer_text.items, editor->minibuffer_text.count, &searchPos, textColor);
+
+        // Set cursor position at the start of the text (we already used those we can change them)
+        searchPos.y = 0.0f;
+        searchPos.x += minibufferCursorOffsett;
+        Vec2f cursorPos = searchPos;
+
+        // Set cursor size
+        float cursor_width = measure_whitespace_width(atlas);
+        Vec2f cursorSize = {cursor_width, 21.0f * 4.0f}; // 21 is the minibufferHeight
+
+        // Render the cursor
+        simple_renderer_flush(sr);
+        simple_renderer_set_shader(sr, VERTEX_SHADER_MINIBUFFER, SHADER_FOR_COLOR);
+        simple_renderer_solid_rect(sr, cursorPos, cursorSize, cursorColor);
+
+        // Flush the renderer
+        simple_renderer_flush(sr);
+    }
+}
+
+
+
+
+
+
+// SQAURES
 /* void render_whitespaces(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor) { */
 /*     if (showWhitespaces) { */
 /*         if (isWave) { */
@@ -390,12 +443,20 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_TEXT);
         }
 
-        // Determine the current line number using the provided function
         size_t currentLineNumber = editor_cursor_row(editor);
 
         // Different colors for line numbers
         Vec4f defaultColor = CURRENT_THEME.line_numbers;
-        Vec4f currentLineColor = CURRENT_THEME.current_line_number;
+        Vec4f currentLineColor;
+        if (highlightCurrentLineNumberOnInsertMode){
+            if (current_mode == INSERT) {
+                currentLineColor = CURRENT_THEME.insert_cursor;
+            } else {
+                currentLineColor = CURRENT_THEME.current_line_number;
+            }
+        } else {
+            currentLineColor = CURRENT_THEME.current_line_number;
+        }
 
         for (size_t i = 0; i < editor->lines.count; ++i) {
             char lineNumberStr[10];
@@ -710,11 +771,9 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     render_whitespaces(atlas, sr, editor);
     
     // Render cursor
-    if(editor->searching){
-        simple_renderer_set_shader(sr, VERTEX_SHADER_FIXED, SHADER_FOR_COLOR);
-    }else if (isWave){
+    if (isWave) {
         simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_COLOR);
-    }else{
+    } else {
         simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
     }
 
@@ -801,7 +860,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                     CURSOR_WIDTH = whitespace_width;
                 }
             } else {
-                CURSOR_WIDTH = 5.0f; // Thin vertical line for INSERT mode
+                CURSOR_WIDTH = 5.0f; // Thin line
             }
             // blinking for INSERT mode
             if (t < CURSOR_BLINK_THRESHOLD ||

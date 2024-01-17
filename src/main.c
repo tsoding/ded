@@ -317,6 +317,30 @@ int main(int argc, char **argv)
     initialize_shader_paths();
     load_snippets_from_directory();
 
+    // Define hash seeds (these could be randomly generated for more robustness)
+    uint64_t seed0 = 0x12345678;
+    uint64_t seed1 = 0x9ABCDEF0;
+
+    // Allocate and initialize the commands hashmap
+    editor.commands = hashmap_new(
+        sizeof(Command), // Size of each element
+        16,              // Initial capacity
+        seed0, seed1,    // Hash seeds
+        simple_string_hash,     // Hash function
+        command_compare, // Compare function (you need to define this based on your Command struct)
+        NULL,            // Element free function (NULL if not needed)
+        NULL             // User data for compare function (NULL if not needed)
+    );
+
+    if (!editor.commands) {
+        // Handle allocation failure
+        fprintf(stderr, "Failed to initialize command map\n");
+        return -1;
+    }
+
+    initialize_commands(editor.commands);
+
+    
     Errno err;
 
     FT_Library library = {0};
@@ -795,7 +819,18 @@ int main(int argc, char **argv)
                         }
                     } break;
 
-                        
+                    case SDLK_d:
+                        if (event.key.keysym.mod & KMOD_SHIFT) {
+                            emacs_kill_line(&editor);
+                        } else if (editor.selection) {
+                            editor_clipboard_copy(&editor);
+                            editor_delete_selection(&editor);
+                            editor.selection = false;
+                        } else {
+                            emacs_kill_line(&editor);
+                        }
+                    break;
+                                         
                     case SDLK_c:
                         if (event.key.keysym.mod & KMOD_SHIFT) {
                             evil_change_line(&editor);
@@ -822,6 +857,12 @@ int main(int argc, char **argv)
                             minibufferHeight -= 189;
                             minibuffering = false;
                         }
+
+                        if (editor.minibuffer_active) {
+                            M_x_active = false;
+                            editor.minibuffer_active = false;
+                        }
+
                         editor_clear_mark(&editor);
                         editor_stop_search(&editor);
                         editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
@@ -1053,6 +1094,7 @@ int main(int argc, char **argv)
                     }
                   } break;
 
+
                     case SDLK_i:
                         if (SDL_GetModState() & KMOD_CTRL) {
                             showIndentationLines = !showIndentationLines;
@@ -1062,22 +1104,36 @@ int main(int argc, char **argv)
                             } else {
                                 add_one_indentation(&editor);
                             }
-                        }
-                        else {
-                            current_mode = INSERT;
+                        } else {
+                            if (SDL_GetModState() & KMOD_SHIFT) {
+                                evil_insert_line(&editor);
+                            } else {
+                                current_mode = INSERT;
+                            }
+
                             if (superDrammtic){
                                 isAnimated = true;
                             }
+                            
+                            // This section is executed for both Shift and no modifier
                             editor.last_stroke = SDL_GetTicks();
                             
-                            // Eat up the next SDL_TEXTINPUT event for 'i'
-                            SDL_PollEvent(&tmpEvent); // This will typically be the SDL_TEXTINPUT event for 'i'
-                            if (tmpEvent.type != SDL_TEXTINPUT || tmpEvent.text.text[0] != 'i') {
-                                SDL_PushEvent(&tmpEvent); // If it's not, push it back to the event queue
+                            // Eat up the next SDL_TEXTINPUT event for 'i' or 'I'
+                            SDL_PollEvent(&tmpEvent);
+                            if (tmpEvent.type != SDL_TEXTINPUT ||
+                                (tmpEvent.text.text[0] != 'i' && tmpEvent.text.text[0] != 'I')) {
+                                SDL_PushEvent(&tmpEvent); // Push it back to the event queue if it's not
                             }
-                        } 
+                        }
                         break;
+                        
+                        
 
+
+
+
+
+                        
                   case SDLK_v: {
                     if (SDL_GetModState() & KMOD_SHIFT) {
                       current_mode = VISUAL_LINE;
@@ -1124,23 +1180,37 @@ int main(int argc, char **argv)
                       }
                       break;
 
-                  case SDLK_x:
-                    if (editor.selection) {
-                      editor_clipboard_copy(&editor);
-                      editor_delete_selection(&editor);
-                      editor.selection = false;
-                    } else if (event.key.keysym.mod & KMOD_ALT) {
-                        if (!minibuffering) {
-                            minibufferHeight += 189;
-                            minibuffering = true;
+                    case SDLK_x:
+                        if (editor.selection) {
+                            editor_clipboard_copy(&editor);
+                            editor_delete_selection(&editor);
+                            editor.selection = false;
+                        } else if (event.key.keysym.mod & KMOD_ALT) {
+                            if (!M_x_active) {
+                                current_mode = INSERT;
+                                M_x_active = true;
+                                editor.minibuffer_active = true;
+
+                                // Consume the next SDL_TEXTINPUT event for 'x'
+                                SDL_Event tmpEvent;
+                                SDL_PollEvent(&tmpEvent);
+                                if (tmpEvent.type != SDL_TEXTINPUT || tmpEvent.text.text[0] != 'x') {
+                                    SDL_PushEvent(&tmpEvent); // Push the event back if it's not the one we're trying to consume
+                                }
+                            }
+                            
+                            // TODO ivy
+                            /* if (!minibuffering) { */
+                            /*     minibufferHeight += 189; */
+                            /*     minibuffering = true; */
+                            /* } */
+                        } else if (event.key.keysym.mod & KMOD_SHIFT) {
+                            evil_delete_backward_char(&editor);
+                        } else {
+                            editor_clipboard_copy(&editor);
+                            evil_delete_char(&editor);
                         }
-                    } else if (event.key.keysym.mod & KMOD_SHIFT) {
-                        evil_delete_backward_char(&editor);
-                    } else {
-                      editor_clipboard_copy(&editor);
-                      evil_delete_char(&editor);
-                    }
-                    break;
+                        break;
 
                   case SDLK_0:
                     editor_move_to_line_begin(&editor);
@@ -1295,8 +1365,6 @@ int main(int argc, char **argv)
                       editor_clipboard_copy(&editor);
                       editor_delete_selection(&editor);
                       editor.selection = false;
-                      current_mode = NORMAL;
-
                     }
                     break;
                     
@@ -1548,7 +1616,15 @@ int main(int argc, char **argv)
                     if (editor.searching) {
                       editor_stop_search_and_mark(&editor);
                       current_mode = NORMAL;
-                    } else {
+                    } else if (editor.minibuffer_active) {
+                        sb_append_null(&editor.minibuffer_text); // null termination
+                        execute_command(editor.commands, &editor, editor.minibuffer_text.items);
+                        editor.minibuffer_text.count = 0;
+                        editor.minibuffer_active = false;
+                        M_x_active = false;
+                        current_mode = NORMAL;
+                    }
+                    else {
                       size_t row = editor_cursor_row(&editor);
                       size_t line_end = editor.lines.items[row].end;
 
@@ -1603,9 +1679,17 @@ int main(int argc, char **argv)
                         if (superDrammtic){
                             isAnimated = false;
                         }
+
+                        if (editor.searching) {
+                            editor_clear_mark(&editor);
+                            editor_stop_search(&editor);
+                        } else if (editor.minibuffer_active) {
+                            editor.minibuffer_text.count = 0;
+                            M_x_active = false;
+                            editor.minibuffer_active = false;
+                        }
+
                         current_mode = NORMAL;
-                        editor_clear_mark(&editor);
-                        editor_stop_search(&editor);
                         editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                     }
                     break;
@@ -1846,6 +1930,7 @@ int main(int argc, char **argv)
         } else {
           editor_render(window, &atlas, &sr, &editor);
           render_search_text(&atlas, &sr, &editor);
+          render_M_x(&atlas, &sr, &editor);
         }
 
         SDL_GL_SwapWindow(window);

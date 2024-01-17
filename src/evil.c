@@ -282,7 +282,7 @@ void evil_delete_char(Editor *e) {
 
     if (e->cursor >= e->data.count) return;
 
-    // 1. Copy the character to clipboard.
+    // Copy the character to clipboard.
     e->clipboard.count = 0;
     sb_append_buf(&e->clipboard, &e->data.items[e->cursor], 1);
     sb_append_null(&e->clipboard);
@@ -290,7 +290,7 @@ void evil_delete_char(Editor *e) {
         fprintf(stderr, "ERROR: SDL ERROR: %s\n", SDL_GetError());
     }
 
-    // 2. Delete the character from the editor.
+    //  Delete the character from the editor.
     memmove(
         &e->data.items[e->cursor],
         &e->data.items[e->cursor + 1],
@@ -439,7 +439,7 @@ void evil_change_line(Editor *e) {
     editor_retokenize(e);
 }
 
-// TODO Capital char
+// TODO can't find Capital chars
 void evil_find_char(Editor *e, char target) {
     if (e->searching || e->cursor >= e->data.count) return;
 
@@ -540,3 +540,13 @@ void evil_change_whole_line(Editor *e) {
 }
 
 
+
+
+void evil_insert_line(Editor *e) {
+    size_t row = editor_cursor_row(e);
+    size_t line_begin = e->lines.items[row].begin;
+    size_t line_end = e->lines.items[row].end;
+    size_t first_non_whitespace = find_first_non_whitespace(e->data.items, line_begin, line_end);
+    e->cursor = first_non_whitespace;
+    current_mode = INSERT;
+}

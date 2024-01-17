@@ -20,9 +20,6 @@ make the text disappear []
  (bad when going up) []
 ** Shaders
 use shaders from =~/.config/ded/shaders= instead [x]
-** Bugs
-opening a file with ded file.c that contain a
-function definition, trow a [1] 35755 segmentation fault (core dumped)
 ** Lexer
 chech for strings in arrays []
 '' []
@@ -39,23 +36,37 @@ also check if the file exist before opening it []
 
 render circles (for whitespaces) []
 line under links (and clickable things)[]
-** Evil
-shift + i []
-evil-find-char-backward []
-evil-search-backward []
-evil-change-line(smarter version, don't delete ";") []
-splits(maybe)   []
-5k should work []
-
-evil-delete-backward-char [x]
-evil-search-word-forward (shift + 8) [x]
-shift + 5 [x]
 ** Addresses
  showIndentationLines = 5555555792d2 i8
  currentThemeIndex    = 555559015340
 
+** Evil
+evil-find-char-backward []
+evil-search-backward []
+splits(maybe)   []
+5k should work []
+
+shift + i [x]
+evil-change-line(smarter version, don't delete ";") [x]
+evil-delete-backward-char [x]
+evil-search-word-forward (shift + 8) [x]
+shift + 5 [x]
+** Bugs
+opening a file with ded file.c that contain a
+function definition, trow a [1] 35755 segmentation fault (core dumped)
+
+activate_snippet on "if" take two times to activate
+also editor_backspace take 3 times to delete []
+
 ** Editor
-find_first_non_whitespace(and refactor) []
+if superDramatic change update camera to be more usable []
+
+switch true to false or false to true in editor_enter []
+
+measure_whitespace_width only once on font switch rather
+than 4 times every frame []
+
+find_first_non_whitespace(and refactor) [/]
 select_function []
 org mode []
 md mode rendered as you type []

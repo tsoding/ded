@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <SDL2/SDL.h>
 
+#include "hashmap.h"
 
 extern bool isAnimated;
 extern size_t indentation;
@@ -32,9 +33,11 @@ extern bool showModeline;
 extern float minibufferHeight;
 extern float modelineHeight;
 extern float modelineAccentWidth;
-extern bool minibuffering;
+extern bool minibuffering; //TODO this will be ivy
+extern bool M_x_active;
 
 extern bool BlockInsertCurosr;
+extern bool highlightCurrentLineNumberOnInsertMode;
 
 typedef struct {
     size_t begin;
@@ -76,6 +79,11 @@ typedef struct {
 
     bool searching;
     String_Builder search;
+
+    bool minibuffer_active;
+    String_Builder minibuffer_text;
+
+    struct hashmap *commands;
 
     bool selection;
     size_t select_begin;
@@ -175,5 +183,16 @@ float measure_whitespace_height(Free_Glyph_Atlas *atlas);
 size_t find_first_non_whitespace(const char* items, size_t begin, size_t end);
 
 
+// M-x
+typedef struct {
+    const char *name;
+    void (*execute)(Editor *); // Function pointer with Editor* argument
+} Command;
+
+void register_command(struct hashmap *command_map, const char *name, void (*execute)(Editor *));
+void initialize_commands(struct hashmap *command_map);
+void execute_command(struct hashmap *command_map, Editor *editor, const char *command_name);
+int command_compare(const void *a, const void *b, void *udata);
+uint64_t simple_string_hash(const void *item, uint64_t seed0, uint64_t seed1);
 
 #endif // EDITOR_H_

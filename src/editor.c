@@ -8,6 +8,7 @@
 #include "./common.h"
 #include "./free_glyph.h"
 #include "./file_browser.h"
+#include "emacs.h"
 #include "lexer.h"
 #include "simple_renderer.h"
 #include <ctype.h> // For isalnum
@@ -41,9 +42,11 @@ float minibufferHeight = 21.0f;
 float modelineHeight = 35.0f;
 float modelineAccentWidth = 5.0f;
 bool minibuffering = false;
+bool M_x_active = false;
 
 
 bool BlockInsertCurosr = true;
+bool highlightCurrentLineNumberOnInsertMode = true; // the loong way 
 
 
 
@@ -99,6 +102,10 @@ void editor_backspace(Editor *e) {
     if (e->searching) {
         if (e->search.count > 0) {
             e->search.count -= 1;
+        }
+    } else if (e->minibuffer_active) {
+        if (e->minibuffer_text.count > 0) {
+            e->minibuffer_text.count -= 1;
         }
     } else {
         // Check if the cursor is at the beginning or at the beginning of a line
@@ -375,6 +382,9 @@ void editor_insert_buf(Editor *e, char *buf, size_t buf_len)
             }
         }
         if (!matched) e->search.count -= buf_len;
+    } else if (e->minibuffer_active) {
+        sb_append_buf(&e->minibuffer_text, buf, buf_len);
+        /* printf("Minibuffer: "SB_Fmt"\n", SB_Arg(e->minibuffer_text)); */
     } else {
         if (e->cursor > e->data.count) {
             e->cursor = e->data.count;
@@ -707,7 +717,14 @@ void editor_enter(Editor *e) {
         editor_stop_search_and_mark(e);
         current_mode = NORMAL;
         return;
-    }
+    } /* else if (M_x_active && e->minibuffer_active) { */
+    /*     // Execute the command in the minibuffer */
+    /*     execute_command(e->commands, e, e->minibuffer_text.items); */
+    /*     e->minibuffer_text.count = 0; */
+    /*     e->minibuffer_active = false; */
+    /*     M_x_active = false; */
+    /*     current_mode = NORMAL; */
+    /* } */
 
     size_t row = editor_cursor_row(e);
     size_t line_end = e->lines.items[row].end;
@@ -1168,5 +1185,57 @@ void select_region_from_brace(Editor *editor) {
 
 
 
+// M-x
+// TODO command aliases and
+// history in program memory, when quitting save it in ~/.config/ded/M-x-history
+// and load it when opening ded clamp it to max-M-x-history-size or something
+void register_command(struct hashmap *command_map, const char *name, void (*execute)(Editor *)) {
+    Command *cmd = malloc(sizeof(Command));
+    if (cmd) {
+        cmd->name = name;
+        cmd->execute = execute;
+        hashmap_set(command_map, cmd);
+    } else {
+        // Handle allocation failure
+    }
+}
 
+// TODO open-below && open-above && editor-enter behave weird
+void initialize_commands(struct hashmap *command_map) {
+    register_command(command_map, "open-below",      evil_open_below);
+    register_command(command_map, "open-above",      evil_open_above);
+    register_command(command_map, "drag-down",       editor_drag_line_down);
+    register_command(command_map, "drag-up",         editor_drag_line_up);
+    register_command(command_map, "editor-enter",    editor_enter);
+    register_command(command_map, "select",          select_region_from_brace);
+    register_command(command_map, "back",            emacs_backward_kill_word);
+    register_command(command_map, "evil-join",       evil_join);
+    register_command(command_map, "evil-yank-line",  evil_yank_line);
+}
+
+void execute_command(struct hashmap *command_map, Editor *editor, const char *command_name) {
+    Command tempCmd = {command_name, NULL};  // Temporary command for lookup
+    Command *cmd = (Command *)hashmap_get(command_map, &tempCmd);
+    if (cmd && cmd->execute) {
+        cmd->execute(editor);
+    } else {
+        // Handle command not found
+    }
+}
+
+int command_compare(const void *a, const void *b, void *udata) {
+    const Command *cmd_a = a;
+    const Command *cmd_b = b;
+    return strcmp(cmd_a->name, cmd_b->name);
+}
+
+uint64_t simple_string_hash(const void *item, uint64_t seed0, uint64_t seed1) {
+    const Command *cmd = item;
+    const char *str = cmd->name;
+    uint64_t hash = seed0;
+    while (*str) {
+        hash = 31 * hash + (*str++);
+    }
+    return hash ^ seed1;
+}
 

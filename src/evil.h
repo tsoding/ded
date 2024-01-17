@@ -24,5 +24,6 @@ void evil_find_char(Editor *e, char target);
 bool handle_evil_find_char(Editor *editor, SDL_Event *event);
 void evil_substitute(Editor *e);
 void evil_change_whole_line(Editor *e);
+void evil_insert_line(Editor *e);
 
 #endif // EVIL_H
