@@ -2,6 +2,7 @@
 #include "editor.h"
 #include "free_glyph.h"
 #include "la.h"
+#include "lexer.h"
 #include "simple_renderer.h"
 #include "theme.h"
 
@@ -38,32 +39,48 @@ void render_search_text(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *ed
     }
 }
 
-
-void render_M_x(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor) {
+void render_minibuffer_content(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor, const char *prefixText) {
     if (editor->minibuffer_active) {
         Vec4f cursorColor = CURRENT_THEME.cursor;
         Vec4f textColor = CURRENT_THEME.text;
         Vec2f searchPos = {30.0f, 20.0f};
+        float prefixRightPadding;
         float minibufferCursorOffsett = 5.0f;
 
-        // Render the search text
-        simple_renderer_set_shader(sr, VERTEX_SHADER_MINIBUFFER, SHADER_FOR_TEXT);
-        free_glyph_atlas_render_line_sized(atlas, sr, editor->minibuffer_text.items, editor->minibuffer_text.count, &searchPos, textColor);
+        if (M_x_active) {
+            prefixRightPadding = 50;
+        } else if (evil_command_active) {
+            prefixRightPadding = 0;
+        }
 
-        // Set cursor position at the start of the text (we already used those we can change them)
-        searchPos.y = 0.0f;
-        searchPos.x += minibufferCursorOffsett;
-        Vec2f cursorPos = searchPos;
+        if (editor->searching) {
 
-        // Set cursor size
-        float cursor_width = measure_whitespace_width(atlas);
-        Vec2f cursorSize = {cursor_width, 21.0f * 4.0f}; // 21 is the minibufferHeight
-
-        // Render the cursor
-        simple_renderer_flush(sr);
-        simple_renderer_set_shader(sr, VERTEX_SHADER_MINIBUFFER, SHADER_FOR_COLOR);
-        simple_renderer_solid_rect(sr, cursorPos, cursorSize, cursorColor);
-
+        } else {
+            // Render the prefix
+            free_glyph_atlas_render_line_sized(atlas, sr, prefixText, strlen(prefixText), &searchPos, cursorColor);
+            
+            // Calculate the width of the prefix and adjust the position for minibuffer text
+            float prefixWidth = free_glyph_atlas_measure_line_width(atlas, prefixText, strlen(prefixText));
+            searchPos.x += prefixRightPadding;
+            
+            // Render the minibuffer text
+            simple_renderer_set_shader(sr, VERTEX_SHADER_MINIBUFFER, SHADER_FOR_TEXT);
+            free_glyph_atlas_render_line_sized(atlas, sr, editor->minibuffer_text.items, editor->minibuffer_text.count, &searchPos, textColor);
+            
+            // Adjust cursor position according to your original logic
+            searchPos.x += minibufferCursorOffsett; // Adjust x for the cursor
+            searchPos.y = 0.0f; // Reset y for the cursor
+            Vec2f cursorPos = searchPos;
+            
+            // Set cursor size
+            float cursor_width = measure_whitespace_width(atlas);
+            Vec2f cursorSize = {cursor_width, 21.0f * 4.0f}; // 21 is the minibufferHeight
+            
+            // Render the cursor
+            simple_renderer_flush(sr);
+            simple_renderer_set_shader(sr, VERTEX_SHADER_MINIBUFFER, SHADER_FOR_COLOR);
+            simple_renderer_solid_rect(sr, cursorPos, cursorSize, cursorColor);
+        }
         // Flush the renderer
         simple_renderer_flush(sr);
     }
@@ -71,6 +88,52 @@ void render_M_x(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor) {
 
 
 
+
+void render_line_numbers(Simple_Renderer *sr, Free_Glyph_Atlas *atlas, Editor *editor) {
+    if (showLineNumbers) {
+        if (isWave) {
+            simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_TEXT);
+        } else {
+            simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_TEXT);
+        }
+        
+        size_t currentLineNumber = editor_cursor_row(editor);
+        
+        // Different colors for line numbers
+        Vec4f defaultColor = CURRENT_THEME.line_numbers;
+        Vec4f currentLineColor = CURRENT_THEME.current_line_number;
+        if (highlightCurrentLineNumberOnInsertMode) {
+            currentLineColor = (current_mode == INSERT) ? CURRENT_THEME.insert_cursor : CURRENT_THEME.current_line_number;
+        }
+        
+        // Calculate the width needed for the largest line number
+        int lineNumberFieldWidth = snprintf(NULL, 0, "%zu", editor->lines.count);
+        
+        for (size_t i = 0; i < editor->lines.count; ++i) {
+            char lineNumberStr[12]; // Sufficiently large to hold the formatted number
+            
+            // Calculate display line number based on relative number setting
+            size_t displayLineNumber;
+            if (relativeLineNumbers) {
+                displayLineNumber = (i == currentLineNumber) ? currentLineNumber + 1 : abs((int)i - (int)currentLineNumber);
+            } else {
+                displayLineNumber = i + 1;
+            }
+            
+            // Format the line number with right justification
+            snprintf(lineNumberStr, sizeof(lineNumberStr), "%*zu", lineNumberFieldWidth, displayLineNumber);
+            
+            Vec2f pos = {0, -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE};
+            
+            // Decide on the color to use
+            Vec4f colorToUse = (highlightCurrentLineNumber && i == currentLineNumber) ? currentLineColor : defaultColor;
+            
+            free_glyph_atlas_render_line_sized(atlas, sr, lineNumberStr, strlen(lineNumberStr), &pos, colorToUse);
+        }
+        
+        simple_renderer_flush(sr);
+    }
+}
 
 
 
@@ -432,64 +495,8 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         }
         simple_renderer_flush(sr);
     }
-
-
-
-    // Render line numbers
-    if (showLineNumbers) {
-        if (isWave) {
-            simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_TEXT);
-        } else {
-            simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_TEXT);
-        }
-
-        size_t currentLineNumber = editor_cursor_row(editor);
-
-        // Different colors for line numbers
-        Vec4f defaultColor = CURRENT_THEME.line_numbers;
-        Vec4f currentLineColor;
-        if (highlightCurrentLineNumberOnInsertMode){
-            if (current_mode == INSERT) {
-                currentLineColor = CURRENT_THEME.insert_cursor;
-            } else {
-                currentLineColor = CURRENT_THEME.current_line_number;
-            }
-        } else {
-            currentLineColor = CURRENT_THEME.current_line_number;
-        }
-
-        for (size_t i = 0; i < editor->lines.count; ++i) {
-            char lineNumberStr[10];
-
-            // Calculate display line number based on relative number setting
-            size_t displayLineNumber;
-            if (relativeLineNumbers) {
-                if (i == currentLineNumber) {
-                    // Display the actual line number for the current line
-                    displayLineNumber = currentLineNumber + 1;
-                } else {
-                    // Show the distance from the current line for other lines
-                    displayLineNumber = (i > currentLineNumber) ? i - currentLineNumber : currentLineNumber - i;
-                }
-            } else {
-                displayLineNumber = i + 1;
-            }
-
-            snprintf(lineNumberStr, sizeof(lineNumberStr), "%zu", displayLineNumber);
-
-            Vec2f pos = {0, -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE};
-
-            // Decide on the color to use
-            Vec4f colorToUse = defaultColor;
-            if (highlightCurrentLineNumber && i == currentLineNumber) {
-                colorToUse = currentLineColor;
-            }
-
-            free_glyph_atlas_render_line_sized(atlas, sr, lineNumberStr, strlen(lineNumberStr), &pos, colorToUse);
-        }
-
-        simple_renderer_flush(sr);
-    }
+  
+    render_line_numbers(sr, atlas, editor);
 
     // Render matching parenthesis
     {
@@ -586,6 +593,10 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 
             case TOKEN_TYPE:
                 color = CURRENT_THEME.type;
+                break;
+
+            case TOKEN_NULL:
+                color = CURRENT_THEME.null;
                 break;
                 
             case TOKEN_FUNCTION_DEFINITION:
@@ -970,7 +981,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
     // Update camera
     {
-        if (isAnimated) {
+        if (followCursor && !instantCamera) {
 
             if (max_line_len > 1000.0f) {
                 max_line_len = 1000.0f;
@@ -997,6 +1008,29 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME)));
             sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME;
 
+        } else if (followCursor && instantCamera) {
+            // TODO looks bas maybe implement double buffering
+            if (max_line_len > 1000.0f) {
+                max_line_len = 1000.0f;
+            }
+            
+            float target_scale = w / zoom_factor / (max_line_len * 0.75); // Handle potential division by 0
+            
+            Vec2f target = cursor_pos;
+            float offset = 0.0f;
+            
+            if (target_scale > 3.0f) {
+                target_scale = 3.0f;
+            } else {
+                offset = cursor_pos.x - w/3/sr->camera_scale;
+                if (offset < 0.0f) offset = 0.0f;
+                target = vec2f(w/3/sr->camera_scale + offset, cursor_pos.y);
+            }
+            
+            // Instantly set the camera position and scale
+            sr->camera_pos = target;
+            sr->camera_scale = target_scale;
+            
         } else {
             sr->camera_scale = 0.24f;  // Set the zoom level to 0.24
 

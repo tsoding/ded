@@ -85,6 +85,8 @@ void evil_jump_item(Editor *editor) {
 }
 
 // TODO when there is a {} dont add the space
+// TODO when animatins are off
+// move the cursor to the added whitespace
 void evil_join(Editor *e) {
     size_t row = editor_cursor_row(e);
     if (row >= e->lines.count - 1) return;

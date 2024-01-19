@@ -145,7 +145,7 @@ static void get_uniform_location(GLuint program, GLint locations[COUNT_UNIFORM_S
 /* void simple_renderer_init(Simple_Renderer *sr) */
 /* { */
 
-/*     if (isAnimated) { */
+/*     if (followCursor) { */
 /*         sr->camera_scale = 3.0f; */
 /*     } */
 
@@ -260,7 +260,7 @@ static void get_uniform_location(GLuint program, GLint locations[COUNT_UNIFORM_S
 
 
 void simple_renderer_init(Simple_Renderer *sr) {
-    if (isAnimated) {
+    if (followCursor) {
         sr->camera_scale = 3.0f;
     }
 

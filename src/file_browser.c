@@ -180,7 +180,7 @@ void fb_render(const File_Browser *fb, SDL_Window *window, Free_Glyph_Atlas *atl
     // Update camera
     {
 
-        if (isAnimated) {
+        if (followCursor) {
 
             if (max_line_len > 1000.0f) {
                 max_line_len = 1000.0f;

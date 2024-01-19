@@ -95,8 +95,7 @@ float free_glyph_atlas_cursor_pos(const Free_Glyph_Atlas *atlas, const char *tex
     return pos.x;
 }
 
-void free_glyph_atlas_measure_line_sized(Free_Glyph_Atlas *atlas, const char *text, size_t text_size, Vec2f *pos)
-{
+void free_glyph_atlas_measure_line_sized(Free_Glyph_Atlas *atlas, const char *text, size_t text_size, Vec2f *pos) {
     for (size_t i = 0; i < text_size; ++i) {
         size_t glyph_index = text[i];
         // TODO: support for glyphs outside of ASCII range
@@ -135,4 +134,21 @@ void free_glyph_atlas_render_line_sized(Free_Glyph_Atlas *atlas, Simple_Renderer
             vec2f(metric.bw / (float) atlas->atlas_width, metric.bh / (float) atlas->atlas_height),
             color);
     }
+}
+
+
+// ADDED
+
+float free_glyph_atlas_measure_line_width(Free_Glyph_Atlas *atlas, const char *text, size_t text_size) {
+    Vec2f pos = {0.0f, 0.0f};
+    for (size_t i = 0; i < text_size; ++i) {
+        size_t glyph_index = text[i];
+        // TODO: support for glyphs outside of ASCII range
+        if (glyph_index >= GLYPH_METRICS_CAPACITY) {
+            glyph_index = '?';
+        }
+        Glyph_Metric metric = atlas->metrics[glyph_index];
+        pos.x += metric.ax;
+    }
+    return pos.x;
 }

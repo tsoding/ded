@@ -15,12 +15,14 @@
 #include "evil.h"
 
 
+
+bool quit = false;
 EvilMode current_mode = NORMAL;
 float zoom_factor = 3.0f;
 float min_zoom_factor = 1.0;
 float max_zoom_factor = 50.0;
 
-bool isAnimated = true;
+bool followCursor = true;
 bool isWave = false;
 size_t indentation = 4;
 
@@ -34,6 +36,7 @@ bool matchParenthesis = true;
 
 bool hl_line = false;
 bool superDrammtic = false;
+bool instantCamera = false;
 bool showIndentationLines = true;
 
 bool showMinibuffer = true;
@@ -41,8 +44,9 @@ bool showModeline = true;
 float minibufferHeight = 21.0f;
 float modelineHeight = 35.0f;
 float modelineAccentWidth = 5.0f;
-bool minibuffering = false;
+bool ivy = false;
 bool M_x_active = false;
+bool evil_command_active = false;
 
 
 bool BlockInsertCurosr = true;
@@ -401,6 +405,7 @@ void editor_insert_buf(Editor *e, char *buf, size_t buf_len)
         memcpy(&e->data.items[e->cursor], buf, buf_len);
         e->cursor += buf_len;
         editor_retokenize(e);
+        /* printf("%.*s", (int)buf_len, buf); */
     }
 }
 
@@ -717,54 +722,53 @@ void editor_enter(Editor *e) {
         editor_stop_search_and_mark(e);
         current_mode = NORMAL;
         return;
-    } /* else if (M_x_active && e->minibuffer_active) { */
-    /*     // Execute the command in the minibuffer */
-    /*     execute_command(e->commands, e, e->minibuffer_text.items); */
-    /*     e->minibuffer_text.count = 0; */
-    /*     e->minibuffer_active = false; */
-    /*     M_x_active = false; */
-    /*     current_mode = NORMAL; */
-    /* } */
-
-    size_t row = editor_cursor_row(e);
-    size_t line_end = e->lines.items[row].end;
-
-    editor_insert_char(e, '\n');
-    size_t line_begin = e->lines.items[row].begin;
-    bool inside_braces = false;
-
-    // Check if the line contains an opening brace '{'
-    for (size_t i = line_begin; i < line_end; ++i) {
-        char c = e->data.items[i];
-        if (c == '{') {
-            inside_braces = true;
-            break;
-        }
-    }
-
-    // Insert the same whitespace character
-    for (size_t i = line_begin; i < line_end; ++i) {
-        char c = e->data.items[i];
-        if (c == ' ' || c == '\t') {
-            editor_insert_char(e, c);
-        } else {
-            break;
-        }
-    }
-
-    // If inside braces, perform additional steps
-    if (inside_braces) {
-        editor_move_line_up(e);
-        editor_move_to_line_end(e);
+    } else if (M_x_active || evil_command_active && e->minibuffer_active) {
+        sb_append_null(&e->minibuffer_text); // null termination
+        execute_command(e->commands, e, e->minibuffer_text.items);
+        e->minibuffer_text.count = 0;
+        e->minibuffer_active = false;
+        M_x_active = false;
+        current_mode = NORMAL;
+    } else {
+        size_t row = editor_cursor_row(e);
+        size_t line_end = e->lines.items[row].end;
+        
         editor_insert_char(e, '\n');
-
-        // Add indentation
-        for (size_t i = 0; i < indentation; ++i) {
-            editor_insert_char(e, ' ');
+        size_t line_begin = e->lines.items[row].begin;
+        bool inside_braces = false;
+        
+        // Check if the line contains an opening brace '{'
+        for (size_t i = line_begin; i < line_end; ++i) {
+            char c = e->data.items[i];
+            if (c == '{') {
+                inside_braces = true;
+                break;
+            }
         }
+        
+        // Insert the same whitespace character
+        for (size_t i = line_begin; i < line_end; ++i) {
+            char c = e->data.items[i];
+            if (c == ' ' || c == '\t') {
+                editor_insert_char(e, c);
+            } else {
+                break;
+            }
+        }
+        
+        // If inside braces, perform additional steps
+        if (inside_braces) {
+            editor_move_line_up(e);
+            editor_move_to_line_end(e);
+            editor_insert_char(e, '\n');
+            
+            // Add indentation
+            for (size_t i = 0; i < indentation; ++i) {
+                editor_insert_char(e, ' ');
+            }
+        }
+        e->last_stroke = SDL_GetTicks();
     }
-
-    e->last_stroke = SDL_GetTicks();
 }
 
 
@@ -1072,6 +1076,145 @@ size_t find_first_non_whitespace(const char* items, size_t begin, size_t end) {
 
 
 
+// TODO tomove
+bool extractLine(Editor *editor, size_t cursor, char *line, size_t max_length) {
+    size_t start = cursor;
+    while (start > 0 && editor->data.items[start - 1] != '\n') {
+        start--;
+    }
+
+    size_t end = start;
+    while (end < editor->data.count && editor->data.items[end] != '\n') {
+        end++;
+    }
+
+    size_t length = end - start;
+    if (length < max_length) {
+        strncpy(line, &editor->data.items[start], length);
+        line[length] = '\0';
+        return true;
+    }
+
+    return false;
+}
+
+bool extractLocalIncludePath(Editor *editor, char *includePath) {
+    char line[512]; // Adjust size as needed
+    if (!extractLine(editor, editor->cursor, line, sizeof(line))) {
+        return false;
+    }
+
+    if (strncmp(line, "#include \"", 10) == 0) {
+        char *start = strchr(line, '\"') + 1;
+        char *end = strrchr(line, '\"');
+        if (start && end && start < end) {
+            size_t length = end - start;
+            strncpy(includePath, start, length);
+            includePath[length] = '\0';
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void getDirectoryFromFilePath(const char *filePath, char *directory) {
+    strcpy(directory, filePath);
+    char *lastSlash = strrchr(directory, '/');
+    if (lastSlash != NULL) {
+        *lastSlash = '\0'; // Null-terminate at the last slash
+    } else {
+        // Handle the case where there is no slash in the path
+        strcpy(directory, ".");
+    }
+}
+
+Errno openLocalIncludeFile(Editor *editor, const char *includePath) {
+    char fullPath[512]; // Buffer for the full path
+    char directory[256]; // Buffer for the directory
+
+    // Get the directory of the current file
+    getDirectoryFromFilePath(editor->file_path.items, directory);
+
+    // Construct the full path
+    snprintf(fullPath, sizeof(fullPath), "%s/%s", directory, includePath);
+
+    // Load the file using the full path
+    Errno load_err = editor_load_from_file(editor, fullPath);
+    if (load_err != 0) {
+        fprintf(stderr, "Error loading file %s: %s\n", fullPath, strerror(load_err));
+        return load_err;
+    }
+
+    printf("Opened file: %s\n", fullPath);
+    return 0;
+}
+
+bool extractGlobalIncludePath(Editor *editor, char *includePath) {
+    char line[512];
+    if (!extractLine(editor, editor->cursor, line, sizeof(line))) {
+        return false;
+    }
+
+    if (strncmp(line, "#include <", 10) == 0) {
+        char *start = strchr(line, '<') + 1;
+        char *end = strrchr(line, '>');
+        if (start && end && start < end) {
+            size_t length = end - start;
+            strncpy(includePath, start, length);
+            includePath[length] = '\0';
+            return true;
+        }
+    }
+
+    return false;
+}
+
+#include "unistd.h" // for F_OK
+Errno openGlobalIncludeFile(Editor *editor, const char *includePath) {
+    char fullPath[512]; // Buffer for the full path
+
+    // List of standard directories (expandable)
+    const char *standardDirs[] = {"/usr/include", NULL}; // NULL terminated array
+
+    for (int i = 0; standardDirs[i] != NULL; i++) {
+        snprintf(fullPath, sizeof(fullPath), "%s/%s", standardDirs[i], includePath);
+
+        // Check if the file exists and is accessible
+        if (access(fullPath, F_OK) != -1) {
+            // Try to load the file using the constructed full path
+            Errno load_err = editor_load_from_file(editor, fullPath);
+            if (load_err == 0) {
+                printf("Opened file: %s\n", fullPath);
+                return 0; // File opened successfully
+            }
+        }
+    }
+
+    // Print the error message only if the file is not found in /usr/include
+    fprintf(stderr, "Error: File %s not found in /usr/include\n", includePath);
+    return -1; // File not found in /usr/include
+}
+
+void editor_open_include(Editor *editor) {
+    char includePath[256];
+
+    if (extractLocalIncludePath(editor, includePath)) {
+        openLocalIncludeFile(editor, includePath);
+    } else if (extractGlobalIncludePath(editor, includePath)) {
+        openGlobalIncludeFile(editor, includePath);
+    }
+}
+
+
+
+
+
+
+
+
+
+
 // CLANG FORMAT TODO
 #include <stdlib.h>
 
@@ -1084,7 +1227,7 @@ int is_clang_format_installed() {
 
 void clang_format(const char *filename, const char *arguments) {
     if (!is_clang_format_installed()) {
-        printf("clang-format is not installed.\n");
+        printf("bruh clang-format is not installed.\n");
         return;
     }
 
@@ -1183,6 +1326,60 @@ void select_region_from_brace(Editor *editor) {
 // TODO select_function
 
 
+bool toggle_bool(Editor *editor) {
+    char word[256];
+    if (!extract_word_under_cursor(editor, word)) {
+        return false;
+    }
+
+    const char *replacement = NULL;
+    int difference = 0;
+    if (strcmp(word, "true") == 0) {
+        replacement = "false";
+        difference = 1; // "false" is 1 character longer than "true"
+    } else if (strcmp(word, "false") == 0) {
+        replacement = "true";
+        difference = -1; // "true" is 1 character shorter than "false"
+    } else {
+        return false;
+    }
+
+    // Find the start position of the word
+    size_t word_start = editor->cursor;
+    while (word_start > 0 && isalnum(editor->data.items[word_start - 1])) {
+        word_start--;
+    }
+
+    // Shift the buffer contents if necessary
+    if (difference != 0) {
+        memmove(&editor->data.items[word_start + strlen(replacement)],
+                &editor->data.items[word_start + strlen(word)],
+                editor->data.count - word_start - strlen(word));
+        editor->data.count += difference;
+    }
+
+    // Replace the word directly in the buffer
+    memcpy(&editor->data.items[word_start], replacement, strlen(replacement));
+
+    editor_retokenize(editor);
+    return true;  // Successfully toggled
+}
+
+
+void editor_quit() {
+    quit = true;
+}
+
+
+void editor_save_and_quit(Editor *e) {
+    editor_save(e);
+    quit = true;
+}
+
+
+
+
+
 
 
 // M-x
@@ -1202,8 +1399,8 @@ void register_command(struct hashmap *command_map, const char *name, void (*exec
 
 // TODO open-below && open-above && editor-enter behave weird
 void initialize_commands(struct hashmap *command_map) {
-    register_command(command_map, "open-below",      evil_open_below);
-    register_command(command_map, "open-above",      evil_open_above);
+    register_command(command_map, "open",      evil_open_below);
+    register_command(command_map, "opena",      evil_open_above);
     register_command(command_map, "drag-down",       editor_drag_line_down);
     register_command(command_map, "drag-up",         editor_drag_line_up);
     register_command(command_map, "editor-enter",    editor_enter);
@@ -1211,6 +1408,11 @@ void initialize_commands(struct hashmap *command_map) {
     register_command(command_map, "back",            emacs_backward_kill_word);
     register_command(command_map, "evil-join",       evil_join);
     register_command(command_map, "evil-yank-line",  evil_yank_line);
+    register_command(command_map, "open-include",    editor_open_include);
+    register_command(command_map, "toggle",          toggle_bool); // Wincompatible-function-pointer-types
+    register_command(command_map, "w",               editor_save);
+    register_command(command_map, "q",               editor_quit);
+    register_command(command_map, "wq",              editor_save_and_quit);
 }
 
 void execute_command(struct hashmap *command_map, Editor *editor, const char *command_name) {
@@ -1238,4 +1440,113 @@ uint64_t simple_string_hash(const void *item, uint64_t seed0, uint64_t seed1) {
     }
     return hash ^ seed1;
 }
+
+
+
+
+
+
+// TODO doesn't work 
+// VARIABLES DOCUMENTATION
+struct hashmap *variable_docs_map;
+
+void initialize_variable_docs_map(uint64_t seed0, uint64_t seed1) {
+    variable_docs_map = hashmap_new(
+        sizeof(VariableDoc), // Size of each element
+        16,                  // Initial capacity
+        seed0, seed1,        // Hash seeds
+        variable_doc_hash,   // Hash function
+        variable_doc_compare,// Compare function
+        NULL,                // Element free function (NULL if not needed)
+        NULL                 // User data for compare function (NULL if not needed)
+    );
+
+    if (!variable_docs_map) {
+        // Handle hashmap initialization failure
+        fprintf(stderr, "Failed to initialize variable documentation map\n");
+    }
+}
+
+
+bool document_variable(const char *name, const char *type, const char *description) {
+    // Check if the variable is already documented using the variable name as the key
+    if (hashmap_get(variable_docs_map, name) != NULL) {
+        // Variable already documented
+        return false;
+    }
+
+    VariableDoc *doc = malloc(sizeof(VariableDoc));
+    if (!doc) {
+        // Memory allocation failure
+        return false;
+    }
+
+    // Duplicate the strings to ensure they are properly managed
+    doc->var_name = strdup(name);
+    doc->var_type = strdup(type);
+    doc->description = strdup(description);
+
+    // Insert the new documentation into the map
+    // The hashmap_set function calculates the hash internally
+    if (hashmap_set(variable_docs_map, doc) == NULL) {
+        // Successfully documented the variable or replaced an existing one
+        return true;
+    } else {
+        // Cleanup in case of failure
+        free(doc->var_name);
+        free(doc->var_type);
+        free(doc->description);
+        free(doc);
+        return false;
+    }
+}
+
+
+
+// TODO type checking
+void initialize_variable_documentation() {
+    // Define hash seeds
+    uint64_t seed0 = 0x12345678;
+    uint64_t seed1 = 0x9ABCDEF0;
+
+    // Initialize the hashmap with seeds
+    initialize_variable_docs_map(seed0, seed1);
+
+    // Document variables
+    document_variable("zoom_factor", "float", "Controls the zoom level of the editor view.");
+    document_variable("showLineNumbers", "bool", "Determines whether line numbers are displayed.");
+    // Add more variables here...
+}
+
+
+
+void print_variable_doc(const char *var_name) {
+    VariableDoc *doc = (VariableDoc *)hashmap_get(variable_docs_map, var_name);
+    if (doc) {
+        printf("Variable Name: %s\nType: %s\nDescription: %s\n", doc->var_name, doc->var_type, doc->description);
+    } else {
+        printf("No documentation found for variable '%s'.\n", var_name);
+    }
+}
+
+
+
+uint64_t variable_doc_hash(const void *item, uint64_t seed0, uint64_t seed1) {
+    const char *str = item;
+    uint64_t hash = seed0;
+    while (*str) {
+        hash = 31 * hash + (*str++);
+    }
+    return hash ^ seed1;
+}
+
+
+int variable_doc_compare(const void *a, const void *b, void *udata) {
+    const VariableDoc *doc = a;
+    const char *key = b;
+    return strcmp(doc->var_name, key);
+}
+
+
+
 

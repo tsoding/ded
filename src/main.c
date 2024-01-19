@@ -169,143 +169,6 @@ void switch_to_font(FT_Library library, FT_Face *currentFace, Free_Glyph_Atlas *
     free_glyph_atlas_init(atlas, *currentFace);
 }
 
-
-
-
-
-// TODO tomove
-bool extractLine(Editor *editor, size_t cursor, char *line, size_t max_length) {
-    size_t start = cursor;
-    while (start > 0 && editor->data.items[start - 1] != '\n') {
-        start--;
-    }
-
-    size_t end = start;
-    while (end < editor->data.count && editor->data.items[end] != '\n') {
-        end++;
-    }
-
-    size_t length = end - start;
-    if (length < max_length) {
-        strncpy(line, &editor->data.items[start], length);
-        line[length] = '\0';
-        return true;
-    }
-
-    return false;
-}
-
-bool extractLocalIncludePath(Editor *editor, char *includePath) {
-    char line[512]; // Adjust size as needed
-    if (!extractLine(editor, editor->cursor, line, sizeof(line))) {
-        return false;
-    }
-
-    if (strncmp(line, "#include \"", 10) == 0) {
-        char *start = strchr(line, '\"') + 1;
-        char *end = strrchr(line, '\"');
-        if (start && end && start < end) {
-            size_t length = end - start;
-            strncpy(includePath, start, length);
-            includePath[length] = '\0';
-            return true;
-        }
-    }
-
-    return false;
-}
-
-void getDirectoryFromFilePath(const char *filePath, char *directory) {
-    strcpy(directory, filePath);
-    char *lastSlash = strrchr(directory, '/');
-    if (lastSlash != NULL) {
-        *lastSlash = '\0'; // Null-terminate at the last slash
-    } else {
-        // Handle the case where there is no slash in the path
-        strcpy(directory, ".");
-    }
-}
-
-Errno openLocalIncludeFile(Editor *editor, const char *includePath) {
-    char fullPath[512]; // Buffer for the full path
-    char directory[256]; // Buffer for the directory
-
-    // Get the directory of the current file
-    getDirectoryFromFilePath(editor->file_path.items, directory);
-
-    // Construct the full path
-    snprintf(fullPath, sizeof(fullPath), "%s/%s", directory, includePath);
-
-    // Load the file using the full path
-    Errno load_err = editor_load_from_file(editor, fullPath);
-    if (load_err != 0) {
-        fprintf(stderr, "Error loading file %s: %s\n", fullPath, strerror(load_err));
-        return load_err;
-    }
-
-    printf("Opened file: %s\n", fullPath);
-    return 0;
-}
-
-bool extractGlobalIncludePath(Editor *editor, char *includePath) {
-    char line[512];
-    if (!extractLine(editor, editor->cursor, line, sizeof(line))) {
-        return false;
-    }
-
-    if (strncmp(line, "#include <", 10) == 0) {
-        char *start = strchr(line, '<') + 1;
-        char *end = strrchr(line, '>');
-        if (start && end && start < end) {
-            size_t length = end - start;
-            strncpy(includePath, start, length);
-            includePath[length] = '\0';
-            return true;
-        }
-    }
-
-    return false;
-}
-
-Errno openGlobalIncludeFile(Editor *editor, const char *includePath) {
-    char fullPath[512]; // Buffer for the full path
-
-    // List of standard directories (expandable)
-    const char *standardDirs[] = {"/usr/include", NULL}; // NULL terminated array
-
-    for (int i = 0; standardDirs[i] != NULL; i++) {
-        snprintf(fullPath, sizeof(fullPath), "%s/%s", standardDirs[i], includePath);
-
-        // Check if the file exists and is accessible
-        if (access(fullPath, F_OK) != -1) {
-            // Try to load the file using the constructed full path
-            Errno load_err = editor_load_from_file(editor, fullPath);
-            if (load_err == 0) {
-                printf("Opened file: %s\n", fullPath);
-                return 0; // File opened successfully
-            }
-        }
-    }
-
-    // Print the error message only if the file is not found in /usr/include
-    fprintf(stderr, "Error: File %s not found in /usr/include\n", includePath);
-    return -1; // File not found in /usr/include
-}
-
-
-
-
-void editor_open_include(Editor *editor) {
-    char includePath[256];
-
-    if (extractLocalIncludePath(editor, includePath)) {
-        openLocalIncludeFile(editor, includePath);
-    } else if (extractGlobalIncludePath(editor, includePath)) {
-        openGlobalIncludeFile(editor, includePath);
-    }
-}
-
-
 // TODO: display errors reported via flash_error right in the text editor window somehow
 #define flash_error(...) do { fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); } while(0)
 
@@ -316,11 +179,15 @@ int main(int argc, char **argv)
     initialize_themes();
     initialize_shader_paths();
     load_snippets_from_directory();
+    
 
     // Define hash seeds (these could be randomly generated for more robustness)
     uint64_t seed0 = 0x12345678;
     uint64_t seed1 = 0x9ABCDEF0;
 
+    initialize_variable_docs_map(seed0, seed1);
+    initialize_variable_documentation();
+    
     // Allocate and initialize the commands hashmap
     editor.commands = hashmap_new(
         sizeof(Command), // Size of each element
@@ -479,7 +346,7 @@ int main(int argc, char **argv)
     editor_retokenize(&editor);
 
     
-    bool quit = false;
+    /* bool quit = false; */
     bool file_browser = false;
 
     while (!quit) {
@@ -627,7 +494,7 @@ int main(int argc, char **argv)
 
                 case SDLK_t: {
                   if (SDL_GetModState() & KMOD_CTRL) {
-                    isAnimated = !isAnimated;  // Toggle the state
+                    followCursor = !followCursor;  // Toggle the state
                   }
                 }
                   break;
@@ -707,7 +574,7 @@ int main(int argc, char **argv)
 
                     case SDLK_t: {
                         if (SDL_GetModState() & KMOD_CTRL) {
-                            isAnimated = !isAnimated;  // Toggle the state
+                            followCursor = !followCursor;  // Toggle the state
                         }
                     }
                     break;
@@ -811,14 +678,34 @@ int main(int argc, char **argv)
                     SDL_Event tmpEvent; // Declare once at the beginning of the switch block
 
                     case SDLK_RETURN: {
-                        if (editor.searching) {
-                            editor_stop_search_and_mark(&editor);
-                            current_mode = NORMAL;
-                        } else {
+                        if (!toggle_bool(&editor)) {
                             editor_open_include(&editor);
                         }
                     } break;
 
+                    case SDLK_SEMICOLON:
+                        if (event.key.keysym.mod & KMOD_SHIFT) {
+                            current_mode = MINIBUFFER;
+                            evil_command_active = true;
+                            editor.minibuffer_active = true;
+                            
+                            // Consume the next SDL_TEXTINPUT event for ':'
+                            SDL_Event tmpEvent;
+                            SDL_PollEvent(&tmpEvent);
+                            if (tmpEvent.type != SDL_TEXTINPUT || tmpEvent.text.text[0] != ':') {
+                                SDL_PushEvent(&tmpEvent); // Push the event back if it's not the one we're trying to consume
+                            }
+                            
+                            // TODO ivy
+                            /* if (!ivy) { */
+                            /*     minibufferHeight += 189; */
+                            /*     ivy = true; */
+                            /* } */
+                        }
+                        break;
+
+
+                        
                     case SDLK_d:
                         if (event.key.keysym.mod & KMOD_SHIFT) {
                             emacs_kill_line(&editor);
@@ -853,9 +740,9 @@ int main(int argc, char **argv)
 
 
                     case SDLK_ESCAPE: {
-                        if (minibuffering) {
+                        if (ivy) {
                             minibufferHeight -= 189;
-                            minibuffering = false;
+                            ivy = false;
                         }
 
                         if (editor.minibuffer_active) {
@@ -877,10 +764,10 @@ int main(int argc, char **argv)
                             } else {
                                 editor_goto_anchor_and_clear(&editor);
                             }
-                        } else if (!minibuffering) {
+                        } else if (!ivy) {
                             // TODO time delay whichkey
                             minibufferHeight += 189;
-                            minibuffering = true;
+                            ivy = true;
                         }
                     }
                     break;
@@ -910,7 +797,7 @@ int main(int argc, char **argv)
 
                     case SDLK_o:
                         if (superDrammtic) {
-                            isAnimated = true;
+                            followCursor = true;
                         }
                         if (SDL_GetModState() & KMOD_SHIFT) {
                             evil_open_above(&editor);
@@ -960,7 +847,7 @@ int main(int argc, char **argv)
 
                   case SDLK_t: {
                     if (SDL_GetModState() & KMOD_CTRL) {
-                      isAnimated = !isAnimated;  // Toggle the state
+                      followCursor = !followCursor;  // Toggle the state
                     }
                   }
                     break;
@@ -989,7 +876,7 @@ int main(int argc, char **argv)
                   } break;
 
                   case SDLK_SLASH: {
-                    current_mode = INSERT;
+                    current_mode = MINIBUFFER;
                     editor.last_stroke = SDL_GetTicks();
                     editor_start_search(&editor);
 
@@ -1050,7 +937,7 @@ int main(int argc, char **argv)
                         if (event.key.keysym.mod & KMOD_CTRL) {
                             // Ctrl+S is pressed
                             editor_start_search(&editor);
-                            current_mode = INSERT;
+                            current_mode = MINIBUFFER;
                         } else {
                             // Either S or Shift+S is pressed
                             if (event.key.keysym.mod & KMOD_SHIFT) {
@@ -1094,7 +981,6 @@ int main(int argc, char **argv)
                     }
                   } break;
 
-
                     case SDLK_i:
                         if (SDL_GetModState() & KMOD_CTRL) {
                             showIndentationLines = !showIndentationLines;
@@ -1112,10 +998,8 @@ int main(int argc, char **argv)
                             }
 
                             if (superDrammtic){
-                                isAnimated = true;
+                                followCursor = true;
                             }
-                            
-                            // This section is executed for both Shift and no modifier
                             editor.last_stroke = SDL_GetTicks();
                             
                             // Eat up the next SDL_TEXTINPUT event for 'i' or 'I'
@@ -1126,14 +1010,7 @@ int main(int argc, char **argv)
                             }
                         }
                         break;
-                        
-                        
-
-
-
-
-
-                        
+                                          
                   case SDLK_v: {
                     if (SDL_GetModState() & KMOD_SHIFT) {
                       current_mode = VISUAL_LINE;
@@ -1153,7 +1030,7 @@ int main(int argc, char **argv)
                   case SDLK_a:
                     editor.last_stroke = SDL_GetTicks();
                     if (superDrammtic){
-                        isAnimated = true;
+                        followCursor = true;
                     }
                     if (SDL_GetModState() & KMOD_SHIFT) { // Check if shift is being held
                       editor_move_to_line_end(&editor);
@@ -1171,15 +1048,6 @@ int main(int argc, char **argv)
                     }
                     break;
 
-                      current_mode = INSERT;
-
-                      // Eat up the next SDL_TEXTINPUT event for 'a'
-                      SDL_PollEvent(&tmpEvent); // This will typically be the SDL_TEXTINPUT event for 'a'
-                      if (tmpEvent.type != SDL_TEXTINPUT || tmpEvent.text.text[0] != 'a') {
-                        SDL_PushEvent(&tmpEvent); // If it's not, push it back to the event queue
-                      }
-                      break;
-
                     case SDLK_x:
                         if (editor.selection) {
                             editor_clipboard_copy(&editor);
@@ -1187,7 +1055,7 @@ int main(int argc, char **argv)
                             editor.selection = false;
                         } else if (event.key.keysym.mod & KMOD_ALT) {
                             if (!M_x_active) {
-                                current_mode = INSERT;
+                                current_mode = MINIBUFFER;
                                 M_x_active = true;
                                 editor.minibuffer_active = true;
 
@@ -1200,9 +1068,9 @@ int main(int argc, char **argv)
                             }
                             
                             // TODO ivy
-                            /* if (!minibuffering) { */
+                            /* if (!ivy) { */
                             /*     minibufferHeight += 189; */
-                            /*     minibuffering = true; */
+                            /*     ivy = true; */
                             /* } */
                         } else if (event.key.keysym.mod & KMOD_SHIFT) {
                             evil_delete_backward_char(&editor);
@@ -1255,7 +1123,7 @@ int main(int argc, char **argv)
                         
                   case SDLK_j:
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                    if ((event.key.keysym.mod & KMOD_ALT) && !isAnimated) {
+                    if ((event.key.keysym.mod & KMOD_ALT) && !followCursor) {
                       move_camera(&sr, "down", 50.0f);
                     } else if (event.key.keysym.mod & KMOD_CTRL) {
                       evil_open_above(&editor);
@@ -1271,7 +1139,7 @@ int main(int argc, char **argv)
 
                   case SDLK_k:
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                    if ((event.key.keysym.mod & KMOD_ALT) && !isAnimated) {
+                    if ((event.key.keysym.mod & KMOD_ALT) && !followCursor) {
                       move_camera(&sr, "up", 50.0f);
                     } else if (event.key.keysym.mod & KMOD_CTRL) {
                       emacs_kill_line(&editor);
@@ -1611,61 +1479,8 @@ int main(int argc, char **argv)
                       editor.last_stroke = SDL_GetTicks();
                       break;
 
-                  // TODO use editor_return()
-                  case SDLK_RETURN: {
-                    if (editor.searching) {
-                      editor_stop_search_and_mark(&editor);
-                      current_mode = NORMAL;
-                    } else if (editor.minibuffer_active) {
-                        sb_append_null(&editor.minibuffer_text); // null termination
-                        execute_command(editor.commands, &editor, editor.minibuffer_text.items);
-                        editor.minibuffer_text.count = 0;
-                        editor.minibuffer_active = false;
-                        M_x_active = false;
-                        current_mode = NORMAL;
-                    }
-                    else {
-                      size_t row = editor_cursor_row(&editor);
-                      size_t line_end = editor.lines.items[row].end;
-
-                      editor_insert_char(&editor, '\n');
-                      size_t line_begin = editor.lines.items[row].begin;
-                      bool inside_braces = false;
-                      
-                      // Check if the line contains an opening brace '{'
-                      for (size_t i = line_begin; i < line_end; ++i) {
-                        char c = editor.data.items[i];
-                        if (c == '{') {
-                          inside_braces = true;
-                          break;
-                        }
-                      }
-                      
-                      // Insert the same whitespace character
-                      for (size_t i = line_begin; i < line_end; ++i) {
-                        char c = editor.data.items[i];
-                        if (c == ' ' || c == '\t') {
-                          editor_insert_char(&editor, c);
-                        } else {
-                          break;
-                        }
-                      }
-                      
-                      // If inside braces, perform additional steps
-                      if (inside_braces) {
-                        editor_move_line_up(&editor);
-                        editor_move_to_line_end(&editor);
-                        editor_insert_char(&editor, '\n');
-                        
-                        // Add indentation
-                        for (size_t i = 0; i < indentation; ++i) {
-                          editor_insert_char(&editor, ' ');
-                        }
-                      }
-                      
-                      editor.last_stroke = SDL_GetTicks();
-                    }
-                  }
+                  case SDLK_RETURN:
+                      editor_enter(&editor);
                   break;
                     
                     case SDLK_f: {
@@ -1677,7 +1492,7 @@ int main(int argc, char **argv)
 
                     case SDLK_ESCAPE: {
                         if (superDrammtic){
-                            isAnimated = false;
+                            followCursor = false;
                         }
 
                         if (editor.searching) {
@@ -1893,6 +1708,50 @@ int main(int argc, char **argv)
               }
               break;
 
+                case MINIBUFFER:
+                    switch (event.key.keysym.sym) {
+
+                    case SDLK_ESCAPE: {
+                        if (ivy) {
+                            minibufferHeight -= 189;
+                            ivy = false;
+                        }
+
+                        if (editor.searching) {
+                            editor_clear_mark(&editor);
+                            editor_stop_search(&editor);
+                        } else if (editor.minibuffer_active) {
+                            editor.minibuffer_text.count = 0;
+                            M_x_active = false;
+                            editor.minibuffer_active = false;
+                        }
+                        current_mode = NORMAL;
+                    }
+                    break;
+                
+                    case SDLK_BACKSPACE:
+                        if (editor.selection) {
+                            // TODO once we have selection in the minibuffer
+                            /* editor_clipboard_copy(&editor); */
+                            /* editor_delete_selection(&editor); */
+                            /* editor.selection = false; */
+                        } else if (event.key.keysym.mod & KMOD_CTRL) {
+                            emacs_backward_kill_word(&editor);
+                            editor.last_stroke = SDL_GetTicks();
+                        }else{
+                            editor_backspace(&editor);
+                        }
+                        editor.last_stroke = SDL_GetTicks();
+                        break;
+                      
+                    // TODO use editor_enter()
+                    case SDLK_RETURN: {
+                        editor_enter(&editor);
+                    }
+                    break;
+                }
+                break;
+
               // More cases for other modes can follow here...
               // ...
                 }
@@ -1904,7 +1763,8 @@ int main(int argc, char **argv)
             case SDL_TEXTINPUT:
               if (file_browser) {
                 // Once we have incremental search in the file browser this may become useful
-              } else if (current_mode == INSERT || current_mode == EMACS) { // Process text input
+                // or to edit file names or create files/direcory
+              } else if (current_mode == INSERT || current_mode == EMACS || current_mode == MINIBUFFER) { // Process text input
                 const char *text = event.text.text;
                 size_t text_len = strlen(text);
                 for (size_t i = 0; i < text_len; ++i) {
@@ -1930,7 +1790,12 @@ int main(int argc, char **argv)
         } else {
           editor_render(window, &atlas, &sr, &editor);
           render_search_text(&atlas, &sr, &editor);
-          render_M_x(&atlas, &sr, &editor);
+          if (M_x_active){
+              render_minibuffer_content(&atlas, &sr, &editor, "M-x");
+          } else if (evil_command_active) {
+              render_minibuffer_content(&atlas, &sr, &editor, ":");
+          }
+            print_variable_doc("zoom_factor");
         }
 
         SDL_GL_SwapWindow(window);
@@ -1940,7 +1805,7 @@ int main(int argc, char **argv)
             SDL_Delay(delta_time_ms - duration);
         }
     }
-    free_snippet_array(&snippets);
+    free_snippet_array(&snippets); // TODO
     return 0;
 }
 

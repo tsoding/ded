@@ -30,7 +30,7 @@ void free_snippet_array(SnippetArray *a) {
 
 
 void load_snippets_from_directory() {
-    const char* home = getenv("HOME");
+    const char * home = getenv("HOME");
     if (!home) {
         fprintf(stderr, "ERROR: HOME environment variable not set.\n");
         return;

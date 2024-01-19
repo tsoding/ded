@@ -44,6 +44,7 @@ typedef enum {
     TOKEN_POINTER,
     TOKEN_TYPE,
     TOKEN_FUNCTION_DEFINITION,
+    TOKEN_NULL,
   } Token_Kind;
 
 const char *token_kind_name(Token_Kind kind);

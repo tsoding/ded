@@ -45,8 +45,9 @@ void emacs_kill_line(Editor *e) {
     editor_retokenize(e);
 }
 
+// TODO make this work also on search and minibuffer
 void emacs_backward_kill_word(Editor *e) {
-    editor_stop_search(e); // TODO make this work also on search
+    editor_stop_search(e); 
 
     size_t start_pos = e->cursor;
 

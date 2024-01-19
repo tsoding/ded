@@ -2,7 +2,7 @@
 #include "common.h"
 
 int currentThemeIndex = 0;
-Theme themes[6];
+Theme themes[7];
 
 void initialize_themes() {
 
@@ -58,6 +58,7 @@ void initialize_themes() {
         .modeline_accent = hex_to_vec4f(0x658B5FFF),
         .whitespace = hex_to_vec4f(0x171717FF),
         .indentation_line = hex_to_vec4f(0x171717FF),
+        .null = hex_to_vec4f(0x564F96FF),
     };
 
     // DOOM one
@@ -112,6 +113,7 @@ void initialize_themes() {
         .modeline_accent = hex_to_vec4f(0x51AFEFFF),
         .whitespace = hex_to_vec4f(0x3F444AFF),
         .indentation_line = hex_to_vec4f(0x3F444AFF),
+        .null = hex_to_vec4f(0xA9A1E1FF),
     };
 
     // Dracula
@@ -166,6 +168,7 @@ void initialize_themes() {
         .modeline_accent = hex_to_vec4f(0xBD93F9FF),
         .whitespace = hex_to_vec4f(0x565761FF),
         .indentation_line = hex_to_vec4f(0x565761FF),
+        .null = hex_to_vec4f(0x8BE9FDFF),
     };
 
     // DOOM city lights
@@ -220,6 +223,7 @@ void initialize_themes() {
         .modeline_accent = hex_to_vec4f(0x5EC4FFFF),
         .whitespace = hex_to_vec4f(0x384551FF),
         .indentation_line = hex_to_vec4f(0x384551FF),
+        .null = hex_to_vec4f(0xE27E8DFF),
     };
 
 
@@ -275,27 +279,28 @@ void initialize_themes() {
         .modeline_accent = hex_to_vec4f(0xB6E63EFF),
         .whitespace = hex_to_vec4f(0x4E4E4EFF),
         .indentation_line = hex_to_vec4f(0x4E4E4EFF),
+        .null = hex_to_vec4f(0xFD971FFF),
     };
 
     
 
     // Palenight
-    themes[5] = (Theme) {
-        .cursor = hex_to_vec4f(0xC792EAFF), //#C792EA
+    themes[5] = (Theme){
+        .cursor = hex_to_vec4f(0xC792EAFF), // #C792EA
         .insert_cursor = hex_to_vec4f(0xC792EAFF),
-        .emacs_cursor = hex_to_vec4f(0xFFCB6BFF), //#FFCB6B
+        .emacs_cursor = hex_to_vec4f(0xFFCB6BFF), // #FFCB6B
         .text = hex_to_vec4f(0xEEFFFFFF),
         .background = hex_to_vec4f(0x292D3EFF),
         .comment = hex_to_vec4f(0x676E95FF),
-        .hashtag = hex_to_vec4f(0x89DDFFFF), //#89DDFF
+        .hashtag = hex_to_vec4f(0x89DDFFFF), // #89DDFF
         .logic = hex_to_vec4f(0x89DDFFFF),
-        .string = hex_to_vec4f(0xC3E88DFF),  //#C3E88D
+        .string = hex_to_vec4f(0xC3E88DFF), // #C3E88D
         .selection = hex_to_vec4f(0x3C435EFF),
         .search = hex_to_vec4f(0x4E5579FF),
         .todo = hex_to_vec4f(0xFFCB6BFF),
         .line_numbers = hex_to_vec4f(0x676E95FF),
         .current_line_number = hex_to_vec4f(0xEEFFFFFF),
-        .fixme = hex_to_vec4f(0xFF5370FF), //#FF5370
+        .fixme = hex_to_vec4f(0xFF5370FF), // #FF5370
         .note = hex_to_vec4f(0xC3E88DFF),
         .bug = hex_to_vec4f(0xFF5370FF),
         .not_equals = hex_to_vec4f(0xFF5370FF),
@@ -313,13 +318,13 @@ void initialize_themes() {
         .arrow = hex_to_vec4f(0xFFCB6BFF),
         .open_square = hex_to_vec4f(0xEEFFFFFF),
         .close_square = hex_to_vec4f(0xEEFFFFFF),
-        .array_content = hex_to_vec4f(0x82AAFFFF), //#82AAFF
+        .array_content = hex_to_vec4f(0x82AAFFFF), // #82AAFF
         .link = hex_to_vec4f(0x89DDFFFF),
         .logic_or = hex_to_vec4f(0xFF5370FF),
         .pipe = hex_to_vec4f(0xC3E88DFF),
         .ampersand = hex_to_vec4f(0x89DDFFFF),
         .logic_and = hex_to_vec4f(0xC3E88DFF),
-        .pointer = hex_to_vec4f(0xF78C6CFF), //#F78C6C
+        .pointer = hex_to_vec4f(0xF78C6CFF), // #F78C6C
         .multiplication = hex_to_vec4f(0xC3E88DFF),
         .matching_parenthesis = hex_to_vec4f(0x3C435EFF),
         .hl_line = hex_to_vec4f(0x242837FF),
@@ -331,7 +336,67 @@ void initialize_themes() {
         .modeline_accent = hex_to_vec4f(0xC792EAFF),
         .whitespace = hex_to_vec4f(0x4E5579FF),
         .indentation_line = hex_to_vec4f(0x4E5579FF),
+        .null = hex_to_vec4f(0xF78C6CFF),
     };
+
+
+    // SUNSET
+    themes[6] = (Theme) {
+        .cursor = hex_to_vec4f(0xD9A173FF), //#D9A173
+        .insert_cursor = hex_to_vec4f(0xD46A7DFF), //#D46A7D
+        .emacs_cursor = hex_to_vec4f(0x9A8B6AFF), //#9A8B6A
+        .text = hex_to_vec4f(0xCCCCC5FF),
+        .background = hex_to_vec4f(0x0C0D12FF),
+        .comment = hex_to_vec4f(0x8E8E89FF),
+        .hashtag = hex_to_vec4f(0xD9A173FF),
+        .logic = hex_to_vec4f(0xD9A173FF),
+        .string = hex_to_vec4f(0x6A7E74FF), //#6A7E74
+        .selection = hex_to_vec4f(0x28292DFF),
+        .search = hex_to_vec4f(0x805F44FF), //#805F44
+        .todo = hex_to_vec4f(0x9A8B6AFF), 
+        .line_numbers = hex_to_vec4f(0x1B1B21FF),
+        .current_line_number = hex_to_vec4f(0xCCCCC5FF),
+        .fixme = hex_to_vec4f(0xC06873FF), //#C06873
+        .note = hex_to_vec4f(0x6A7E74FF), 
+        .bug = hex_to_vec4f(0xC06873FF),
+        .not_equals = hex_to_vec4f(0xD46A7DFF),
+        .exclamation = hex_to_vec4f(0xD46A7DFF),
+        .equals = hex_to_vec4f(0x6A7E74FF),
+        .equals_equals = hex_to_vec4f(0x6A7E74FF),
+        .greater_than = hex_to_vec4f(0x6A7E74FF),
+        .less_than = hex_to_vec4f(0xC06873FF),
+        .marks = hex_to_vec4f(0x805F44FF),
+        .fb_selection = hex_to_vec4f(0x28292DFF),
+        .plus = hex_to_vec4f(0x6A7E74FF),
+        .minus = hex_to_vec4f(0xD46A7DFF),
+        .truee = hex_to_vec4f(0x6A7E74FF),
+        .falsee = hex_to_vec4f(0xD46A7DFF),
+        .arrow = hex_to_vec4f(0xCCCCC5FF),
+        .open_square = hex_to_vec4f(0xCCCCC5FF),
+        .close_square = hex_to_vec4f(0xCCCCC5FF),
+        .array_content = hex_to_vec4f(0xCCCCC5FF),
+        .link = hex_to_vec4f(0xD9A173FF),
+        .logic_or = hex_to_vec4f(0xD46A7DFF),
+        .pipe = hex_to_vec4f(0x6A7E74FF),
+        .ampersand = hex_to_vec4f(0x6A7E74FF),
+        .logic_and = hex_to_vec4f(0x6A7E74FF),
+        .pointer = hex_to_vec4f(0xD9A173FF),
+        .multiplication = hex_to_vec4f(0x6A7E74FF),
+        .matching_parenthesis = hex_to_vec4f(0x28292DFF),
+        .hl_line = hex_to_vec4f(0x0A0B0FFF),
+        .type = hex_to_vec4f(0x9A8B6AFF),
+        .function_definition = hex_to_vec4f(0xE07084FF), //#E07084
+        .anchor = hex_to_vec4f(0xE07084FF),
+        .minibuffer = hex_to_vec4f(0x0C0D12FF),
+        .modeline = hex_to_vec4f(0x08090CFF),
+        .modeline_accent = hex_to_vec4f(0xD9A173FF),
+        .whitespace = hex_to_vec4f(0x1B1B21FF),
+        .indentation_line = hex_to_vec4f(0x28292DFF),
+        .null = hex_to_vec4f(0xD46A7DFF),
+    };
+
+
+
  }
 
 void theme_next(int *currentThemeIndex) {

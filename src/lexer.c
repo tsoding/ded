@@ -428,6 +428,32 @@ Token lexer_next(Lexer *l)
         return token;
     }
 
+    // single quote
+    if (l->content[l->cursor] == '\'') {
+        token.kind = TOKEN_STRING;
+        lexer_chop_char(l, 1);
+        while (l->cursor < l->content_len && l->content[l->cursor] != '\'' && l->content[l->cursor] != '\n') {
+            lexer_chop_char(l, 1);
+        }
+        if (l->cursor < l->content_len) {
+            lexer_chop_char(l, 1);
+        }
+        token.text_len = &l->content[l->cursor] - token.text;
+        return token;
+    }
+
+    // "NULL"
+    if ((l->cursor + 3 < l->content_len) &&
+        (strncmp(&l->content[l->cursor], "NULL", 4) == 0) &&
+        ((l->cursor + 4 == l->content_len) || !isalnum(l->content[l->cursor + 4]))) {
+        
+        lexer_chop_char(l, 4); // Skip the entire "NULL" token
+        token.kind = TOKEN_NULL;
+        token.text_len = 4;
+        return token;
+    }
+
+    
     if (l->content[l->cursor] == '#') {
         if (l->cursor + 6 < l->content_len && is_hex_digit(l->content[l->cursor + 1])
             && is_hex_digit(l->content[l->cursor + 2])
@@ -465,6 +491,24 @@ Token lexer_next(Lexer *l)
         return token;
     }
 
+    // TODO 
+    // multi-line comments
+    /* if (lexer_starts_with(l, "/\*")) { */
+    /*     token.kind = TOKEN_COMMENT;  // Assuming you use the same token kind for single and multi-line comments */
+    /*     lexer_chop_char(l, 2);  // Skip the "/\*" */
+        
+    /*     while (l->cursor + 1 < l->content_len) { */
+    /*         if (l->content[l->cursor] == '*' && l->content[l->cursor + 1] == '/') { */
+    /*             lexer_chop_char(l, 2);  // Skip the "*\/" */
+    /*             break; */
+    /*         } */
+    /*         lexer_chop_char(l, 1); */
+    /*     } */
+        
+    /*     token.text_len = &l->content[l->cursor] - token.text; */
+    /*     return token; */
+    /* } */
+    
     // FUNCTION DEFINITION
     if (l->cursor < l->content_len && is_symbol_start(l->content[l->cursor])) {
         // Save the start position of the potential function name
