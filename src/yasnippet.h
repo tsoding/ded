@@ -23,7 +23,6 @@ void init_snippet_array(SnippetArray *a, size_t initial_size);
 void insert_snippet(SnippetArray *a, Snippet snippet);
 void free_snippet_array(SnippetArray *a);
 void load_snippets_from_directory();
-bool get_word_left_of_cursor(Editor *e, char *word, size_t max_word_length);
 void activate_snippet(Editor *e);
 
 

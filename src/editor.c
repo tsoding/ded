@@ -1365,17 +1365,130 @@ bool toggle_bool(Editor *editor) {
     return true;  // Successfully toggled
 }
 
-
 void editor_quit() {
     quit = true;
 }
-
 
 void editor_save_and_quit(Editor *e) {
     editor_save(e);
     quit = true;
 }
 
+
+
+
+
+bool extract_word_left_of_cursor(Editor *e, char *word, size_t max_word_length) {
+    if (e->cursor == 0 || !isalnum(e->data.items[e->cursor - 1])) {
+        return false;
+    }
+
+    size_t end = e->cursor;
+    size_t start = end;
+
+    while (start > 0 && isalnum(e->data.items[start - 1])) {
+        start--;
+    }
+
+    size_t word_length = end - start;
+    if (word_length >= max_word_length) {
+        return false;
+    }
+
+    memcpy(word, &e->data.items[start], word_length);
+    word[word_length] = '\0';
+    e->cursor = start;
+    return true;
+}
+
+
+
+
+
+#define MAX_MATCHES 1024
+#define MAX_WORD_LENGTH 256
+
+// TODO cycle
+// TODO bad match sometimes i invoke it and it does nothing
+
+void evil_complete_next(Editor *e) {
+    static char last_word[MAX_WORD_LENGTH] = {0};
+    static size_t last_match_index = 0;
+    char current_word[MAX_WORD_LENGTH];
+
+    if (!extract_word_left_of_cursor(e, current_word, sizeof(current_word))) {
+        printf("No word to complete.\n");
+        return;
+    }
+
+    if (strcmp(last_word, current_word) != 0) {
+        strcpy(last_word, current_word);
+        last_match_index = 0;
+    }
+
+    char *matches[MAX_MATCHES];
+    size_t matches_count = 0;
+    find_matches_in_editor_data(e, current_word, matches, &matches_count);
+
+    if (matches_count == 0) {
+        printf("Pattern not found.\n");
+        return;
+    }
+
+    const char *next_match = matches[last_match_index % matches_count];
+    size_t next_match_length = strlen(next_match);
+    size_t current_word_length = strlen(current_word);
+
+    // Adjust the buffer size and content
+    if (next_match_length != current_word_length) {
+        memmove(&e->data.items[e->cursor + next_match_length],
+                &e->data.items[e->cursor + current_word_length],
+                e->data.count - e->cursor);
+        e->data.count += next_match_length - current_word_length;
+    }
+
+    // Replace the current word with the match
+    memcpy(&e->data.items[e->cursor], next_match, next_match_length);
+
+    // Update the cursor position to the end of the new word
+    e->cursor += next_match_length;
+
+    last_match_index++;
+
+    // Clean up
+    for (size_t i = 0; i < matches_count; i++) {
+        free(matches[i]);
+    }
+    editor_retokenize(e);
+}
+
+void find_matches_in_editor_data(Editor *e, const char *word, char **matches, size_t *matches_count) {
+    size_t word_length = strlen(word);
+    *matches_count = 0;
+    char *data = e->data.items;
+    size_t data_length = e->data.count;
+
+    for (size_t i = 0; i < data_length; i++) {
+        if (isalnum(data[i]) && (i == 0 || !isalnum(data[i - 1]))) {
+            // Found the start of a word
+            if (strncmp(&data[i], word, word_length) == 0) {
+                // Found a matching word, now find the end of the word
+                size_t word_end = i + 1;
+                while (word_end < data_length && isalnum(data[word_end])) {
+                    word_end++;
+                }
+
+                size_t match_length = word_end - i;
+                if (*matches_count < MAX_MATCHES) {
+                    matches[*matches_count] = malloc(match_length + 1);
+                    strncpy(matches[*matches_count], &data[i], match_length);
+                    matches[*matches_count][match_length] = '\0';
+                    (*matches_count)++;
+                }
+            }
+        }
+    }
+}
 
 
 

@@ -76,41 +76,12 @@ void load_snippets_from_directory() {
     closedir(dir);
 }
 
-
-bool get_word_left_of_cursor(Editor *e, char *word, size_t max_word_length) {
-    if (e->cursor == 0 || !(isalnum(e->data.items[e->cursor - 1]) || e->data.items[e->cursor - 1] == '<')) {
-        return false; // No word or symbol directly to the left of the cursor
-    }
-
-    size_t end = e->cursor;
-    size_t start = end;
-
-    // Move start to the left while the character is alphanumeric or specific symbols
-    while (start > 0 && (isalnum(e->data.items[start - 1]) || e->data.items[start - 1] == '<')) {
-        start--;
-    }
-
-    size_t word_length = end - start;
-    if (word_length >= max_word_length) {
-        return false; // Word is too long for the buffer
-    }
-
-    memcpy(word, &e->data.items[start], word_length);
-    word[word_length] = '\0'; // Null-terminate the word
-
-    e->cursor = start; // Move cursor to the start of the word
-    printf("Extracted word: '%s'\n", word);
-    return true;
-}
-
-
-
 // ORIGINAL
 /* void activate_snippet(Editor *e) { */
 /*     char word[MAX_SNIPPET_KEY_LENGTH]; */
 /*     size_t original_cursor_position = e->cursor; // Save the original cursor position */
 
-/*     if (!get_word_left_of_cursor(e, word, sizeof(word))) { */
+/*     if (!exctract_word_left_of_cursor(e, word, sizeof(word))) { */
 /*         return; // No valid word found, so do nothing. */
 /*     } */
 
@@ -190,7 +161,7 @@ void activate_snippet(Editor *e) {
     char word[MAX_SNIPPET_KEY_LENGTH];
     size_t original_cursor_position = e->cursor; // Save the original cursor position
 
-    if (!get_word_left_of_cursor(e, word, sizeof(word))) {
+    if (!extract_word_left_of_cursor(e, word, sizeof(word))) {
         return; // No valid word found, so do nothing.
     }
 
@@ -276,7 +247,7 @@ void activate_snippet(Editor *e) {
 /*     char word[MAX_SNIPPET_KEY_LENGTH]; */
 /*     size_t original_cursor_position = e->cursor; // Save the original cursor position */
 
-/*     if (!get_word_left_of_cursor(e, word, sizeof(word))) { */
+/*     if (!exctract_word_left_of_cursor(e, word, sizeof(word))) { */
 /*         return; // No valid word found, so do nothing. */
 /*     } */
 

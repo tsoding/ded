@@ -179,13 +179,16 @@ int main(int argc, char **argv)
     initialize_themes();
     initialize_shader_paths();
     load_snippets_from_directory();
-    
+
 
     // Define hash seeds (these could be randomly generated for more robustness)
     uint64_t seed0 = 0x12345678;
     uint64_t seed1 = 0x9ABCDEF0;
 
-    initialize_variable_docs_map(seed0, seed1);
+    uint64_t seed2 = 0x1E7EDAD0;
+    uint64_t seed3 = 0x3E8A3D59;
+
+    initialize_variable_docs_map(seed2, seed3);
     initialize_variable_documentation();
     
     // Allocate and initialize the commands hashmap
@@ -1235,6 +1238,16 @@ int main(int argc, char **argv)
                       editor.selection = false;
                     }
                     break;
+
+
+                    case SDLK_n: {
+                        if (SDL_GetModState() & KMOD_CTRL) {
+                            evil_complete_next(&editor);
+                            editor.last_stroke = SDL_GetTicks();
+                        }                      
+                    }
+                    break;
+
                     
                     case SDLK_SPACE: {
                         if (SDL_GetModState() & KMOD_CTRL) {
@@ -1790,12 +1803,21 @@ int main(int argc, char **argv)
         } else {
           editor_render(window, &atlas, &sr, &editor);
           render_search_text(&atlas, &sr, &editor);
+
+          
+          
+          if (fb.file_extension.items != NULL && strcmp(fb.file_extension.items, "md") == 0) {
+              render_markdown(&atlas, &sr, &editor, &fb);
+          }
+
+ 
+          
           if (M_x_active){
               render_minibuffer_content(&atlas, &sr, &editor, "M-x");
           } else if (evil_command_active) {
               render_minibuffer_content(&atlas, &sr, &editor, ":");
           }
-            print_variable_doc("zoom_factor");
+          /* print_variable_doc("zoom_factor"); */
         }
 
         SDL_GL_SwapWindow(window);

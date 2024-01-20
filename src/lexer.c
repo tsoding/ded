@@ -442,6 +442,7 @@ Token lexer_next(Lexer *l)
         return token;
     }
 
+
     // "NULL"
     if ((l->cursor + 3 < l->content_len) &&
         (strncmp(&l->content[l->cursor], "NULL", 4) == 0) &&

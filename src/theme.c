@@ -59,6 +59,7 @@ void initialize_themes() {
         .whitespace = hex_to_vec4f(0x171717FF),
         .indentation_line = hex_to_vec4f(0x171717FF),
         .null = hex_to_vec4f(0x564F96FF),
+        .code_block = hex_to_vec4f(0x080808FF),
     };
 
     // DOOM one
@@ -114,6 +115,7 @@ void initialize_themes() {
         .whitespace = hex_to_vec4f(0x3F444AFF),
         .indentation_line = hex_to_vec4f(0x3F444AFF),
         .null = hex_to_vec4f(0xA9A1E1FF),
+        .code_block = hex_to_vec4f(0x23272EFF),
     };
 
     // Dracula
@@ -169,6 +171,7 @@ void initialize_themes() {
         .whitespace = hex_to_vec4f(0x565761FF),
         .indentation_line = hex_to_vec4f(0x565761FF),
         .null = hex_to_vec4f(0x8BE9FDFF),
+        .code_block = hex_to_vec4f(0x23242FFF),
     };
 
     // DOOM city lights
@@ -224,6 +227,7 @@ void initialize_themes() {
         .whitespace = hex_to_vec4f(0x384551FF),
         .indentation_line = hex_to_vec4f(0x384551FF),
         .null = hex_to_vec4f(0xE27E8DFF),
+        .code_block = hex_to_vec4f(0x20282FFF),
     };
 
 
@@ -280,6 +284,7 @@ void initialize_themes() {
         .whitespace = hex_to_vec4f(0x4E4E4EFF),
         .indentation_line = hex_to_vec4f(0x4E4E4EFF),
         .null = hex_to_vec4f(0xFD971FFF),
+        .code_block = hex_to_vec4f(0x2D2E2EFF),
     };
 
     
@@ -337,6 +342,7 @@ void initialize_themes() {
         .whitespace = hex_to_vec4f(0x4E5579FF),
         .indentation_line = hex_to_vec4f(0x4E5579FF),
         .null = hex_to_vec4f(0xF78C6CFF),
+        .code_block = hex_to_vec4f(0x232635FF),
     };
 
 
@@ -393,6 +399,7 @@ void initialize_themes() {
         .whitespace = hex_to_vec4f(0x1B1B21FF),
         .indentation_line = hex_to_vec4f(0x28292DFF),
         .null = hex_to_vec4f(0xD46A7DFF),
+        .code_block = hex_to_vec4f(0x0B0C11FF),
     };
 
 

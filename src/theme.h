@@ -55,6 +55,7 @@ typedef struct {
     Vec4f whitespace;
     Vec4f indentation_line;
     Vec4f null;
+    Vec4f code_block;
 } Theme;
 
 

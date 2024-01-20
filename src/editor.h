@@ -96,8 +96,8 @@ typedef struct {
     size_t cursor;
 
     bool has_mark;            // Indicates if there's a marked search result.
-    size_t mark_start;        // Start of marked search result. TODO support multiple marks
-    size_t mark_end;          // End of marked search result.
+    size_t mark_start;
+    size_t mark_end;
 
     Uint32 last_stroke;
 
@@ -179,12 +179,19 @@ Errno openLocalIncludeFile(Editor *editor, const char *includePath);
 bool extractGlobalIncludePath(Editor *editor, char *includePath);
 Errno openGlobalIncludeFile(Editor *editor, const char *includePath);
 void editor_open_include(Editor *editor);
-
 bool toggle_bool(Editor *editor);
-
 
 void editor_quit();
 void editor_save_and_quit(Editor *e);
+
+void find_matches_in_editor_data(Editor *e, const char *word, char **matches, size_t *matches_count);
+void evil_complete_next(Editor *e);
+
+
+
+
+
+
 
 // UTILITY
 bool extractLine(Editor *editor, size_t cursor, char *line, size_t max_length);
@@ -195,6 +202,7 @@ bool editor_is_line_whitespaced(Editor *e, size_t row);
 float measure_whitespace_width(Free_Glyph_Atlas *atlas);
 float measure_whitespace_height(Free_Glyph_Atlas *atlas);
 size_t find_first_non_whitespace(const char* items, size_t begin, size_t end);
+bool exract_word_left_of_cursor(Editor *e, char *word, size_t max_word_length);
 
 
 // M-x

@@ -60,6 +60,14 @@ activate_snippet on "if" take two times to activate
 also editor_backspace take 3 times to delete []
 
 ** Editor
+in M-x if the input is a number go to that line in the editor if it exist
+dim a split the smaller it is []
+
+option to render whitespaces on selection []
+
+theme creator gui where colors update in real time []
+
+function to search code in a specific C case 
 
 map all variables to a string  and write the gui  to inspect variables st runtime and change them []
 

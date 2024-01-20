@@ -226,5 +226,26 @@ const char *fb_file_path(File_Browser *fb)
     sb_append_cstr(&fb->file_path, fb->files.items[fb->cursor]);
     sb_append_null(&fb->file_path);
 
+    extract_file_extension(fb->files.items[fb->cursor], &fb->file_extension); //added
+    printf("Current file_extention: "SB_Fmt"\n", SB_Arg(fb->file_extension));
+
     return fb->file_path.items;
+}
+
+// ADDED
+
+
+void extract_file_extension(const char *filename, String_Builder *ext) {
+    const char *dot = strrchr(filename, '.');
+    if (!dot || dot == filename) {
+        // No extension found or the dot is the first character (hidden files in Unix)
+        // Clear the String_Builder manually
+        ext->count = 0;
+        sb_append_null(ext);
+        return;
+    }
+    // Clear the String_Builder manually before appending new content
+    ext->count = 0;
+    sb_append_cstr(ext, dot + 1); // Skip the dot
+    sb_append_null(ext); // Ensure null termination
 }

@@ -1,5 +1,6 @@
 #include "render.h"
 #include "editor.h"
+#include "file_browser.h"
 #include "free_glyph.h"
 #include "la.h"
 #include "lexer.h"
@@ -38,6 +39,61 @@ void render_search_text(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *ed
         simple_renderer_flush(sr);
     }
 }
+
+#include <string.h> // Include string.h for strcmp
+
+typedef struct {
+    size_t startLine;
+    size_t endLine;
+    float startX;
+} MarkdownCodeBlockInfo;
+
+void render_markdown(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor, File_Browser *fb) {
+    const float LINE_HEIGHT = FREE_GLYPH_FONT_SIZE;
+    MarkdownCodeBlockInfo codeBlockStack[500]; // Assuming a max of 500 code blocks
+    int codeBlockCount = 0;
+
+    for (size_t i = 0; i < editor->lines.count; ++i) {
+        Line line = editor->lines.items[i];
+        float lineStartX = 0; // Start of the line
+
+        // Check for code block start or end
+        if (line.end - line.begin >= 3 && strncmp(editor->data.items + line.begin, "```", 3) == 0) {
+            if (codeBlockCount > 0 && codeBlockStack[codeBlockCount - 1].endLine == 0) {
+                // Closing code block
+                codeBlockStack[codeBlockCount - 1].endLine = i;
+            } else {
+                // Starting new code block
+                codeBlockStack[codeBlockCount++] = (MarkdownCodeBlockInfo){i, 0, lineStartX};
+            }
+        }
+    }
+
+    // Draw rectangles for each code block
+    for (int k = 0; k < codeBlockCount; k++) {
+        if (codeBlockStack[k].endLine > 0) { // Only if code block is closed
+            // Start one line before
+            Vec2f startPos = {codeBlockStack[k].startX, -((float)codeBlockStack[k].startLine + CURSOR_OFFSET - 1) * LINE_HEIGHT};
+            // End one line later
+            Vec2f endPos = {1000.0f, -((float)codeBlockStack[k].endLine + CURSOR_OFFSET) * LINE_HEIGHT}; // Removed the -1
+
+
+            if (showLineNumbers) {
+                startPos.x += lineNumberWidth;
+                endPos.x += lineNumberWidth;
+            }
+            
+            Vec4f codeBlockColor = CURRENT_THEME.code_block;
+            Vec2f rectSize = {/* endPos.x - */ startPos.x + 6000.0f, endPos.y - startPos.y}; // TODO use w
+
+            simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
+            simple_renderer_solid_rect(sr, startPos, rectSize, codeBlockColor);
+        }
+    }
+}
+
+
+
 
 void render_minibuffer_content(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor, const char *prefixText) {
     if (editor->minibuffer_active) {
@@ -102,9 +158,21 @@ void render_line_numbers(Simple_Renderer *sr, Free_Glyph_Atlas *atlas, Editor *e
         // Different colors for line numbers
         Vec4f defaultColor = CURRENT_THEME.line_numbers;
         Vec4f currentLineColor = CURRENT_THEME.current_line_number;
+        /* if (highlightCurrentLineNumberOnInsertMode) { */
+        /*     currentLineColor = (current_mode == INSERT) ? CURRENT_THEME.insert_cursor : CURRENT_THEME.current_line_number; */
+        /* } */
+
         if (highlightCurrentLineNumberOnInsertMode) {
-            currentLineColor = (current_mode == INSERT) ? CURRENT_THEME.insert_cursor : CURRENT_THEME.current_line_number;
+            if (current_mode == INSERT) {
+                currentLineColor = CURRENT_THEME.insert_cursor;
+            } else if (current_mode == EMACS) {
+                currentLineColor = CURRENT_THEME.emacs_cursor;
+            } else {
+                currentLineColor = CURRENT_THEME.current_line_number;
+            }
         }
+
+
         
         // Calculate the width needed for the largest line number
         int lineNumberFieldWidth = snprintf(NULL, 0, "%zu", editor->lines.count);
@@ -544,6 +612,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     
     // Render text
     {
+
         if (isWave) {
             simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_TEXT);
         } else {
@@ -770,7 +839,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             default:
                 {}
             }
-
 
             free_glyph_atlas_render_line_sized(atlas, sr, token.text, token.text_len, &pos, color);
             // TODO: the max_line_len should be calculated based on what's visible on the screen right now
