@@ -2,6 +2,7 @@
 #define THEME_H
 
 #include "la.h"
+#include "stdbool.h"
 
 typedef struct {
     Vec4f cursor;
@@ -53,18 +54,34 @@ typedef struct {
     Vec4f function_definition; 
     Vec4f anchor; 
     Vec4f whitespace;
+    Vec4f selected_whitespaces;
     Vec4f indentation_line;
     Vec4f null;
     Vec4f code_block;
 } Theme;
 
+#define CURRENT_THEME (currentTheme) // interpolated theme
 
 extern Theme themes[];
+extern Theme currentTheme; // Interpolated theme
+extern Theme previousTheme;
 extern int currentThemeIndex;
-#define CURRENT_THEME (themes[currentThemeIndex])
+extern int previousThemeIndex; // Index of the previous theme
+
+extern float interpolationProgress;
+extern bool theme_lerp;
+extern float theme_lerp_speed;
+extern float theme_lerp_treshold;
+
+
 
 void initialize_themes();
 void theme_next(int *currentThemeIndex);
 void theme_previous(int *currentThemeIndex);
+void update_theme_interpolation(); // Function to handle interpolation
+Vec4f color_lerp(Vec4f start, Vec4f end, float t); // Function to interpolate colors
+void switch_to_theme(int *currentThemeIndex, int newIndex);
+
+
 
 #endif // THEME_H

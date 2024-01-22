@@ -15,9 +15,7 @@
 #include "evil.h"
 
 
-
 bool quit = false;
-EvilMode current_mode = NORMAL;
 float zoom_factor = 3.0f;
 float min_zoom_factor = 1.0;
 float max_zoom_factor = 50.0;
@@ -48,11 +46,26 @@ bool ivy = false;
 bool M_x_active = false;
 bool evil_command_active = false;
 
-
 bool BlockInsertCurosr = true;
-bool highlightCurrentLineNumberOnInsertMode = true; // the loong way 
+bool highlightCurrentLineNumberOnInsertMode = true; // the loong way
+
+bool helix = false;
+bool emacs = false;
+bool automatic_zoom = true;
 
 
+
+void set_current_mode() {
+    if (emacs) {
+        current_mode = EMACS;
+    } else if (helix) {
+        current_mode = HELIX;
+    } else {
+        current_mode = NORMAL;
+    }
+}
+
+EvilMode current_mode = HELIX;
 
 bool extract_word_under_cursor(Editor *editor, char *word) {
     // Make a copy of cursor position to avoid modifying the actual cursor
@@ -100,7 +113,7 @@ void move_camera(Simple_Renderer *sr, const char* direction, float amount) {
 }
 
 
-// TODO smarter
+// TODO if we are on a multiple of indentation delete the correct number of indentations
 void editor_backspace(Editor *e) {
     // If in search mode, reduce the search query length
     if (e->searching) {
@@ -264,29 +277,114 @@ Errno editor_save(const Editor *e)
     return write_entire_file(e->file_path.items, e->data.items, e->data.count);
 }
 
-Errno editor_load_from_file(Editor *e, const char *file_path)
-{
-    printf("Loading %s\n", file_path);
+/* Errno editor_load_from_file(Editor *e, const char *file_path) */
+/* { */
+/*     printf("Loading %s\n", file_path); */
+
+/*     e->data.count = 0; */
+/*     Errno err = read_entire_file(file_path, &e->data); */
+/*     if (err != 0) return err; */
+
+/*     e->cursor = 0; */
+
+/*     editor_retokenize(e); */
+
+/*     e->file_path.count = 0; */
+/*     sb_append_cstr(&e->file_path, file_path); */
+/*     sb_append_null(&e->file_path); */
+
+/*     // Add file path to buffer history */
+/*     if (e->buffer_history_count < MAX_BUFFER_HISTORY) { */
+/*         e->buffer_history[e->buffer_history_count++] = strdup(file_path); */
+/*     } */
+
+/*     return 0; */
+/* } */
+
+
+size_t get_position_from_line_column(Editor *e, size_t line, size_t column) {
+    size_t pos = 0;
+    size_t current_line = 0;
+
+    while (pos < e->data.count && current_line < line) {
+        if (e->data.items[pos] == '\n') {
+            current_line++;
+        }
+        pos++;
+    }
+
+    // Adjust column position
+    size_t line_start = pos;
+    size_t current_column = 0;
+    while (pos < e->data.count && current_column < column) {
+        if (e->data.items[pos] == '\n') {
+            break; // Prevent going to next line
+        }
+        current_column++;
+        pos++;
+    }
+
+    return line_start + current_column;
+}
+
+
+
+/* Errno find_file(Editor *e, const char *file_path, size_t line, size_t column) { */
+/*     printf("Loading %s\n", file_path); */
+
+/*     e->data.count = 0; */
+/*     Errno err = read_entire_file(file_path, &e->data); */
+/*     if (err != 0) return err; */
+
+/*     // Move cursor to the specified line and column */
+/*     e->cursor = get_position_from_line_column(e, line, column); */
+
+/*     editor_retokenize(e); */
+
+/*     e->file_path.count = 0; */
+/*     sb_append_cstr(&e->file_path, file_path); */
+/*     sb_append_null(&e->file_path); */
+
+/*     // Add file path to buffer history */
+/*     if (e->buffer_history_count < MAX_BUFFER_HISTORY) { */
+/*         e->buffer_history[e->buffer_history_count++] = strdup(file_path); */
+/*     } */
+
+/*     return 0; */
+/* } */
+
+
+Errno find_file(Editor *e, const char *file_path, size_t line, size_t column) {
+    char expanded_file_path[PATH_MAX];
+    expand_path(file_path, expanded_file_path, sizeof(expanded_file_path));
+    printf("Loading %s\n", expanded_file_path);
 
     e->data.count = 0;
-    Errno err = read_entire_file(file_path, &e->data);
+    Errno err = read_entire_file(expanded_file_path, &e->data);
     if (err != 0) return err;
 
-    e->cursor = 0;
+    // Move cursor to the specified line and column
+    e->cursor = get_position_from_line_column(e, line, column);
 
     editor_retokenize(e);
 
     e->file_path.count = 0;
-    sb_append_cstr(&e->file_path, file_path);
+    sb_append_cstr(&e->file_path, expanded_file_path);
     sb_append_null(&e->file_path);
 
     // Add file path to buffer history
     if (e->buffer_history_count < MAX_BUFFER_HISTORY) {
-        e->buffer_history[e->buffer_history_count++] = strdup(file_path);
+        e->buffer_history[e->buffer_history_count++] = strdup(expanded_file_path);
     }
 
     return 0;
 }
+
+
+
+
+
+
 
 size_t editor_cursor_row(const Editor *e)
 {
@@ -1140,7 +1238,7 @@ Errno openLocalIncludeFile(Editor *editor, const char *includePath) {
     snprintf(fullPath, sizeof(fullPath), "%s/%s", directory, includePath);
 
     // Load the file using the full path
-    Errno load_err = editor_load_from_file(editor, fullPath);
+    Errno load_err = find_file(editor, fullPath, 0, 0);
     if (load_err != 0) {
         fprintf(stderr, "Error loading file %s: %s\n", fullPath, strerror(load_err));
         return load_err;
@@ -1183,7 +1281,7 @@ Errno openGlobalIncludeFile(Editor *editor, const char *includePath) {
         // Check if the file exists and is accessible
         if (access(fullPath, F_OK) != -1) {
             // Try to load the file using the constructed full path
-            Errno load_err = editor_load_from_file(editor, fullPath);
+            Errno load_err = find_file(editor, fullPath, 0, 0);
             if (load_err == 0) {
                 printf("Opened file: %s\n", fullPath);
                 return 0; // File opened successfully
@@ -1492,68 +1590,42 @@ void find_matches_in_editor_data(Editor *e, const char *word, char **matches, si
 
 
 
-
-
-
-// M-x
-// TODO command aliases and
-// history in program memory, when quitting save it in ~/.config/ded/M-x-history
-// and load it when opening ded clamp it to max-M-x-history-size or something
-void register_command(struct hashmap *command_map, const char *name, void (*execute)(Editor *)) {
-    Command *cmd = malloc(sizeof(Command));
-    if (cmd) {
-        cmd->name = name;
-        cmd->execute = execute;
-        hashmap_set(command_map, cmd);
-    } else {
-        // Handle allocation failure
+Errno editor_goto_line(Editor *editor, const char *params[]) {
+    if (!params || !params[0]) {
+        // Handle error: No line number provided
+        return -1;
     }
-}
 
-// TODO open-below && open-above && editor-enter behave weird
-void initialize_commands(struct hashmap *command_map) {
-    register_command(command_map, "open",      evil_open_below);
-    register_command(command_map, "opena",      evil_open_above);
-    register_command(command_map, "drag-down",       editor_drag_line_down);
-    register_command(command_map, "drag-up",         editor_drag_line_up);
-    register_command(command_map, "editor-enter",    editor_enter);
-    register_command(command_map, "select",          select_region_from_brace);
-    register_command(command_map, "back",            emacs_backward_kill_word);
-    register_command(command_map, "evil-join",       evil_join);
-    register_command(command_map, "evil-yank-line",  evil_yank_line);
-    register_command(command_map, "open-include",    editor_open_include);
-    register_command(command_map, "toggle",          toggle_bool); // Wincompatible-function-pointer-types
-    register_command(command_map, "w",               editor_save);
-    register_command(command_map, "q",               editor_quit);
-    register_command(command_map, "wq",              editor_save_and_quit);
-}
-
-void execute_command(struct hashmap *command_map, Editor *editor, const char *command_name) {
-    Command tempCmd = {command_name, NULL};  // Temporary command for lookup
-    Command *cmd = (Command *)hashmap_get(command_map, &tempCmd);
-    if (cmd && cmd->execute) {
-        cmd->execute(editor);
-    } else {
-        // Handle command not found
+    size_t line_number = atoi(params[0]);
+    if (line_number == 0 || line_number > editor->lines.count) {
+        // Line number is out of range
+        return -1;
     }
+
+    // Adjust line_number to zero-based index
+    line_number -= 1;
+
+    // Set the cursor to the beginning of the specified line
+    editor->cursor = editor->lines.items[line_number].begin;
+
+    return 0;
 }
 
-int command_compare(const void *a, const void *b, void *udata) {
-    const Command *cmd_a = a;
-    const Command *cmd_b = b;
-    return strcmp(cmd_a->name, cmd_b->name);
-}
+void get_cursor_position(const Editor *e, int *line, int *character) {
+    assert(e != NULL && line != NULL && character != NULL);
 
-uint64_t simple_string_hash(const void *item, uint64_t seed0, uint64_t seed1) {
-    const Command *cmd = item;
-    const char *str = cmd->name;
-    uint64_t hash = seed0;
-    while (*str) {
-        hash = 31 * hash + (*str++);
+    // Get the line number
+    *line = editor_cursor_row(e);
+
+    // Find the start of the current line
+    size_t line_start = 0;
+    if (*line > 0 && *line < e->lines.count) {
+        line_start = e->lines.items[*line].begin;
     }
-    return hash ^ seed1;
-}
 
+    // Calculate the column number (character position)
+    *character = e->cursor - line_start;
+}
 
 
 
@@ -1658,6 +1730,87 @@ int variable_doc_compare(const void *a, const void *b, void *udata) {
     const VariableDoc *doc = a;
     const char *key = b;
     return strcmp(doc->var_name, key);
+}
+
+
+
+
+
+// ANIMATIONS
+// TODO don't always update
+
+float easeOutCubic(float x) {
+    return 1 - pow(1 - x, 3);
+}
+
+
+float targetModelineHeight;
+bool isModelineAnimating = false;
+void update_modeline_animation() {
+    if (!isModelineAnimating) {
+        return;
+    }
+
+    float animationSpeed = 1.50f;
+
+    if (modelineHeight < targetModelineHeight) {
+        modelineHeight += animationSpeed;
+        if (modelineHeight > targetModelineHeight) {
+            modelineHeight = targetModelineHeight;
+        }
+    } else if (modelineHeight > targetModelineHeight) {
+        modelineHeight -= animationSpeed;
+        if (modelineHeight < targetModelineHeight) {
+            modelineHeight = targetModelineHeight;
+        }
+    }
+
+    if (modelineHeight == targetModelineHeight) {
+        isModelineAnimating = false;
+    }
+}
+
+
+float targetMinibufferHeight;
+bool isMinibufferAnimating = false;
+float minibufferAnimationProgress = 0.0f; // Normalized progress of the animation
+float minibufferAnimationDuration = 1.0f; // Duration of the animation in seconds
+
+
+void update_minibuffer_animation(float deltaTime) {
+    if (!isMinibufferAnimating) {
+        return;
+    }
+
+    minibufferAnimationProgress += deltaTime / minibufferAnimationDuration;
+
+    if (minibufferAnimationProgress > 1.0f) {
+        minibufferAnimationProgress = 1.0f;
+        isMinibufferAnimating = false;
+    }
+
+    float easedProgress = easeOutCubic(minibufferAnimationProgress);
+    minibufferHeight = easedProgress * (targetMinibufferHeight - minibufferHeight) + minibufferHeight;
+
+    if (minibufferHeight == targetMinibufferHeight || minibufferAnimationProgress >= 1.0f) {
+        isMinibufferAnimating = false;
+    }
+}
+
+
+
+
+
+size_t calculate_max_line_length(const Editor *editor) {
+    size_t max_len = 0;
+    for (size_t i = 0; i < editor->lines.count; ++i) {
+        Line line = editor->lines.items[i];
+        size_t line_length = line.end - line.begin;
+        if (line_length > max_len) {
+            max_len = line_length;
+        }
+    }
+    return max_len;
 }
 
 

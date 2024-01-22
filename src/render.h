@@ -6,6 +6,14 @@
 #include "simple_renderer.h"
 #include "editor.h"
 
+
+extern float tokenInterpolationProgress;
+extern float tokenLerpSpeed;
+extern bool tokenLerp;
+
+
+void update_tokens_interpolation();
+
 void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor);
 void render_search_text(Free_Glyph_Atlas *minibuffer_atlas, Simple_Renderer *sr, Editor *editor);
 /* void render_M_x(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor); */
@@ -15,6 +23,17 @@ void render_line_numbers(Simple_Renderer *sr, Free_Glyph_Atlas *atlas, Editor *e
 
 #include "file_browser.h"
 void render_markdown(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor, File_Browser *fb);
+
+
+
+typedef struct {
+    Vec4f originalColor;
+    Vec4f targetColor;
+    float interpolationProgress;
+} TokenColorData;
+
+
+
 
 
 #endif // RENDER_H

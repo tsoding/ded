@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <string.h>
 #include "common.h"
+#include "helix.h"
 
 #include <dirent.h>
 
@@ -38,14 +39,16 @@
 #include "buffer.h"
 #include "theme.h"
 #include "unistd.h"
+#include "M-x.h"
+#include "lsp.h"
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 #define FONT_DIR "~/.config/ded/fonts/"
 /* #define DEFAULT_FONT "jet-extra-bold.ttf" */
-/* #define DEFAULT_FONT "radon.otf" */
+#define DEFAULT_FONT "radon.otf"
 /* #define DEFAULT_FONT "minecraft.ttf" */
-#define DEFAULT_FONT "iosevka-regular.ttf"
+/* #define DEFAULT_FONT "iosevka-regular.ttf" */
 #define MAX_FONTS 20
 #define MAX_PATH_SIZE 1024
 
@@ -172,14 +175,21 @@ void switch_to_font(FT_Library library, FT_Face *currentFace, Free_Glyph_Atlas *
 // TODO: display errors reported via flash_error right in the text editor window somehow
 #define flash_error(...) do { fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); } while(0)
 
+#include <signal.h>
 
 int main(int argc, char **argv)
 {
-
+    set_current_mode();
     initialize_themes();
     initialize_shader_paths();
     load_snippets_from_directory();
 
+    // lsp
+    signal(SIGINT, handle_signal);
+    start_ccls(/* project_root */);
+    initialize_lsp();
+
+    
 
     // Define hash seeds (these could be randomly generated for more robustness)
     uint64_t seed0 = 0x12345678;
@@ -280,7 +290,7 @@ int main(int argc, char **argv)
 
     if (argc > 1) {
         const char *file_path = argv[1];
-        err = editor_load_from_file(&editor, file_path);
+        err = find_file(&editor, file_path, 0, 0);
         if (err != 0) {
             fprintf(stderr, "ERROR: Could not read file %s: %s\n", file_path, strerror(err));
             return 1;
@@ -392,7 +402,7 @@ int main(int argc, char **argv)
                                 case FT_REGULAR: {
                                     // TODO: before opening a new file make sure you don't have unsaved changes
                                     // And if you do, annoy the user about it. (just like all the other editors do)
-                                    err = editor_load_from_file(&editor, file_path);
+                                    err = find_file(&editor, file_path, 0, 0);
                                     if (err != 0) {
                                         flash_error("Could not open file %s: %s", file_path, strerror(err));
                                     } else {
@@ -525,7 +535,7 @@ int main(int argc, char **argv)
                         // TODO: before opening a new file make sure you don't
                         // have unsaved changes And if you do, annoy the user
                         // about it. (just like all the other editors do)
-                        err = editor_load_from_file(&editor, file_path);
+                        err = find_file(&editor, file_path, 0, 0);
                         if (err != 0) {
                           flash_error("Could not open file %s: %s", file_path,
                                       strerror(err));
@@ -647,6 +657,7 @@ int main(int argc, char **argv)
                             if (zoom_factor < min_zoom_factor) {
                                 zoom_factor = min_zoom_factor;
                             }
+                            printf("zoom_factor: %.6f", zoom_factor);
                         }
                     } break;
 
@@ -659,6 +670,7 @@ int main(int argc, char **argv)
                             if (zoom_factor > max_zoom_factor) {
                                 zoom_factor = max_zoom_factor;
                             }
+                            printf("zoom_factor: %.6f", zoom_factor);
                         }
                     } break;
                         
@@ -843,7 +855,7 @@ int main(int argc, char **argv)
 
                     case SDLK_z: {
                         if (SDL_GetModState() & KMOD_CTRL) {
-                            current_mode = EMACS;
+                            helix_mode();
                         }
                     }
                     break;
@@ -969,6 +981,7 @@ int main(int argc, char **argv)
                       if (zoom_factor < min_zoom_factor) {
                         zoom_factor = min_zoom_factor;
                       }
+                      printf("zoom_factor: %.6f", zoom_factor);
                     }
                   } break;
 
@@ -981,6 +994,7 @@ int main(int argc, char **argv)
                       if (zoom_factor > max_zoom_factor) {
                         zoom_factor = max_zoom_factor;
                       }
+                      printf("zoom_factor: %.6f", zoom_factor);
                     }
                   } break;
 
@@ -1148,8 +1162,10 @@ int main(int argc, char **argv)
                       emacs_kill_line(&editor);
                     } else if (event.key.keysym.mod & KMOD_ALT) {
                       editor_move_paragraph_up(&editor);
+                    } else if (event.key.keysym.mod & KMOD_SHIFT) {
+                        goto_definition(&editor);
                     } else {
-                      editor_move_line_up(&editor);
+                        editor_move_line_up(&editor);
                     }
                     editor.last_stroke = SDL_GetTicks();
                     break;
@@ -1721,6 +1737,573 @@ int main(int argc, char **argv)
               }
               break;
 
+             // TODO 
+                case HELIX:
+                    switch (event.key.keysym.sym) {
+                    SDL_Event tmpEvent; // Declare once at the beginning of the switch block
+
+                    case SDLK_RETURN: {
+                        if (!toggle_bool(&editor)) {
+                            editor_open_include(&editor);
+                        }
+                    } break;
+
+                    case SDLK_SEMICOLON:
+                        if (event.key.keysym.mod & KMOD_SHIFT) {
+                            current_mode = MINIBUFFER;
+                            evil_command_active = true;
+                            editor.minibuffer_active = true;
+                            
+                            // Consume the next SDL_TEXTINPUT event for ':'
+                            SDL_Event tmpEvent;
+                            SDL_PollEvent(&tmpEvent);
+                            if (tmpEvent.type != SDL_TEXTINPUT || tmpEvent.text.text[0] != ':') {
+                                SDL_PushEvent(&tmpEvent); // Push the event back if it's not the one we're trying to consume
+                            }
+                            
+                            // TODO ivy
+                            /* if (!ivy) { */
+                            /*     minibufferHeight += 189; */
+                            /*     ivy = true; */
+                            /* } */
+                        }
+                        break;
+
+
+                        
+                    case SDLK_d:
+                        if (event.key.keysym.mod & KMOD_SHIFT) {
+                            emacs_kill_line(&editor);
+                        } else if (editor.selection) {
+                            editor_clipboard_copy(&editor);
+                            editor_delete_selection(&editor);
+                            editor.selection = false;
+                        } else {
+                            emacs_kill_line(&editor);
+                        }
+                    break;
+                                         
+                    case SDLK_c:
+                        if (event.key.keysym.mod & KMOD_SHIFT) {
+                            evil_change_line(&editor);
+                        }
+                        
+                        // Eat up the next SDL_TEXTINPUT event for 'C'
+                        SDL_PollEvent(&tmpEvent);
+                        if (tmpEvent.type != SDL_TEXTINPUT ||
+                            (tmpEvent.text.text[0] != 'C')) {
+                            SDL_PushEvent(&tmpEvent); // Push it back to the event queue if it's not
+                        }
+                        break;
+
+                    case SDLK_m:
+                        if (event.key.keysym.mod & KMOD_ALT) {
+                            emacs_back_to_indentation(&editor);
+                        }
+                        break;
+
+
+
+                    case SDLK_ESCAPE: {
+                        if (ivy) {
+                            minibufferHeight -= 189;
+                            ivy = false;
+                        }
+
+                        if (editor.minibuffer_active) {
+                            M_x_active = false;
+                            editor.minibuffer_active = false;
+                        }
+
+                        editor_clear_mark(&editor);
+                        editor_stop_search(&editor);
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                    }
+                    break;
+
+
+                    case SDLK_SPACE: {
+                        if (SDL_GetModState() & KMOD_CTRL) {
+                            if (!editor.has_anchor){
+                                editor_set_anchor(&editor);
+                            } else {
+                                editor_goto_anchor_and_clear(&editor);
+                            }
+                        } else if (!ivy) {
+                            // TODO time delay whichkey
+                            minibufferHeight += 189;
+                            ivy = true;
+                        }
+                    }
+                    break;
+
+                    case SDLK_5: {
+                        if (SDL_GetModState() & KMOD_SHIFT) {
+                            evil_jump_item(&editor);
+                        }
+                    }
+                    break;
+
+                    case SDLK_8: {
+                        if (SDL_GetModState() & KMOD_SHIFT) {
+                            evil_search_word_forward(&editor);
+                        }
+                    }
+                    break;
+
+
+                    case SDLK_1: {
+                        if (SDL_GetModState() & KMOD_CTRL) {
+                            hl_line = !hl_line;
+                        }
+                    }
+                    break;
+
+
+                    case SDLK_o:
+                        if (superDrammtic) {
+                            followCursor = true;
+                        }
+                        if (SDL_GetModState() & KMOD_SHIFT) {
+                            evil_open_above(&editor);
+                        } else {
+                            evil_open_below(&editor);
+                        }
+                        
+                        current_mode = INSERT;
+                        editor.last_stroke = SDL_GetTicks();
+                        
+                        // Eat up the next SDL_TEXTINPUT event for 'o' or 'O'
+                        SDL_PollEvent(&tmpEvent);
+                        if (tmpEvent.type != SDL_TEXTINPUT ||
+                            (tmpEvent.text.text[0] != 'o' && tmpEvent.text.text[0] != 'O')) {
+                            SDL_PushEvent(&tmpEvent); // Push it back to the event queue if it's not
+                        }
+                        break;
+
+                  case SDLK_LEFTBRACKET:
+                    if (SDL_GetModState() & KMOD_ALT) {
+                      switch_to_font(library, &face, &atlas, -1);
+                      printf("Switched to previous font: %s\n", fonts[current_font_index]);
+                      /* redraw_screen(); */
+                    }
+                    break;
+
+                  case SDLK_RIGHTBRACKET:
+                    if (SDL_GetModState() & KMOD_ALT) {
+                      switch_to_font(library, &face, &atlas, 1);
+                      printf("Switched to next font: %s\n", fonts[current_font_index]);
+                      /* redraw_screen(); */
+                    }
+                    break;
+
+
+                    case SDLK_TAB: {
+                        indent(&editor);
+                    }
+                    break;
+
+                    case SDLK_z: {
+                        if (SDL_GetModState() & KMOD_CTRL) {
+                            /* current_mode = EMACS; */
+                            /* current_mode = NORMAL; */
+                            helix_mode();
+                        }
+                    }
+                    break;
+
+                  case SDLK_t: {
+                    if (SDL_GetModState() & KMOD_CTRL) {
+                      followCursor = !followCursor;  // Toggle the state
+                    }
+                  }
+                    break;
+
+
+                    case SDLK_F5: {
+                        simple_renderer_reload_shaders(&sr);
+                    }
+                    break;
+
+                    case SDLK_y:
+                        if (editor.selection) {
+                            editor_clipboard_copy(&editor);
+                        } else {
+                            evil_yank_line(&editor);
+                        }
+                        break;
+
+                    
+                  case SDLK_g: {
+                    if (SDL_GetModState() & KMOD_SHIFT) {
+                      editor_move_to_end(&editor);
+                    } else {
+                      editor_move_to_begin(&editor);
+                    }
+                  } break;
+
+                  case SDLK_SLASH: {
+                    current_mode = MINIBUFFER;
+                    editor.last_stroke = SDL_GetTicks();
+                    editor_start_search(&editor);
+
+                    // Consume the next SDL_TEXTINPUT event for '/'
+                    SDL_Event tmpEvent;
+                    SDL_PollEvent(&tmpEvent);
+                    if (tmpEvent.type != SDL_TEXTINPUT || tmpEvent.text.text[0] != '/') {
+                      SDL_PushEvent(&tmpEvent); // Push the event back if it's not the one we're trying to consume
+                    }
+                  } break;
+
+                    case SDLK_n: {
+                        if (SDL_GetModState() & KMOD_CTRL) {
+                            editor_move_line_down(&editor);
+                        } else if (SDL_GetModState() & KMOD_ALT) {
+                            editor_next_buffer(&editor);
+                        } else if (SDL_GetModState() & KMOD_SHIFT) {
+                            evil_search_previous(&editor);
+                        } else {
+                            evil_search_next(&editor);
+                        }
+                    } break;
+                        
+                    case SDLK_p:
+                        if (SDL_GetModState() & KMOD_CTRL){
+                            editor_move_line_up(&editor);
+                        } else if (SDL_GetModState() & KMOD_ALT) {
+                            editor_previous_buffer(&editor);
+                        } else if (copiedLine) {
+                            if (SDL_GetModState() & KMOD_SHIFT) {
+                                evil_paste_before(&editor);
+                            } else {
+                                evil_paste_after(&editor);
+                            }
+                        } else {
+                            editor_clipboard_paste(&editor);
+                        }
+                        break;
+                        
+                  case SDLK_b:
+                    editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                    if (SDL_GetModState() & KMOD_CTRL){
+                      editor_move_char_left(&editor);
+                    } else if (SDL_GetModState() & KMOD_ALT) {
+                        editor_kill_buffer(&editor);
+                    } else {
+                        editor_move_word_left(&editor);
+                    }
+                    break;
+
+                  case SDLK_f:
+                    if (SDL_GetModState() & KMOD_CTRL){
+                      editor_move_char_right(&editor);
+                    }
+                    break;
+
+                    case SDLK_s: {
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            // Ctrl+S is pressed
+                            editor_start_search(&editor);
+                            current_mode = MINIBUFFER;
+                        } else {
+                            // Either S or Shift+S is pressed
+                            if (event.key.keysym.mod & KMOD_SHIFT) {
+                                evil_change_whole_line(&editor);
+                            } else {
+                                evil_substitute(&editor);
+                            }
+                            editor.selection = false;
+                            // Eat up the next SDL_TEXTINPUT event for 's' or 'S'
+                            SDL_PollEvent(&tmpEvent);
+                            if (tmpEvent.type != SDL_TEXTINPUT ||
+                                (tmpEvent.text.text[0] != 's' && tmpEvent.text.text[0] != 'S')) {
+                                SDL_PushEvent(&tmpEvent); // Push it back to the event queue if it's not
+                            }
+                            editor.last_stroke = SDL_GetTicks();
+                        }
+                        break;
+                    }
+                        
+                  case SDLK_EQUALS: {
+                    if (SDL_GetModState() & KMOD_ALT) {  // Check if ALT is pressed
+                      theme_next(&currentThemeIndex);
+                      printf("Changed theme to %d\n", currentThemeIndex); // Logging the theme change for debugging
+                    } else if (SDL_GetModState() & KMOD_CTRL) {  // Check if CTRL is pressed
+                      zoom_factor -= 1.0f;
+                      if (zoom_factor < min_zoom_factor) {
+                        zoom_factor = min_zoom_factor;
+                      }
+                    }
+                  } break;
+
+                  case SDLK_MINUS: {
+                    if (SDL_GetModState() & KMOD_ALT) {  // Check if ALT is pressed
+                      theme_previous(&currentThemeIndex);
+                      printf("Changed theme back to %d\n", currentThemeIndex); // Logging the theme change for debugging
+                    } else if (SDL_GetModState() & KMOD_CTRL) {  // Check if CTRL is pressed
+                      zoom_factor += 1.0f;
+                      if (zoom_factor > max_zoom_factor) {
+                        zoom_factor = max_zoom_factor;
+                      }
+                    }
+                  } break;
+
+                    case SDLK_i:
+                        if (SDL_GetModState() & KMOD_CTRL) {
+                            showIndentationLines = !showIndentationLines;
+                        } else if (SDL_GetModState() & KMOD_ALT) {
+                            if (SDL_GetModState() & KMOD_SHIFT) {
+                                remove_one_indentation(&editor);
+                            } else {
+                                add_one_indentation(&editor);
+                            }
+                        } else {
+                            if (SDL_GetModState() & KMOD_SHIFT) {
+                                evil_insert_line(&editor);
+                            } else {
+                                current_mode = INSERT;
+                            }
+
+                            if (superDrammtic){
+                                followCursor = true;
+                            }
+                            editor.last_stroke = SDL_GetTicks();
+                            
+                            // Eat up the next SDL_TEXTINPUT event for 'i' or 'I'
+                            SDL_PollEvent(&tmpEvent);
+                            if (tmpEvent.type != SDL_TEXTINPUT ||
+                                (tmpEvent.text.text[0] != 'i' && tmpEvent.text.text[0] != 'I')) {
+                                SDL_PushEvent(&tmpEvent); // Push it back to the event queue if it's not
+                            }
+                        }
+                        break;
+                                          
+                  case SDLK_v: {
+                    if (SDL_GetModState() & KMOD_SHIFT) {
+                      current_mode = VISUAL_LINE;
+                      evil_visual_line(&editor);
+                    } else {
+                      current_mode = VISUAL;
+                      evil_visual_char(&editor);
+                    }
+                  } break;
+                      
+                  case SDLK_4: {
+                    if (SDL_GetModState() & KMOD_SHIFT) {
+                      editor_move_to_line_end(&editor);
+                    }
+                  } break;
+                      
+                  case SDLK_a:
+                    editor.last_stroke = SDL_GetTicks();
+                    if (superDrammtic){
+                        followCursor = true;
+                    }
+                    if (SDL_GetModState() & KMOD_SHIFT) { // Check if shift is being held
+                      editor_move_to_line_end(&editor);
+                    } else {
+                      // Move the cursor one position to the right
+                      editor_move_char_right(&editor);
+                    }
+
+                    current_mode = INSERT;
+
+                    // Eat up the next SDL_TEXTINPUT event for 'a' or 'A'
+                    SDL_PollEvent(&tmpEvent); // This will typically be the SDL_TEXTINPUT event for 'a' or 'A'
+                    if (tmpEvent.type != SDL_TEXTINPUT || (tmpEvent.text.text[0] != 'a' && tmpEvent.text.text[0] != 'A')) {
+                      SDL_PushEvent(&tmpEvent); // If it's not, push it back to the event queue
+                    }
+                    break;
+
+                    case SDLK_x:
+                        if (editor.selection) {
+                            editor_clipboard_copy(&editor);
+                            editor_delete_selection(&editor);
+                            editor.selection = false;
+                        } else if (event.key.keysym.mod & KMOD_ALT) {
+                            if (!M_x_active) {
+                                current_mode = MINIBUFFER;
+                                M_x_active = true;
+                                editor.minibuffer_active = true;
+
+                                // Consume the next SDL_TEXTINPUT event for 'x'
+                                SDL_Event tmpEvent;
+                                SDL_PollEvent(&tmpEvent);
+                                if (tmpEvent.type != SDL_TEXTINPUT || tmpEvent.text.text[0] != 'x') {
+                                    SDL_PushEvent(&tmpEvent); // Push the event back if it's not the one we're trying to consume
+                                }
+                            }
+                            
+                            // TODO ivy
+                            /* if (!ivy) { */
+                            /*     minibufferHeight += 189; */
+                            /*     ivy = true; */
+                            /* } */
+                        } else if (event.key.keysym.mod & KMOD_SHIFT) {
+                            evil_delete_backward_char(&editor);
+                        } else {
+                            editor_clipboard_copy(&editor);
+                            evil_delete_char(&editor);
+                        }
+                        break;
+
+                  case SDLK_0:
+                    editor_move_to_line_begin(&editor);
+                    break;
+
+                  case SDLK_F3:
+                    file_browser = true;
+                    break;
+
+                  case SDLK_r:
+                    if (event.key.keysym.mod & KMOD_CTRL) {
+                    file_browser = true;
+                    }
+                    break;
+
+                  case SDLK_BACKSPACE: //  yes you can delete in normal mode
+                    if (editor.selection) {
+                      editor_clipboard_copy(&editor);
+                      editor_delete_selection(&editor);
+                      editor.selection = false;
+                    } else if (event.key.keysym.mod & KMOD_CTRL) {
+                      emacs_backward_kill_word(&editor);
+                    } else {
+                      editor_backspace(&editor);
+                    }
+                    break;
+                    
+                    case SDLK_h:
+                        if (event.key.keysym.mod & KMOD_ALT) {
+                            emacs_mark_paragraph(&editor, true);
+                        } else {
+                            editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                            if (event.key.keysym.mod & KMOD_CTRL) {
+                                editor_move_word_left(&editor);
+                            } else {
+                                editor_move_char_left(&editor);
+                            }
+                        }
+                        editor.last_stroke = SDL_GetTicks();
+                        break;
+
+                        
+                  case SDLK_j:
+                    editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                    if ((event.key.keysym.mod & KMOD_ALT) && !followCursor) {
+                      move_camera(&sr, "down", 50.0f);
+                    } else if (event.key.keysym.mod & KMOD_CTRL) {
+                      evil_open_above(&editor);
+                    } else if ((event.key.keysym.mod & KMOD_SHIFT) && !(event.key.keysym.mod & KMOD_ALT)) {
+                      evil_join(&editor);
+                    } else if (event.key.keysym.mod & KMOD_ALT) {
+                      editor_move_paragraph_down(&editor);
+                    } else {
+                      editor_move_line_down(&editor);
+                    }
+                    editor.last_stroke = SDL_GetTicks();
+                    break;
+
+                  case SDLK_k:
+                    editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                    if ((event.key.keysym.mod & KMOD_ALT) && !followCursor) {
+                      move_camera(&sr, "up", 50.0f);
+                    } else if (event.key.keysym.mod & KMOD_CTRL) {
+                      emacs_kill_line(&editor);
+                    } else if (event.key.keysym.mod & KMOD_ALT) {
+                      editor_move_paragraph_up(&editor);
+                    } else if (event.key.keysym.mod & KMOD_SHIFT) {
+                        goto_definition(&editor);
+                    } else {
+                        editor_move_line_up(&editor);
+                    }
+                    editor.last_stroke = SDL_GetTicks();
+                    break;
+
+                    case SDLK_l:
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                        if (event.key.keysym.mod & KMOD_CTRL) {
+                            showLineNumbers = !showLineNumbers;
+                        } else if (event.key.keysym.mod & KMOD_ALT) {
+                            select_region_from_inside_braces(&editor); 
+                        } else {
+                            editor_move_char_right(&editor);
+                        }
+                        editor.last_stroke = SDL_GetTicks();
+                        break;
+
+                    
+                    case SDLK_DOWN:
+                        if (event.key.keysym.mod & KMOD_ALT) {
+                            editor_drag_line_down(&editor);
+                        } else {
+                            editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                            if (event.key.keysym.mod & KMOD_CTRL) {
+                                editor_move_paragraph_down(&editor);
+                            } else {
+                                editor_move_line_down(&editor);
+                            }
+                        }
+                        break;
+                        
+
+                    case SDLK_UP:
+                        if (event.key.keysym.mod & KMOD_ALT) {
+                            editor_drag_line_up(&editor);
+                        } else {
+                            editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                            editor_move_line_up(&editor);
+
+                            if (event.key.keysym.mod & KMOD_CTRL) {
+                                editor_move_paragraph_up(&editor);
+                            }
+                        }
+                        break;
+    
+
+
+                    case SDLK_RIGHT:
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                        editor_move_char_right(&editor);
+                        break;
+
+                    case SDLK_LEFT:
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                        editor_move_char_left(&editor);
+                        break;
+
+
+                  case SDLK_w:
+                    if (event.key.keysym.mod & KMOD_CTRL) {
+                      showWhitespaces = !showWhitespaces;
+                    }else{
+                      editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                      editor_move_word_right(&editor);
+                    }
+                    break;
+
+                  case SDLK_e:
+                    if (event.key.keysym.mod & KMOD_CTRL) {
+                      isWave = !isWave;
+                      /* current_mode = EMACS; */
+                      /* editor.last_stroke = SDL_GetTicks(); */
+                    }
+                    break;
+
+                    // additional NORMAL mode keybinds here...
+                  } break;
+
+
+
+
+
+
+
+
+
+
+
+              
                 case MINIBUFFER:
                     switch (event.key.keysym.sym) {
 
@@ -1778,11 +2361,18 @@ int main(int argc, char **argv)
                 // Once we have incremental search in the file browser this may become useful
                 // or to edit file names or create files/direcory
               } else if (current_mode == INSERT || current_mode == EMACS || current_mode == MINIBUFFER) { // Process text input
+
+                if (editor.selection) {
+                    editor_delete_selection(&editor);
+                }
+
                 const char *text = event.text.text;
                 size_t text_len = strlen(text);
                 for (size_t i = 0; i < text_len; ++i) {
                   editor_insert_char(&editor, text[i]);
                 }
+
+                editor.selection = false;
                 editor.last_stroke = SDL_GetTicks();
               }
               break;
@@ -1793,7 +2383,8 @@ int main(int argc, char **argv)
         int w, h;
         SDL_GetWindowSize(window, &w, &h);
         glViewport(0, 0, w, h);
-        Vec4f bg = themes[currentThemeIndex].background;
+        /* Vec4f bg = themes[currentThemeIndex].background; */
+        Vec4f bg = currentTheme.background;
         bg.w = 0.0f;
         glClearColor(bg.x, bg.y, bg.z, bg.w);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -1801,8 +2392,15 @@ int main(int argc, char **argv)
         if (file_browser) {
           fb_render(&fb, window, &atlas, &sr);
         } else {
-          editor_render(window, &atlas, &sr, &editor);
-          render_search_text(&atlas, &sr, &editor);
+            if (theme_lerp){
+                update_theme_interpolation();
+            }
+
+            update_modeline_animation();
+            update_minibuffer_animation(DELTA_TIME);
+
+            editor_render(window, &atlas, &sr, &editor);
+            render_search_text(&atlas, &sr, &editor);
 
           
           
@@ -1827,6 +2425,8 @@ int main(int argc, char **argv)
             SDL_Delay(delta_time_ms - duration);
         }
     }
+    
+    shutdown_lsp();
     free_snippet_array(&snippets); // TODO
     return 0;
 }

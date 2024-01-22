@@ -6,7 +6,6 @@
 #include <stdbool.h>
 
 
-
 static int file_cmp(const void *ap, const void *bp)
 {
     const char *a = *(const char**)ap;
@@ -16,20 +15,26 @@ static int file_cmp(const void *ap, const void *bp)
 
 Errno fb_open_dir(File_Browser *fb, const char *dir_path)
 {
+    char resolved_path[PATH_MAX];
+    expand_path(dir_path, resolved_path, sizeof(resolved_path));
+
     fb->files.count = 0;
     fb->cursor = 0;
-    Errno err = read_entire_dir(dir_path, &fb->files);
+    Errno err = read_entire_dir(resolved_path, &fb->files);
     if (err != 0) {
         return err;
     }
     qsort(fb->files.items, fb->files.count, sizeof(*fb->files.items), file_cmp);
 
     fb->dir_path.count = 0;
-    sb_append_cstr(&fb->dir_path, dir_path);
+    sb_append_cstr(&fb->dir_path, resolved_path);
     sb_append_null(&fb->dir_path);
-
+    printf("Opened directory: %s\n", fb->dir_path.items);
     return 0;
 }
+
+
+
 
 #define PATH_SEP "/"
 #define PATH_EMPTY ""
@@ -101,6 +106,7 @@ void normpath(String_View path, String_Builder *result)
     free(new_comps.items);
 }
 
+
 Errno fb_change_dir(File_Browser *fb)
 {
     assert(fb->dir_path.count > 0 && "You need to call fb_open_dir() before fb_change_dir()");
@@ -109,31 +115,28 @@ Errno fb_change_dir(File_Browser *fb)
     if (fb->cursor >= fb->files.count) return 0;
 
     const char *dir_name = fb->files.items[fb->cursor];
+    char new_path[PATH_MAX];
+    snprintf(new_path, sizeof(new_path), "%s/%s", fb->dir_path.items, dir_name);
 
-    fb->dir_path.count -= 1;
+    char resolved_path[PATH_MAX];
+    expand_path(new_path, resolved_path, sizeof(resolved_path));
 
-    // TODO: fb->dir_path grows indefinitely if we hit the root
-    sb_append_cstr(&fb->dir_path, "/");
-    sb_append_cstr(&fb->dir_path, dir_name);
-
-    String_Builder result = {0};
-    normpath(sb_to_sv(fb->dir_path), &result);
-    da_move(&fb->dir_path, result);
+    fb->dir_path.count = 0;
+    sb_append_cstr(&fb->dir_path, resolved_path);
     sb_append_null(&fb->dir_path);
-
-    printf("Changed dir to %s\n", fb->dir_path.items);
 
     fb->files.count = 0;
     fb->cursor = 0;
-    Errno err = read_entire_dir(fb->dir_path.items, &fb->files);
-
+    Errno err = read_entire_dir(resolved_path, &fb->files);
     if (err != 0) {
         return err;
     }
     qsort(fb->files.items, fb->files.count, sizeof(*fb->files.items), file_cmp);
-
+    printf("Changed directory to: %s\n", fb->dir_path.items);
     return 0;
 }
+
+
 
 void fb_render(const File_Browser *fb, SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr)
 {
@@ -226,15 +229,15 @@ const char *fb_file_path(File_Browser *fb)
     sb_append_cstr(&fb->file_path, fb->files.items[fb->cursor]);
     sb_append_null(&fb->file_path);
 
-    extract_file_extension(fb->files.items[fb->cursor], &fb->file_extension); //added
-    printf("Current file_extention: "SB_Fmt"\n", SB_Arg(fb->file_extension));
+    extract_file_extension(fb->files.items[fb->cursor], &fb->file_extension);
+    printf("File path: %s\n", fb->file_path.items); // Print file path
+    printf("File extension: %s\n", fb->file_extension.items); // Print file extension
 
     return fb->file_path.items;
 }
 
+
 // ADDED
-
-
 void extract_file_extension(const char *filename, String_Builder *ext) {
     const char *dot = strrchr(filename, '.');
     if (!dot || dot == filename) {
@@ -249,3 +252,23 @@ void extract_file_extension(const char *filename, String_Builder *ext) {
     sb_append_cstr(ext, dot + 1); // Skip the dot
     sb_append_null(ext); // Ensure null termination
 }
+
+void expand_path(const char *original_path, char *expanded_path, size_t expanded_path_size) {
+    if (original_path[0] == '~') {
+        const char *home = getenv("HOME");
+        if (home) {
+            snprintf(expanded_path, expanded_path_size, "%s%s", home, original_path + 1);
+        } else {
+            strncpy(expanded_path, original_path, expanded_path_size);
+        }
+    } else {
+        char resolved_path[PATH_MAX];
+        if (realpath(original_path, resolved_path) != NULL) {
+            strncpy(expanded_path, resolved_path, expanded_path_size);
+        } else {
+            strncpy(expanded_path, original_path, expanded_path_size);
+        }
+    }
+    expanded_path[expanded_path_size - 1] = '\0';
+}
+

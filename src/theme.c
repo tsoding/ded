@@ -1,11 +1,154 @@
 #include "theme.h"
 #include "common.h"
+#include "editor.h"
 
 int currentThemeIndex = 0;
-Theme themes[7];
+int previousThemeIndex = 0;
+float interpolationProgress;
+Theme themes[8];
+Theme currentTheme;
+Theme previousTheme;
+
+bool theme_lerp = true;
+float theme_lerp_speed = 0.005f;
+float theme_lerp_treshold = 1.0f; // 0.5 mix themes
+
+Vec4f color_lerp(Vec4f start, Vec4f end, float t) {
+    Vec4f result;
+    result.x = start.x + (end.x - start.x) * t;
+    result.y = start.y + (end.y - start.y) * t;
+    result.z = start.z + (end.z - start.z) * t;
+    result.w = start.w + (end.w - start.w) * t;
+    return result;
+}
+
+
+void switch_to_theme(int *currentThemeIndex, int newIndex) {
+    const int themeCount = sizeof(themes) / sizeof(themes[0]);
+    
+    // Check if newIndex is valid
+    if (newIndex < 0 || newIndex >= themeCount) {
+        return; // Invalid index, do nothing
+    }
+
+    // Update previous theme information
+    previousTheme = currentTheme;
+    previousThemeIndex = *currentThemeIndex;
+
+    // Set the new theme index
+    *currentThemeIndex = newIndex;
+
+    // Reset interpolation progress
+    interpolationProgress = 0.0f;
+
+    if (!theme_lerp) {
+        // If theme lerp is disabled, set the current theme immediately
+        currentTheme = themes[*currentThemeIndex];
+    }
+}
+
+
+void theme_next(int *currentThemeIndex) {
+    previousTheme = currentTheme; // Capture the current interpolated state
+    previousThemeIndex = *currentThemeIndex;
+
+    const int themeCount = sizeof(themes) / sizeof(themes[0]);
+    *currentThemeIndex = (*currentThemeIndex + 1) % themeCount;
+
+    if (!theme_lerp) {
+      currentTheme = themes[*currentThemeIndex];
+    }
+    interpolationProgress = 0.0f; // Restart interpolation
+}
+
+void theme_previous(int *currentThemeIndex) {
+    previousTheme = currentTheme; // Capture the current interpolated state
+    previousThemeIndex = *currentThemeIndex;
+
+    *currentThemeIndex -= 1;
+    if (*currentThemeIndex < 0) {
+        const int themeCount = sizeof(themes) / sizeof(themes[0]);
+        *currentThemeIndex = themeCount - 1;
+    }
+
+    if (!theme_lerp) {
+        currentTheme = themes[*currentThemeIndex];
+    }
+    
+    interpolationProgress = 0.0f; // Restart interpolation
+}
+
+void update_theme_interpolation() {
+    if (theme_lerp && interpolationProgress < theme_lerp_treshold) {
+        interpolationProgress += theme_lerp_speed;
+        Theme startTheme = previousTheme;
+        Theme endTheme = themes[currentThemeIndex];
+
+        // Interpolate each color component
+        currentTheme.cursor = color_lerp(startTheme.cursor, endTheme.cursor, interpolationProgress);
+        currentTheme.insert_cursor = color_lerp(startTheme.insert_cursor, endTheme.insert_cursor, interpolationProgress);
+        currentTheme.emacs_cursor = color_lerp(startTheme.emacs_cursor, endTheme.emacs_cursor, interpolationProgress);
+        currentTheme.text = color_lerp(startTheme.text, endTheme.text, interpolationProgress);
+        currentTheme.background = color_lerp(startTheme.background, endTheme.background, interpolationProgress);
+        currentTheme.logic = color_lerp(startTheme.logic, endTheme.logic, interpolationProgress);
+        currentTheme.comment = color_lerp(startTheme.comment, endTheme.comment, interpolationProgress);
+        currentTheme.hashtag = color_lerp(startTheme.hashtag, endTheme.hashtag, interpolationProgress);
+        currentTheme.string = color_lerp(startTheme.string, endTheme.string, interpolationProgress);
+        currentTheme.selection = color_lerp(startTheme.selection, endTheme.selection, interpolationProgress);
+        currentTheme.search = color_lerp(startTheme.search, endTheme.search, interpolationProgress);
+        currentTheme.line_numbers = color_lerp(startTheme.line_numbers, endTheme.line_numbers, interpolationProgress);
+        currentTheme.todo = color_lerp(startTheme.todo, endTheme.todo, interpolationProgress);
+        currentTheme.fixme = color_lerp(startTheme.fixme, endTheme.fixme, interpolationProgress);
+        currentTheme.note = color_lerp(startTheme.note, endTheme.note, interpolationProgress);
+        currentTheme.bug = color_lerp(startTheme.bug, endTheme.bug, interpolationProgress);
+        currentTheme.equals = color_lerp(startTheme.equals, endTheme.equals, interpolationProgress);
+        currentTheme.not_equals = color_lerp(startTheme.not_equals, endTheme.not_equals, interpolationProgress);
+        currentTheme.exclamation = color_lerp(startTheme.exclamation, endTheme.exclamation, interpolationProgress);
+        currentTheme.equals_equals = color_lerp(startTheme.equals_equals, endTheme.equals_equals, interpolationProgress);
+        currentTheme.less_than = color_lerp(startTheme.less_than, endTheme.less_than, interpolationProgress);
+        currentTheme.greater_than = color_lerp(startTheme.greater_than, endTheme.greater_than, interpolationProgress);
+        currentTheme.arrow = color_lerp(startTheme.arrow, endTheme.arrow, interpolationProgress);
+        currentTheme.plus = color_lerp(startTheme.plus, endTheme.plus, interpolationProgress);
+        currentTheme.minus = color_lerp(startTheme.minus, endTheme.minus, interpolationProgress);
+        currentTheme.truee = color_lerp(startTheme.truee, endTheme.truee, interpolationProgress);
+        currentTheme.falsee = color_lerp(startTheme.falsee, endTheme.falsee, interpolationProgress);
+        currentTheme.open_square = color_lerp(startTheme.open_square, endTheme.open_square, interpolationProgress);
+        currentTheme.close_square = color_lerp(startTheme.close_square, endTheme.close_square, interpolationProgress);
+        currentTheme.array_content = color_lerp(startTheme.array_content, endTheme.array_content, interpolationProgress);
+        currentTheme.current_line_number = color_lerp(startTheme.current_line_number, endTheme.current_line_number, interpolationProgress);
+        currentTheme.marks = color_lerp(startTheme.marks, endTheme.marks, interpolationProgress);
+        currentTheme.fb_selection = color_lerp(startTheme.fb_selection, endTheme.fb_selection, interpolationProgress);
+        currentTheme.link = color_lerp(startTheme.link, endTheme.link, interpolationProgress);
+        currentTheme.logic_or = color_lerp(startTheme.logic_or, endTheme.logic_or, interpolationProgress);
+        currentTheme.pipe = color_lerp(startTheme.pipe, endTheme.pipe, interpolationProgress);
+        currentTheme.logic_and = color_lerp(startTheme.logic_and, endTheme.logic_and, interpolationProgress);
+        currentTheme.ampersand = color_lerp(startTheme.ampersand, endTheme.ampersand, interpolationProgress);
+        currentTheme.multiplication = color_lerp(startTheme.multiplication, endTheme.multiplication, interpolationProgress);
+        currentTheme.pointer = color_lerp(startTheme.pointer, endTheme.pointer, interpolationProgress);
+        currentTheme.modeline = color_lerp(startTheme.modeline, endTheme.modeline, interpolationProgress);
+        currentTheme.modeline_accent = color_lerp(startTheme.modeline_accent, endTheme.modeline_accent, interpolationProgress);
+        currentTheme.minibuffer = color_lerp(startTheme.minibuffer, endTheme.minibuffer, interpolationProgress);
+        currentTheme.matching_parenthesis = color_lerp(startTheme.matching_parenthesis, endTheme.matching_parenthesis, interpolationProgress);
+        currentTheme.hl_line = color_lerp(startTheme.hl_line, endTheme.hl_line, interpolationProgress);
+        currentTheme.type = color_lerp(startTheme.type, endTheme.type, interpolationProgress);
+        currentTheme.function_definition = color_lerp(startTheme.function_definition, endTheme.function_definition, interpolationProgress);
+        currentTheme.anchor = color_lerp(startTheme.anchor, endTheme.anchor, interpolationProgress);
+        currentTheme.whitespace = color_lerp(startTheme.whitespace, endTheme.whitespace, interpolationProgress);
+        currentTheme.indentation_line = color_lerp(startTheme.indentation_line, endTheme.indentation_line, interpolationProgress);
+        currentTheme.null = color_lerp(startTheme.null, endTheme.null, interpolationProgress);
+        currentTheme.code_block = color_lerp(startTheme.code_block, endTheme.code_block, interpolationProgress);
+
+        
+        if (interpolationProgress >= 1.0f) {
+            interpolationProgress = 1.0f;
+        }
+    } else if (!theme_lerp) {
+        currentTheme = themes[currentThemeIndex];
+        interpolationProgress = 1.0f;
+    }
+}
 
 void initialize_themes() {
-
     // Nature
     themes[0] = (Theme) {
         .cursor = hex_to_vec4f(0x658B5FFF),
@@ -57,6 +200,7 @@ void initialize_themes() {
         .modeline = hex_to_vec4f(0x060606FF),
         .modeline_accent = hex_to_vec4f(0x658B5FFF),
         .whitespace = hex_to_vec4f(0x171717FF),
+        .selected_whitespaces = hex_to_vec4f(0x9989A7FF),
         .indentation_line = hex_to_vec4f(0x171717FF),
         .null = hex_to_vec4f(0x564F96FF),
         .code_block = hex_to_vec4f(0x080808FF),
@@ -113,29 +257,30 @@ void initialize_themes() {
         .modeline = hex_to_vec4f(0x1D2026FF),
         .modeline_accent = hex_to_vec4f(0x51AFEFFF),
         .whitespace = hex_to_vec4f(0x3F444AFF),
+        .selected_whitespaces = hex_to_vec4f(0x959BA5FF),
         .indentation_line = hex_to_vec4f(0x3F444AFF),
         .null = hex_to_vec4f(0xA9A1E1FF),
         .code_block = hex_to_vec4f(0x23272EFF),
     };
 
     // Dracula
-    themes[2] = (Theme) {
-        .cursor = hex_to_vec4f(0xBD93F9FF), //#BD93F9
+    themes[2] = (Theme){
+        .cursor = hex_to_vec4f(0xBD93F9FF), // #BD93F9
         .insert_cursor = hex_to_vec4f(0xBD93F9FF),
-        .emacs_cursor = hex_to_vec4f(0xF1FA8CFF), //#F1FA8C
+        .emacs_cursor = hex_to_vec4f(0xF1FA8CFF), // #F1FA8C
         .text = hex_to_vec4f(0xF8F8F2FF),
         .background = hex_to_vec4f(0x282A36FF),
         .comment = hex_to_vec4f(0x6272A4FF),
         .hashtag = hex_to_vec4f(0xBD93F9FF),
-        .logic = hex_to_vec4f(0xFF79C6FF), //#FF79C6
+        .logic = hex_to_vec4f(0xFF79C6FF), // #FF79C6
         .string = hex_to_vec4f(0xF1FA8CFF),
         .selection = hex_to_vec4f(0x44475AFF),
-        .search = hex_to_vec4f(0x8466AEFF), //#8466AE
+        .search = hex_to_vec4f(0x8466AEFF), // #8466AE
         .todo = hex_to_vec4f(0xF1FA8CFF),
         .line_numbers = hex_to_vec4f(0x6272A4FF),
         .current_line_number = hex_to_vec4f(0xF8F8F2FF),
-        .fixme = hex_to_vec4f(0xFF5555FF), //#FF5555
-        .note = hex_to_vec4f(0x50FA7BFF), //#50FA7B
+        .fixme = hex_to_vec4f(0xFF5555FF), // #FF5555
+        .note = hex_to_vec4f(0x50FA7BFF),  // #50FA7B
         .bug = hex_to_vec4f(0xFF5555FF),
         .not_equals = hex_to_vec4f(0xFF5555FF),
         .exclamation = hex_to_vec4f(0xBD93F9FF),
@@ -149,7 +294,7 @@ void initialize_themes() {
         .minus = hex_to_vec4f(0xFF5555FF),
         .truee = hex_to_vec4f(0x50FA7BFF),
         .falsee = hex_to_vec4f(0xFF5555FF),
-        .arrow = hex_to_vec4f(0x8BE9FDFF), //#8BE9FD
+        .arrow = hex_to_vec4f(0x8BE9FDFF), // #8BE9FD
         .open_square = hex_to_vec4f(0xF8F8F2FF),
         .close_square = hex_to_vec4f(0xF8F8F2FF),
         .array_content = hex_to_vec4f(0xBD93F9FF),
@@ -158,139 +303,26 @@ void initialize_themes() {
         .type = hex_to_vec4f(0xBD93F9FF),
         .function_definition = hex_to_vec4f(0x50FA7BFF),
         .anchor = hex_to_vec4f(0xFF79C6FF),
-        .hl_line = hex_to_vec4f(0x1E2029FF), //#1E2029
+        .hl_line = hex_to_vec4f(0x1E2029FF), // #1E2029
         .multiplication = hex_to_vec4f(0x50FA7BFF),
-        .pointer = hex_to_vec4f(0xFFC9E8FF), //#FFC9E8
+        .pointer = hex_to_vec4f(0xFFC9E8FF), // #FFC9E8
         .logic_and = hex_to_vec4f(0x50FA7BFF),
         .logic_or = hex_to_vec4f(0xFF5555FF),
         .ampersand = hex_to_vec4f(0x8BE9FDFF),
         .pipe = hex_to_vec4f(0x50FA7BFF),
-        .minibuffer = hex_to_vec4f(0x1E2029FF), //#1E2029
+        .minibuffer = hex_to_vec4f(0x1E2029FF), // #1E2029
         .modeline = hex_to_vec4f(0x22232DFF),
         .modeline_accent = hex_to_vec4f(0xBD93F9FF),
         .whitespace = hex_to_vec4f(0x565761FF),
+        .selected_whitespaces = hex_to_vec4f(0xC6C6C1FF),
         .indentation_line = hex_to_vec4f(0x565761FF),
         .null = hex_to_vec4f(0x8BE9FDFF),
         .code_block = hex_to_vec4f(0x23242FFF),
     };
 
-    // DOOM city lights
+
+    // Palenigh
     themes[3] = (Theme){
-        .cursor = hex_to_vec4f(0x5EC4FFFF),        // #5EC4FF
-        .insert_cursor = hex_to_vec4f(0xE27E8DFF), // #E27E8D
-        .emacs_cursor = hex_to_vec4f(0xEBBF83FF),  // #EBBF83
-        .text = hex_to_vec4f(0xA0B3C5FF),
-        .background = hex_to_vec4f(0x1D252CFF),
-        .comment = hex_to_vec4f(0x41505EFF),
-        .hashtag = hex_to_vec4f(0x5EC4FFFF),
-        .logic = hex_to_vec4f(0x5EC4FFFF),
-        .string = hex_to_vec4f(0x539AFCFF), // #539AFC
-        .selection = hex_to_vec4f(0x28323BFF),
-        .search = hex_to_vec4f(0x4189B2FF),
-        .todo = hex_to_vec4f(0xEBBF83FF),
-        .line_numbers = hex_to_vec4f(0x384551FF),
-        .current_line_number = hex_to_vec4f(0xA0B3C5FF),
-        .fixme = hex_to_vec4f(0xD95468FF), // #D95468
-        .note = hex_to_vec4f(0x8BD49CFF),  // #8BD49C
-        .bug = hex_to_vec4f(0xD95468FF),
-        .not_equals = hex_to_vec4f(0xD95468FF),
-        .exclamation = hex_to_vec4f(0x5EC4FFFF),
-        .equals = hex_to_vec4f(0x8BD49CFF),
-        .equals_equals = hex_to_vec4f(0x8BD49CFF),
-        .greater_than = hex_to_vec4f(0x8BD49CFF),
-        .less_than = hex_to_vec4f(0xD95468FF),
-        .marks = hex_to_vec4f(0x4189B2FF),
-        .fb_selection = hex_to_vec4f(0x28323BFF),
-        .plus = hex_to_vec4f(0x8BD49CFF),
-        .minus = hex_to_vec4f(0xD95468FF),
-        .truee = hex_to_vec4f(0x8BD49CFF),
-        .falsee = hex_to_vec4f(0xD95468FF),
-        .arrow = hex_to_vec4f(0xA0B3C5FF),
-        .open_square = hex_to_vec4f(0xA0B3C5FF),
-        .close_square = hex_to_vec4f(0xA0B3C5FF),
-        .array_content = hex_to_vec4f(0x539AFCFF),
-        .link = hex_to_vec4f(0x539AFCFF),
-        .matching_parenthesis = hex_to_vec4f(0x28323BFF),
-        .type = hex_to_vec4f(0xEBBF83FF),
-        .function_definition = hex_to_vec4f(0x33CED8FF), // #33CED8
-        .anchor = hex_to_vec4f(0xE27E8DFF),
-        .hl_line = hex_to_vec4f(0x181E24FF),
-        .multiplication = hex_to_vec4f(0x8BD49CFF),
-        .pointer = hex_to_vec4f(0x539AFCFF),
-        .logic_and = hex_to_vec4f(0x8BD49CFF),
-        .logic_or = hex_to_vec4f(0xD95468FF),
-        .ampersand = hex_to_vec4f(0x5EC4FFFF),
-        .pipe = hex_to_vec4f(0x8BD49CFF),
-        .minibuffer = hex_to_vec4f(0x181E24FF),
-        .modeline = hex_to_vec4f(0x181F25FF),
-        .modeline_accent = hex_to_vec4f(0x5EC4FFFF),
-        .whitespace = hex_to_vec4f(0x384551FF),
-        .indentation_line = hex_to_vec4f(0x384551FF),
-        .null = hex_to_vec4f(0xE27E8DFF),
-        .code_block = hex_to_vec4f(0x20282FFF),
-    };
-
-
-    // DOOM molokai
-    themes[4] = (Theme) {
-        .cursor = hex_to_vec4f(0xFB2874FF), //#FB2874
-        .insert_cursor = hex_to_vec4f(0xFB2874FF),
-        .emacs_cursor = hex_to_vec4f(0xE2C770FF), //#E2C770
-        .text = hex_to_vec4f(0xD6D6D4FF),
-        .background = hex_to_vec4f(0x1C1E1FFF),
-        .comment = hex_to_vec4f(0x555556FF),
-        .hashtag = hex_to_vec4f(0x9C91E4FF), //#9C91E4
-        .logic = hex_to_vec4f(0xFB2874FF),
-        .string = hex_to_vec4f(0xE2C770FF),
-        .selection = hex_to_vec4f(0x4E4E4EFF),
-        .search = hex_to_vec4f(0x9C91E4FF),
-        .todo = hex_to_vec4f(0xE2C770FF),
-        .line_numbers = hex_to_vec4f(0x555556FF),
-        .current_line_number = hex_to_vec4f(0xCFC0C5FF),
-        .fixme = hex_to_vec4f(0xE74C3CFF), //#E74C3C
-        .note = hex_to_vec4f(0xB6E63EFF), //#B6E63E
-        .bug = hex_to_vec4f(0xE74C3CFF),
-        .not_equals = hex_to_vec4f(0xE74C3CFF),
-        .exclamation = hex_to_vec4f(0x9C91E4FF),
-        .equals = hex_to_vec4f(0xB6E63EFF),
-        .equals_equals = hex_to_vec4f(0xB6E63EFF),
-        .greater_than = hex_to_vec4f(0xB6E63EFF),
-        .less_than = hex_to_vec4f(0xE74C3CFF),
-        .marks = hex_to_vec4f(0xB6E63EFF),
-        .fb_selection = hex_to_vec4f(0x4E4E4EFF),
-        .plus = hex_to_vec4f(0xB6E63EFF),
-        .minus = hex_to_vec4f(0xE74C3CFF),
-        .truee = hex_to_vec4f(0xB6E63EFF),
-        .falsee = hex_to_vec4f(0xE74C3CFF),
-        .arrow = hex_to_vec4f(0xD6D6D4FF),
-        .open_square = hex_to_vec4f(0xD6D6D4FF),
-        .close_square = hex_to_vec4f(0xD6D6D4FF),
-        .array_content = hex_to_vec4f(0x9C91E4FF),
-        .link = hex_to_vec4f(0x9C91E4FF),
-        .matching_parenthesis = hex_to_vec4f(0x4E4E4EFF),
-        .type = hex_to_vec4f(0x66D9EFFF),
-        .function_definition = hex_to_vec4f(0xB6E63EFF),
-        .anchor = hex_to_vec4f(0x9C91E4FF),
-        .hl_line = hex_to_vec4f(0x222323FF),
-        .multiplication = hex_to_vec4f(0xB6E63EFF),
-        .pointer = hex_to_vec4f(0x9C91E4FF),
-        .logic_and = hex_to_vec4f(0xB6E63EFF),
-        .logic_or = hex_to_vec4f(0xE74C3CFF),
-        .ampersand = hex_to_vec4f(0x9C91E4FF),
-        .pipe = hex_to_vec4f(0xB6E63EFF),
-        .minibuffer = hex_to_vec4f(0x222323FF),
-        .modeline = hex_to_vec4f(0x2D2E2EFF),
-        .modeline_accent = hex_to_vec4f(0xB6E63EFF),
-        .whitespace = hex_to_vec4f(0x4E4E4EFF),
-        .indentation_line = hex_to_vec4f(0x4E4E4EFF),
-        .null = hex_to_vec4f(0xFD971FFF),
-        .code_block = hex_to_vec4f(0x2D2E2EFF),
-    };
-
-    
-
-    // Palenight
-    themes[5] = (Theme){
         .cursor = hex_to_vec4f(0xC792EAFF), // #C792EA
         .insert_cursor = hex_to_vec4f(0xC792EAFF),
         .emacs_cursor = hex_to_vec4f(0xFFCB6BFF), // #FFCB6B
@@ -340,30 +372,146 @@ void initialize_themes() {
         .modeline = hex_to_vec4f(0x232635FF),
         .modeline_accent = hex_to_vec4f(0xC792EAFF),
         .whitespace = hex_to_vec4f(0x4E5579FF),
+        .selected_whitespaces = hex_to_vec4f(0xBECCCCFF),
         .indentation_line = hex_to_vec4f(0x4E5579FF),
         .null = hex_to_vec4f(0xF78C6CFF),
         .code_block = hex_to_vec4f(0x232635FF),
     };
 
+    // DOOM city lights
+    themes[4] = (Theme){
+        .cursor = hex_to_vec4f(0x5EC4FFFF),        // #5EC4FF
+        .insert_cursor = hex_to_vec4f(0xE27E8DFF), // #E27E8D
+        .emacs_cursor = hex_to_vec4f(0xEBBF83FF),  // #EBBF83
+        .text = hex_to_vec4f(0xA0B3C5FF),
+        .background = hex_to_vec4f(0x1D252CFF),
+        .comment = hex_to_vec4f(0x41505EFF),
+        .hashtag = hex_to_vec4f(0x5EC4FFFF),
+        .logic = hex_to_vec4f(0x5EC4FFFF),
+        .string = hex_to_vec4f(0x539AFCFF), // #539AFC
+        .selection = hex_to_vec4f(0x28323BFF),
+        .search = hex_to_vec4f(0x4189B2FF),
+        .todo = hex_to_vec4f(0xEBBF83FF),
+        .line_numbers = hex_to_vec4f(0x384551FF),
+        .current_line_number = hex_to_vec4f(0xA0B3C5FF),
+        .fixme = hex_to_vec4f(0xD95468FF), // #D95468
+        .note = hex_to_vec4f(0x8BD49CFF),  // #8BD49C
+        .bug = hex_to_vec4f(0xD95468FF),
+        .not_equals = hex_to_vec4f(0xD95468FF),
+        .exclamation = hex_to_vec4f(0x5EC4FFFF),
+        .equals = hex_to_vec4f(0x8BD49CFF),
+        .equals_equals = hex_to_vec4f(0x8BD49CFF),
+        .greater_than = hex_to_vec4f(0x8BD49CFF),
+        .less_than = hex_to_vec4f(0xD95468FF),
+        .marks = hex_to_vec4f(0x4189B2FF),
+        .fb_selection = hex_to_vec4f(0x28323BFF),
+        .plus = hex_to_vec4f(0x8BD49CFF),
+        .minus = hex_to_vec4f(0xD95468FF),
+        .truee = hex_to_vec4f(0x8BD49CFF),
+        .falsee = hex_to_vec4f(0xD95468FF),
+        .arrow = hex_to_vec4f(0xA0B3C5FF),
+        .open_square = hex_to_vec4f(0xA0B3C5FF),
+        .close_square = hex_to_vec4f(0xA0B3C5FF),
+        .array_content = hex_to_vec4f(0x539AFCFF),
+        .link = hex_to_vec4f(0x539AFCFF),
+        .matching_parenthesis = hex_to_vec4f(0x28323BFF),
+        .type = hex_to_vec4f(0xEBBF83FF),
+        .function_definition = hex_to_vec4f(0x33CED8FF), // #33CED8
+        .anchor = hex_to_vec4f(0xE27E8DFF),
+        .hl_line = hex_to_vec4f(0x181E24FF),
+        .multiplication = hex_to_vec4f(0x8BD49CFF),
+        .pointer = hex_to_vec4f(0x539AFCFF),
+        .logic_and = hex_to_vec4f(0x8BD49CFF),
+        .logic_or = hex_to_vec4f(0xD95468FF),
+        .ampersand = hex_to_vec4f(0x5EC4FFFF),
+        .pipe = hex_to_vec4f(0x8BD49CFF),
+        .minibuffer = hex_to_vec4f(0x181E24FF),
+        .modeline = hex_to_vec4f(0x181F25FF),
+        .modeline_accent = hex_to_vec4f(0x5EC4FFFF),
+        .whitespace = hex_to_vec4f(0x384551FF),
+        .selected_whitespaces = hex_to_vec4f(0x808F9DFF),
+        .indentation_line = hex_to_vec4f(0x384551FF),
+        .null = hex_to_vec4f(0xE27E8DFF),
+        .code_block = hex_to_vec4f(0x20282FFF),
+    };
+
+
+    // DOOM molokai
+    themes[5] = (Theme) {
+        .cursor = hex_to_vec4f(0xFB2874FF), //#FB2874
+        .insert_cursor = hex_to_vec4f(0xFB2874FF),
+        .emacs_cursor = hex_to_vec4f(0xE2C770FF), //#E2C770
+        .text = hex_to_vec4f(0xD6D6D4FF),
+        .background = hex_to_vec4f(0x1C1E1FFF),
+        .comment = hex_to_vec4f(0x555556FF),
+        .hashtag = hex_to_vec4f(0x9C91E4FF), //#9C91E4
+        .logic = hex_to_vec4f(0xFB2874FF),
+        .string = hex_to_vec4f(0xE2C770FF),
+        .selection = hex_to_vec4f(0x4E4E4EFF),
+        .search = hex_to_vec4f(0x9C91E4FF),
+        .todo = hex_to_vec4f(0xE2C770FF),
+        .line_numbers = hex_to_vec4f(0x555556FF),
+        .current_line_number = hex_to_vec4f(0xCFC0C5FF),
+        .fixme = hex_to_vec4f(0xE74C3CFF), //#E74C3C
+        .note = hex_to_vec4f(0xB6E63EFF), //#B6E63E
+        .bug = hex_to_vec4f(0xE74C3CFF),
+        .not_equals = hex_to_vec4f(0xE74C3CFF),
+        .exclamation = hex_to_vec4f(0x9C91E4FF),
+        .equals = hex_to_vec4f(0xB6E63EFF),
+        .equals_equals = hex_to_vec4f(0xB6E63EFF),
+        .greater_than = hex_to_vec4f(0xB6E63EFF),
+        .less_than = hex_to_vec4f(0xE74C3CFF),
+        .marks = hex_to_vec4f(0xB6E63EFF),
+        .fb_selection = hex_to_vec4f(0x4E4E4EFF),
+        .plus = hex_to_vec4f(0xB6E63EFF),
+        .minus = hex_to_vec4f(0xE74C3CFF),
+        .truee = hex_to_vec4f(0xB6E63EFF),
+        .falsee = hex_to_vec4f(0xE74C3CFF),
+        .arrow = hex_to_vec4f(0xD6D6D4FF),
+        .open_square = hex_to_vec4f(0xD6D6D4FF),
+        .close_square = hex_to_vec4f(0xD6D6D4FF),
+        .array_content = hex_to_vec4f(0x9C91E4FF),
+        .link = hex_to_vec4f(0x9C91E4FF),
+        .matching_parenthesis = hex_to_vec4f(0x4E4E4EFF),
+        .type = hex_to_vec4f(0x66D9EFFF),
+        .function_definition = hex_to_vec4f(0xB6E63EFF),
+        .anchor = hex_to_vec4f(0x9C91E4FF),
+        .hl_line = hex_to_vec4f(0x222323FF),
+        .multiplication = hex_to_vec4f(0xB6E63EFF),
+        .pointer = hex_to_vec4f(0x9C91E4FF),
+        .logic_and = hex_to_vec4f(0xB6E63EFF),
+        .logic_or = hex_to_vec4f(0xE74C3CFF),
+        .ampersand = hex_to_vec4f(0x9C91E4FF),
+        .pipe = hex_to_vec4f(0xB6E63EFF),
+        .minibuffer = hex_to_vec4f(0x222323FF),
+        .modeline = hex_to_vec4f(0x2D2E2EFF),
+        .modeline_accent = hex_to_vec4f(0xB6E63EFF),
+        .whitespace = hex_to_vec4f(0x4E4E4EFF),
+        .selected_whitespaces = hex_to_vec4f(0x808F9DFF),
+        .indentation_line = hex_to_vec4f(0x4E4E4EFF),
+        .null = hex_to_vec4f(0xFD971FFF),
+        .code_block = hex_to_vec4f(0x2D2E2EFF),
+    };
+
 
     // SUNSET
-    themes[6] = (Theme) {
-        .cursor = hex_to_vec4f(0xD9A173FF), //#D9A173
-        .insert_cursor = hex_to_vec4f(0xD46A7DFF), //#D46A7D
-        .emacs_cursor = hex_to_vec4f(0x9A8B6AFF), //#9A8B6A
+    themes[6] = (Theme){
+        .cursor = hex_to_vec4f(0xD9A173FF),        // #D9A173
+        .insert_cursor = hex_to_vec4f(0xD46A7DFF), // #D46A7D
+        .emacs_cursor = hex_to_vec4f(0x9A8B6AFF),  // #9A8B6A
         .text = hex_to_vec4f(0xCCCCC5FF),
         .background = hex_to_vec4f(0x0C0D12FF),
         .comment = hex_to_vec4f(0x8E8E89FF),
         .hashtag = hex_to_vec4f(0xD9A173FF),
         .logic = hex_to_vec4f(0xD9A173FF),
-        .string = hex_to_vec4f(0x6A7E74FF), //#6A7E74
+        .string = hex_to_vec4f(0x6A7E74FF), // #6A7E74
         .selection = hex_to_vec4f(0x28292DFF),
-        .search = hex_to_vec4f(0x805F44FF), //#805F44
-        .todo = hex_to_vec4f(0x9A8B6AFF), 
+        .search = hex_to_vec4f(0x805F44FF), // #805F44
+        .todo = hex_to_vec4f(0x9A8B6AFF),
         .line_numbers = hex_to_vec4f(0x1B1B21FF),
         .current_line_number = hex_to_vec4f(0xCCCCC5FF),
-        .fixme = hex_to_vec4f(0xC06873FF), //#C06873
-        .note = hex_to_vec4f(0x6A7E74FF), 
+        .fixme = hex_to_vec4f(0xC06873FF), // #C06873
+        .note = hex_to_vec4f(0x6A7E74FF),
         .bug = hex_to_vec4f(0xC06873FF),
         .not_equals = hex_to_vec4f(0xD46A7DFF),
         .exclamation = hex_to_vec4f(0xD46A7DFF),
@@ -391,33 +539,85 @@ void initialize_themes() {
         .matching_parenthesis = hex_to_vec4f(0x28292DFF),
         .hl_line = hex_to_vec4f(0x0A0B0FFF),
         .type = hex_to_vec4f(0x9A8B6AFF),
-        .function_definition = hex_to_vec4f(0xE07084FF), //#E07084
+        .function_definition = hex_to_vec4f(0xE07084FF), // #E07084
         .anchor = hex_to_vec4f(0xE07084FF),
         .minibuffer = hex_to_vec4f(0x0C0D12FF),
         .modeline = hex_to_vec4f(0x08090CFF),
         .modeline_accent = hex_to_vec4f(0xD9A173FF),
         .whitespace = hex_to_vec4f(0x1B1B21FF),
+        .selected_whitespaces = hex_to_vec4f(0xA3A39DFF),
         .indentation_line = hex_to_vec4f(0x28292DFF),
         .null = hex_to_vec4f(0xD46A7DFF),
         .code_block = hex_to_vec4f(0x0B0C11FF),
     };
 
 
+    // Helix
+    themes[7] = (Theme){
+        .cursor = hex_to_vec4f(0x5A5977FF), //#5A5977
+        .insert_cursor = hex_to_vec4f(0x5A5977FF),
+        .emacs_cursor = hex_to_vec4f(0x5A5977FF),
+        .text = hex_to_vec4f(0xFFFFFFFF),
+        .background = hex_to_vec4f(0x3B224CFF), //#3B224C
+        .comment = hex_to_vec4f(0x697C81FF),
+        .hashtag = hex_to_vec4f(0xDBBFEFFF), //#DBBFEF
+        .logic = hex_to_vec4f(0xECCDBAFF), //#ECCDBA
+        .string = hex_to_vec4f(0xCCCCCCFF),
+        .selection = hex_to_vec4f(0x540099FF), //#540099
+        .search = hex_to_vec4f(0x540099FF),
+        .todo = hex_to_vec4f(0x6F44F0FF),
+        .line_numbers = hex_to_vec4f(0x5A5977FF),
+        .current_line_number = hex_to_vec4f(0xDBBFEFFF),
+        .fixme = hex_to_vec4f(0xF47868FF), //#F47868
+        .note = hex_to_vec4f(0x6F44F0FF),
+        .bug = hex_to_vec4f(0xF47868FF),
+        .not_equals = hex_to_vec4f(0xDBBFEFFF), //#DBBFEF
+        .exclamation = hex_to_vec4f(0xDBBFEFFF),
+        .equals = hex_to_vec4f(0xDBBFEFFF),
+        .equals_equals = hex_to_vec4f(0xDBBFEFFF),
+        .greater_than = hex_to_vec4f(0xDBBFEFFF),
+        .less_than = hex_to_vec4f(0xDBBFEFFF),
+        .marks = hex_to_vec4f(0x540099FF),
+        .fb_selection = hex_to_vec4f(0x540099FF),
+        .plus = hex_to_vec4f(0xDBBFEFFF),
+        .minus = hex_to_vec4f(0xDBBFEFFF),
+        .truee = hex_to_vec4f(0xFFFFFFFF),
+        .falsee = hex_to_vec4f(0xFFFFFFFF),
+        .arrow = hex_to_vec4f(0xA4A0E8FF), //#A4A0E8
+        .open_square = hex_to_vec4f(0xA4A0E8FF),
+        .close_square = hex_to_vec4f(0xA4A0E8FF),
+        .array_content = hex_to_vec4f(0xA4A0E8FF),
+        .link = hex_to_vec4f(0xA4A0E8FF),
+        .logic_or = hex_to_vec4f(0xDBBFEFFF),
+        .pipe = hex_to_vec4f(0xDBBFEFFF),
+        .ampersand = hex_to_vec4f(0xDBBFEFFF),
+        .logic_and = hex_to_vec4f(0xDBBFEFFF),
+        .pointer = hex_to_vec4f(0xFFFFFFFF),
+        .multiplication = hex_to_vec4f(0xFFFFFFFF),
+        .matching_parenthesis = hex_to_vec4f(0x6C6999FF),
+        .hl_line = hex_to_vec4f(0x281733FF),
+        .type = hex_to_vec4f(0xFFFFFFFF),
+        .function_definition = hex_to_vec4f(0xFFFFFFFF),
+        .anchor = hex_to_vec4f(0xFFFFFFFF),
+        .minibuffer = hex_to_vec4f(0x3B224CFF),
+        .modeline = hex_to_vec4f(0x281733FF),
+        .modeline_accent = hex_to_vec4f(0x281733FF),
+        .whitespace = hex_to_vec4f(0x281733FF),
+        .selected_whitespaces = hex_to_vec4f(0xFFFFFFFF),
+        .indentation_line = hex_to_vec4f(0x281733FF),
+        .null = hex_to_vec4f(0xFFFFFFFF),
+        .code_block = hex_to_vec4f(0x281733FF),
+    };
+
+    
+    // Initialize currentTheme to the first theme
+    if (current_mode == HELIX) {
+        currentTheme = themes[7];
+    } else {
+        currentTheme = themes[0];
+    }
+    previousThemeIndex = 0;
+    currentThemeIndex = 0;
+    interpolationProgress = 1.0f; // No interpolation needed at start
 
  }
-
-void theme_next(int *currentThemeIndex) {
-    const int themeCount = sizeof(themes) / sizeof(themes[0]);
-    *currentThemeIndex += 1;
-    if (*currentThemeIndex >= themeCount) {
-        *currentThemeIndex = 0;  // wrap around
-    }
-}
-
-void theme_previous(int *currentThemeIndex) {
-    *currentThemeIndex -= 1;
-    if (*currentThemeIndex < 0) {
-        const int themeCount = sizeof(themes) / sizeof(themes[0]);
-        *currentThemeIndex = themeCount - 1;  // wrap around to the last theme
-    }
-}

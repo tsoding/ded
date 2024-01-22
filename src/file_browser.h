@@ -32,6 +32,7 @@ Errno fb_go_to_parent(File_Browser *fb);
 
 // ADDED
 void extract_file_extension(const char *filename, String_Builder *ext);
+void expand_path(const char *original_path, char *expanded_path, size_t expanded_path_size);
 
 
 

@@ -21,15 +21,19 @@ make the text disappear []
 ** Shaders
 use shaders from =~/.config/ded/shaders= instead [x]
 ** Lexer
+support multi line tokens []
 chech for strings in arrays []
 multi line comments []
-different vertex and fragment shader per token []
+different vertex and fragment shader per token (need batch rendering) []
 different font per token []
 '' [x]
 NULL [x]
 syntax highlighting for : | || & && [x]
 highlight links [x]
 ** Renderer 
+batch rendering []
+optional vscode hl_line []
+cchange hl_line color based on mode []
 render_trailing_whitespaces []
 line under links []
 render circles (we need to use a shader for better performance) [/]
@@ -42,7 +46,7 @@ each theme should have a name not only and index
 
 ** Evil
 evil-find-char-backward []
-evil-visual-liene-mode []
+evil-visual-line-mode []
 evil-search-backward []
 splits(maybe)   []
 5k should work []
@@ -60,8 +64,18 @@ activate_snippet on "if" take two times to activate
 also editor_backspace take 3 times to delete []
 
 ** Editor
-in M-x if the input is a number go to that line in the editor if it exist
-dim a split the smaller it is []
+render line numbers only on buffers with more than ...
+lerp syntax highlighting in []
+
+save open buffers on quit and cursor position for each of them 
+while ded is running keep them into memory, save them on quit to 
+~/.config/ded/buffers []
+
+render whitespaces with error color when there is an error on a line []
+moveto function up/down []
+drag function up/down []
+
+dim unfocused splits the smaller they are []
 
 option to render whitespaces on selection []
 
@@ -78,7 +92,6 @@ if the search found nothing until the end of the file wrap arround
 and check from the start of the fil until the cursor []
 
 
-switch true to false or false to true in editor_enter []
 
 measure_whitespace_width only once on font switch rather
 than 4 times every frame []
@@ -118,6 +131,9 @@ use window hight and width dinamicly instead of fixed position when animations a
 
 
 
+switch true to false or false to true in editor_enter [x]
+in M-x if the input is a number
+go to that line in the editor if it exist [x]
 a theme should be able to define how much lighter of the bg
 whitespaces indicators are in % (currently hardcoded to 70%)[x]
 keep a list of opened files to quickly

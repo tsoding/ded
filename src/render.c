@@ -6,8 +6,12 @@
 #include "lexer.h"
 #include "simple_renderer.h"
 #include "theme.h"
+#include <stdbool.h>
 
 float lineNumberWidth = FREE_GLYPH_FONT_SIZE * 5;
+bool render_whitespaces_on_select = true;
+bool lerpTokens = true;
+
 
 // TODO sub-pixel rendering
 void render_search_text(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor) {
@@ -40,6 +44,58 @@ void render_search_text(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *ed
     }
 }
 
+void render_selection(Editor *editor, Simple_Renderer *sr, Free_Glyph_Atlas *atlas) {
+    if (isWave) {
+        simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_COLOR);
+    } else {
+        simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
+    }
+    if (editor->selection) {
+        for (size_t row = 0; row < editor->lines.count; ++row) {
+            size_t select_begin_chr = editor->select_begin;
+            size_t select_end_chr = editor->cursor;
+            if (select_begin_chr > select_end_chr) {
+                SWAP(size_t, select_begin_chr, select_end_chr);
+            }
+
+            Line line_chr = editor->lines.items[row];
+
+            if (select_begin_chr < line_chr.begin) {
+                select_begin_chr = line_chr.begin;
+            }
+
+            if (select_end_chr > line_chr.end) {
+                select_end_chr = line_chr.end;
+            }
+
+            if (select_begin_chr <= select_end_chr) {
+                Vec2f select_begin_scr = vec2f(0, -((float)row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE);
+                free_glyph_atlas_measure_line_sized(
+                                                    atlas, editor->data.items + line_chr.begin, select_begin_chr - line_chr.begin,
+                                                    &select_begin_scr);
+
+                Vec2f select_end_scr = select_begin_scr;
+                // Adjust the range to include the end character
+                free_glyph_atlas_measure_line_sized(
+                                                    atlas, editor->data.items + select_begin_chr, select_end_chr - select_begin_chr + 1,
+                                                    &select_end_scr);
+
+                // Adjust selection for line numbers if displayed
+                if (showLineNumbers) {
+                    select_begin_scr.x += lineNumberWidth;
+                    select_end_scr.x += lineNumberWidth;
+                }
+
+                Vec4f selection_color = vec4f(.25, .25, .25, 1);
+
+                simple_renderer_solid_rect(sr, select_begin_scr, vec2f(select_end_scr.x - select_begin_scr.x, FREE_GLYPH_FONT_SIZE), selection_color);
+            }
+        }
+    }
+    simple_renderer_flush(sr);
+}
+    
+
 #include <string.h> // Include string.h for strcmp
 
 typedef struct {
@@ -48,6 +104,8 @@ typedef struct {
     float startX;
 } MarkdownCodeBlockInfo;
 
+
+// TODO allign codeblock with cursor and make them expandable adding chars
 void render_markdown(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor, File_Browser *fb) {
     const float LINE_HEIGHT = FREE_GLYPH_FONT_SIZE;
     MarkdownCodeBlockInfo codeBlockStack[500]; // Assuming a max of 500 code blocks
@@ -84,7 +142,7 @@ void render_markdown(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *edito
             }
             
             Vec4f codeBlockColor = CURRENT_THEME.code_block;
-            Vec2f rectSize = {/* endPos.x - */ startPos.x + 6000.0f, endPos.y - startPos.y}; // TODO use w
+            Vec2f rectSize = {/* endPos.x - */ startPos.x + 2000.0f, endPos.y - startPos.y}; // TODO use w
 
             simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
             simple_renderer_solid_rect(sr, startPos, rectSize, codeBlockColor);
@@ -204,76 +262,102 @@ void render_line_numbers(Simple_Renderer *sr, Free_Glyph_Atlas *atlas, Editor *e
 }
 
 
-
-// SQAURES
+// TODO 
 /* void render_whitespaces(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor) { */
-/*     if (showWhitespaces) { */
-/*         if (isWave) { */
-/*             simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_COLOR); */
-/*         } else { */
-/*             simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR); */
+/*     float circleRadius = FREE_GLYPH_FONT_SIZE * 0.1; */
+/*     Vec4f whitespaceColor = CURRENT_THEME.whitespace; */
+/*     int circleSegments = 20; */
+
+/*     for (size_t i = 0; i < editor->lines.count; ++i) { */
+/*         Line line = editor->lines.items[i]; */
+/*         Vec2f pos = {0, -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE}; */
+
+/*         if (showLineNumbers) { */
+/*             pos.x += lineNumberWidth; */
 /*         } */
-        
-/*         float squareSize = FREE_GLYPH_FONT_SIZE * 0.2; */
-/*         Vec4f whitespaceColor = CURRENT_THEME.whitespace; */
-        
-/*         for (size_t i = 0; i < editor->lines.count; ++i) { */
-/*             Line line = editor->lines.items[i]; */
-/*             Vec2f pos = {0, -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE}; */
-            
-/*             if (showLineNumbers) { */
-/*                 pos.x += lineNumberWidth; */
-/*             } */
-            
-/*             for (size_t j = line.begin; j < line.end; ++j) { */
-/*                 if (editor->data.items[j] == ' ' || editor->data.items[j] == '\t') { */
-/*                     // Measure the actual character width */
-/*                     Vec2f char_pos = pos; */
-/*                     char_pos.x += (j - line.begin) * squareSize; // Starting position for this character */
-/*                     free_glyph_atlas_measure_line_sized(atlas, editor->data.items + j, 1, &char_pos); */
-/*                     float char_width = char_pos.x - pos.x - (j - line.begin) * squareSize; */
-                    
-/*                     Vec2f rectPos = {pos.x + (j - line.begin) * char_width + (char_width - squareSize) / 2, pos.y + (FREE_GLYPH_FONT_SIZE - squareSize) / 2}; */
-/*                     simple_renderer_solid_rect(sr, rectPos, vec2f(squareSize, squareSize), whitespaceColor); */
-/*                 } */
+
+/*         // Manually calculate the selection start and end */
+/*         size_t selectionStart = editor->select_begin; */
+/*         size_t selectionEnd = editor->cursor; */
+/*         if (selectionStart > selectionEnd) { */
+/*             size_t temp = selectionStart; */
+/*             selectionStart = selectionEnd; */
+/*             selectionEnd = temp; */
+/*         } */
+
+/*         for (size_t j = line.begin; j < line.end; ++j) { */
+/*             bool isWhitespace = editor->data.items[j] == ' ' || editor->data.items[j] == '\t'; */
+/*             bool isInSelection = editor->selection && j >= selectionStart && j < selectionEnd; */
+/*             bool shouldRenderAll = showWhitespaces && isWhitespace; */
+/*             bool shouldRenderInSelection = render_whitespaces_on_select && isInSelection && isWhitespace; */
+
+/*             if (shouldRenderAll || shouldRenderInSelection) { */
+/*                 Vec2f char_pos = pos; */
+/*                 char_pos.x += (j - line.begin) * circleRadius * 2; */
+/*                 free_glyph_atlas_measure_line_sized(atlas, editor->data.items + j, 1, &char_pos); */
+/*                 float char_width = char_pos.x - pos.x - (j - line.begin) * circleRadius * 2; */
+
+/*                 Vec2f circleCenter = {pos.x + (j - line.begin) * char_width + char_width / 2, pos.y + FREE_GLYPH_FONT_SIZE / 2}; */
+
+/*                 simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR); */
+/*                 simple_renderer_circle(sr, circleCenter, circleRadius, whitespaceColor, circleSegments); */
 /*             } */
 /*         } */
-/*         simple_renderer_flush(sr); */
 /*     } */
+
+/*     simple_renderer_flush(sr); */
 /* } */
 
-
 void render_whitespaces(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor) {
-    if (showWhitespaces) {
-        float circleRadius = FREE_GLYPH_FONT_SIZE * 0.1; // Adjust the radius as needed
-        Vec4f whitespaceColor = CURRENT_THEME.whitespace;
-        int circleSegments = 20; // Adjust the number of segments for smoother circles
+    float circleRadius = FREE_GLYPH_FONT_SIZE * 0.1;
+    int circleSegments = 20;
 
-        for (size_t i = 0; i < editor->lines.count; ++i) {
-            Line line = editor->lines.items[i];
-            Vec2f pos = {0, -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE};
+    for (size_t i = 0; i < editor->lines.count; ++i) {
+        Line line = editor->lines.items[i];
+        Vec2f pos = {0, -((float)i + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE};
 
-            if (showLineNumbers) {
-                pos.x += lineNumberWidth;
+        if (showLineNumbers) {
+            pos.x += lineNumberWidth;
+        }
+
+        // Manually calculate the selection start and end
+        size_t selectionStart = editor->select_begin;
+        size_t selectionEnd = editor->cursor;
+        bool isSelectingLeftToRight = selectionStart <= editor->cursor;
+        if (selectionStart > selectionEnd) {
+            size_t temp = selectionStart;
+            selectionStart = selectionEnd;
+            selectionEnd = temp;
+        }
+
+        for (size_t j = line.begin; j < line.end; ++j) {
+            bool isWhitespace = editor->data.items[j] == ' ' || editor->data.items[j] == '\t';
+            bool isInSelection = editor->selection && j >= selectionStart && j < selectionEnd;
+            bool shouldRenderAll = showWhitespaces && isWhitespace;
+            bool shouldRenderInSelection = render_whitespaces_on_select && isInSelection && isWhitespace;
+
+            // Skip rendering whitespace at cursor's original position when selecting left to right
+            if (isSelectingLeftToRight && j == editor->cursor) {
+                continue;
             }
 
-            for (size_t j = line.begin; j < line.end; ++j) {
-                if (editor->data.items[j] == ' ' || editor->data.items[j] == '\t') {
-                    Vec2f char_pos = pos;
-                    char_pos.x += (j - line.begin) * circleRadius * 2;
-                    free_glyph_atlas_measure_line_sized(atlas, editor->data.items + j, 1, &char_pos);
-                    float char_width = char_pos.x - pos.x - (j - line.begin) * circleRadius * 2;
+            if (shouldRenderAll || shouldRenderInSelection) {
+                Vec2f char_pos = pos;
+                char_pos.x += (j - line.begin) * circleRadius * 2;
+                free_glyph_atlas_measure_line_sized(atlas, editor->data.items + j, 1, &char_pos);
+                float char_width = char_pos.x - pos.x - (j - line.begin) * circleRadius * 2;
 
-                    Vec2f circleCenter = {pos.x + (j - line.begin) * char_width + char_width / 2, pos.y + FREE_GLYPH_FONT_SIZE / 2};
+                Vec2f circleCenter = {pos.x + (j - line.begin) * char_width + char_width / 2, pos.y + FREE_GLYPH_FONT_SIZE / 2};
 
-                    // Draw the circle for whitespace
-                    simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
-                    simple_renderer_circle(sr, circleCenter, circleRadius, whitespaceColor, circleSegments);
-                }
+                Vec4f whitespaceColor = shouldRenderInSelection ? CURRENT_THEME.selected_whitespaces : CURRENT_THEME.whitespace;
+
+                simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
+                simple_renderer_circle(sr, circleCenter, circleRadius, whitespaceColor, circleSegments);
             }
         }
-        simple_renderer_flush(sr);
     }
+
+    simple_renderer_flush(sr);
 }
 
 
@@ -429,61 +513,10 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
     // TODO shader switch
     render_indentation_lines(sr, atlas, editor);
+    render_selection(editor, sr, atlas);
+    render_whitespaces(atlas, sr, editor);
+
     
-    // Render selection
-
-    {
-        if (isWave){
-            simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_COLOR);
-        }else{
-            simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
-        }
-        if (editor->selection) {
-            for (size_t row = 0; row < editor->lines.count; ++row) {
-                size_t select_begin_chr = editor->select_begin;
-                size_t select_end_chr = editor->cursor;
-                if (select_begin_chr > select_end_chr) {
-                    SWAP(size_t, select_begin_chr, select_end_chr);
-                }
-
-                Line line_chr = editor->lines.items[row];
-
-                if (select_begin_chr < line_chr.begin) {
-                    select_begin_chr = line_chr.begin;
-                }
-
-                if (select_end_chr > line_chr.end) {
-                    select_end_chr = line_chr.end;
-                }
-
-                if (select_begin_chr <= select_end_chr) {
-                    Vec2f select_begin_scr = vec2f(0, -((float)row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE);
-                    free_glyph_atlas_measure_line_sized(
-                                                        atlas, editor->data.items + line_chr.begin, select_begin_chr - line_chr.begin,
-                                                        &select_begin_scr);
-
-                    Vec2f select_end_scr = select_begin_scr;
-                    free_glyph_atlas_measure_line_sized(
-                                                        atlas, editor->data.items + select_begin_chr, select_end_chr - select_begin_chr,
-                                                        &select_end_scr);
-
-                    // Adjust selection for line numbers if displayed
-                    if (showLineNumbers) {
-                        select_begin_scr.x += lineNumberWidth;
-                        select_end_scr.x += lineNumberWidth;
-                    }
-
-                    Vec4f selection_color = vec4f(.25, .25, .25, 1);
-
-                    simple_renderer_solid_rect(sr, select_begin_scr, vec2f(select_end_scr.x - select_begin_scr.x, FREE_GLYPH_FONT_SIZE), selection_color);
-                }
-            }
-        }
-        simple_renderer_flush(sr);
-    }
-
-
-
     Vec2f cursor_pos = vec2fs(0.0f);
     {
         size_t cursor_row = editor_cursor_row(editor);
@@ -609,7 +642,8 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         }
     }
 
-    
+
+
     // Render text
     {
 
@@ -847,13 +881,16 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         simple_renderer_flush(sr);
     }
 
-    render_whitespaces(atlas, sr, editor);
+
+
+
+
     
     // Render cursor
     if (isWave) {
-        simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_COLOR);
+        simple_renderer_set_shader(sr, VERTEX_SHADER_WAVE, SHADER_FOR_CURSOR);
     } else {
-        simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
+        simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_CURSOR);
     }
 
     {
@@ -899,6 +936,28 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 CURSOR_COLOR);
         } break;
 
+        case HELIX: {
+            float cursor_width;
+            // Check if the cursor is on an actual character or an empty line
+            if (editor->cursor < editor->data.count && editor->data.items[editor->cursor] != '\n') {
+                    Vec2f next_char_pos = cursor_pos;
+                    free_glyph_atlas_measure_line_sized(
+                        atlas, editor->data.items + editor->cursor,
+                        1, // Measure the actual character at the cursor
+                        &next_char_pos);
+                    cursor_width = next_char_pos.x - cursor_pos.x;
+            } else {
+                    cursor_width = whitespace_width;
+            }
+
+            simple_renderer_solid_rect(
+                sr, cursor_pos, vec2f(cursor_width, FREE_GLYPH_FONT_SIZE),
+                CURSOR_COLOR);
+        } break;
+
+
+
+            
         case EMACS: {
             float cursor_width;
             CURSOR_COLOR = CURRENT_THEME.emacs_cursor;
@@ -1050,7 +1109,24 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     // Update camera
     {
         if (followCursor && !instantCamera) {
-
+            if (automatic_zoom) {
+                float len = calculate_max_line_length(editor);
+                if (len > 0) { // Check if there is at least one line
+                    if (len <= 62) {
+                        zoom_factor = 4.0f;
+                    } else if (len <= 78) {
+                        zoom_factor = 5.0f;
+                    } else if (len <= 94) {
+                        zoom_factor = 6.0f;
+                    } else {
+                        zoom_factor = 7.0f;
+                        if (showLineNumbers) {
+                            zoom_factor += 1;
+                        }
+                    }
+                }
+            }
+            
             if (max_line_len > 1000.0f) {
                 max_line_len = 1000.0f;
             }

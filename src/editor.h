@@ -42,6 +42,11 @@ extern bool BlockInsertCurosr;
 extern bool highlightCurrentLineNumberOnInsertMode;
 extern bool instantCamera;
 
+
+extern bool helix;
+extern bool emacs;
+extern bool automatic_zoom;
+
 typedef struct {
     size_t begin;
     size_t end;
@@ -60,9 +65,11 @@ typedef struct {
 } Tokens;
 
 
+
 //TODO minibuffer, replace, replace char, helix
 typedef enum {
     EMACS,
+    HELIX,
     NORMAL,
     INSERT,
     VISUAL,
@@ -117,7 +124,9 @@ typedef struct {
 
 Errno editor_save_as(Editor *editor, const char *file_path);
 Errno editor_save(const Editor *editor);
-Errno editor_load_from_file(Editor *editor, const char *file_path);
+/* Errno editor_load_from_file(Editor *editor, const char *file_path); */
+Errno find_file(Editor *e, const char *file_path, size_t line, size_t column);
+size_t get_position_from_line_column(Editor *e, size_t line, size_t column);
 
 void editor_backspace(Editor *editor);
 void editor_delete(Editor *editor);
@@ -186,12 +195,12 @@ void editor_save_and_quit(Editor *e);
 
 void find_matches_in_editor_data(Editor *e, const char *word, char **matches, size_t *matches_count);
 void evil_complete_next(Editor *e);
+Errno editor_goto_line(Editor *editor, const char *params[]);
+void get_cursor_position(const Editor *e, int *line, int *character);
 
 
-
-
-
-
+void set_current_mode();
+size_t calculate_max_line_length(const Editor *editor);
 
 // UTILITY
 bool extractLine(Editor *editor, size_t cursor, char *line, size_t max_length);
@@ -203,20 +212,7 @@ float measure_whitespace_width(Free_Glyph_Atlas *atlas);
 float measure_whitespace_height(Free_Glyph_Atlas *atlas);
 size_t find_first_non_whitespace(const char* items, size_t begin, size_t end);
 bool exract_word_left_of_cursor(Editor *e, char *word, size_t max_word_length);
-
-
-// M-x
-typedef struct {
-    const char *name;
-    void (*execute)(Editor *); // Function pointer with Editor* argument
-} Command;
-
-void register_command(struct hashmap *command_map, const char *name, void (*execute)(Editor *));
-void initialize_commands(struct hashmap *command_map);
-void execute_command(struct hashmap *command_map, Editor *editor, const char *command_name);
-int command_compare(const void *a, const void *b, void *udata);
-uint64_t simple_string_hash(const void *item, uint64_t seed0, uint64_t seed1);
-
+bool is_number(const char *str);
 
 // Var Documentation
 
@@ -232,6 +228,26 @@ void initialize_variable_documentation();
 void print_variable_doc(const char *var_name);
 uint64_t variable_doc_hash(const void *item, uint64_t seed0, uint64_t seed1);
 int variable_doc_compare(const void *a, const void *b, void *udata);
+
+
+
+// animation
+
+extern float targetModelineHeight;
+extern bool isModelineAnimating;
+extern void update_modeline_animation();
+
+extern float targetMinibufferHeight;
+extern bool isMinibufferAnimating;
+
+extern float minibufferAnimationProgress;
+extern float minibufferAnimationDuration;
+void update_minibuffer_animation(float deltaTime);
+
+float easeOutCubic(float x);
+
+
+
 
 
 
