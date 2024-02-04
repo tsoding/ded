@@ -10,6 +10,9 @@
 #define GL_GLEXT_PROTOTYPES
 #include <SDL2/SDL_opengl.h>
 
+#define DRAG_X_MIN 1
+#define DRAG_Y_MIN 1
+
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
@@ -171,6 +174,54 @@ int main(int argc, char **argv)
             }
             break;
 
+            case SDL_MOUSEBUTTONUP:
+				if(!file_browser && (event.button.button & SDL_BUTTON_LEFT) == SDL_BUTTON_LEFT) {
+					editor.drag_mouse = false;
+				}
+				
+            	break;
+
+            case SDL_MOUSEMOTION:
+            	if(!file_browser && editor.drag_mouse) {
+            		int x_rel = event.motion.xrel;
+            		int y_rel = event.motion.yrel;
+            		int is_x_left = x_rel < 0;
+            		int is_y_down = y_rel < 0;
+            		x_rel = abs(x_rel);
+            		y_rel = abs(y_rel);
+            		while(y_rel > DRAG_Y_MIN) {
+						if(is_y_down) {
+							editor_move_line_up(&editor);
+						} else {
+							editor_move_line_down(&editor);
+						}
+						
+            			y_rel -= DRAG_Y_MIN;
+            		}
+
+            		while(x_rel > DRAG_X_MIN) {
+            			if(event.key.keysym.mod & KMOD_CTRL) {
+            				if(is_x_left) {
+            					editor_move_word_left(&editor);
+            				} else {
+            					editor_move_word_right(&editor);
+            				}
+            			} else {
+            				if(is_x_left) {
+            					editor_move_char_left(&editor);
+            				} else {
+            					editor_move_char_right(&editor);
+            				}
+            			}
+
+            			x_rel -= DRAG_X_MIN;
+            		}
+
+            		editor.last_stroke = SDL_GetTicks();
+            	}
+            	
+            	break;
+
             case SDL_MOUSEWHEEL:
                 if(event.wheel.y > 0) {
                     editor_move_line_up(&editor);
@@ -187,49 +238,48 @@ int main(int argc, char **argv)
                 }
                 
                 break;
+
             
             case SDL_MOUSEBUTTONDOWN:
-                if(file_browser) {
-                    if((event.button.button & SDL_BUTTON_LEFT) == SDL_BUTTON_LEFT) {
-                        const char *file_path = fb_file_path(&fb);
-                        if (file_path) {
-                            File_Type ft;
-                            err = type_of_file(file_path, &ft);
-                            if (err != 0) {
-                                flash_error("Could not determine type of file %s: %s", file_path, strerror(err));
-                            } else {
-                                switch (ft) {
-                                case FT_DIRECTORY: {
-                                    err = fb_change_dir(&fb);
-                                    if (err != 0) {
-                                        flash_error("Could not change directory to %s: %s", file_path, strerror(err));
-                                    }
-                                }
-                                break;
+                if(file_browser && (event.button.button & SDL_BUTTON_LEFT) == SDL_BUTTON_LEFT) {
+	                const char *file_path = fb_file_path(&fb);
+	                File_Type ft;
+	                err = type_of_file(file_path, &ft);
+	                if (err != 0) {
+	                    flash_error("Could not determine type of file %s: %s", file_path, strerror(err));
+	                } else {
+	                    switch (ft) {
+	                    case FT_DIRECTORY: {
+	                        err = fb_change_dir(&fb);
+	                        if (err != 0) {
+	                            flash_error("Could not change directory to %s: %s", file_path, strerror(err));
+	                        }
+	                    }
+	                    break;
 
-                                case FT_REGULAR: {
-                                    // TODO: before opening a new file make sure you don't have unsaved changes
-                                    // And if you do, annoy the user about it. (just like all the other editors do)
-                                    err = editor_load_from_file(&editor, file_path);
-                                    if (err != 0) {
-                                        flash_error("Could not open file %s: %s", file_path, strerror(err));
-                                    } else {
-                                        file_browser = false;
-                                    }
-                                }
-                                break;
+	                    case FT_REGULAR: {
+	                        // TODO: before opening a new file make sure you don't have unsaved changes
+	                        // And if you do, annoy the user about it. (just like all the other editors do)
+	                        err = editor_load_from_file(&editor, file_path);
+	                        if (err != 0) {
+	                            flash_error("Could not open file %s: %s", file_path, strerror(err));
+	                        } else {
+	                            file_browser = false;
+	                        }
+	                    }
+	                    break;
 
-                                case FT_OTHER: {
-                                    flash_error("%s is neither a regular file nor a directory. We can't open it.", file_path);
-                                }
-                                break;
+	                    case FT_OTHER: {
+	                        flash_error("%s is neither a regular file nor a directory. We can't open it.", file_path);
+	                    }
+	                    break;
 
-                                default:
-                                    UNREACHABLE("unknown File_Type");
-                                }
-                            }
-                        }
-                    }
+	                    default:
+	                        UNREACHABLE("unknown File_Type");
+	                    }
+	                }
+                } else if((event.button.button & SDL_BUTTON_LEFT) == SDL_BUTTON_LEFT) {
+                	editor.drag_mouse = true;
                 }
                 
                 break;

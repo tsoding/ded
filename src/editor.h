@@ -44,6 +44,8 @@ typedef struct {
     Uint32 last_stroke;
 
     String_Builder clipboard;
+
+    bool drag_mouse;
 } Editor;
 
 Errno editor_save_as(Editor *editor, const char *file_path);
