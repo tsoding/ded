@@ -48,7 +48,8 @@ Errno read_entire_dir(const char *dir_path, Files *files)
     errno = 0;
     struct dirent *ent = readdir(dir);
     while (ent != NULL) {
-        da_append(files, temp_strdup(ent->d_name));
+		char *dir_name = temp_strdup(ent->d_name);
+        da_append(files, dir_name);
         ent = readdir(dir);
     }
 
@@ -79,16 +80,18 @@ defer:
 
 static Errno file_size(FILE *file, size_t *size)
 {
+	errno = 0;
     long saved = ftell(file);
-    if (saved < 0) return errno;
+    if (errno) return errno;
     if (fseek(file, 0, SEEK_END) < 0) return errno;
     long result = ftell(file);
-    if (result < 0) return errno;
+    if (errno) return errno;
     if (fseek(file, saved, SEEK_SET) < 0) return errno;
     *size = (size_t) result;
     return 0;
 }
 
+// ram go boom boom
 Errno read_entire_file(const char *file_path, String_Builder *sb)
 {
     Errno result = 0;

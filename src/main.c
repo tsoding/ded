@@ -3,12 +3,15 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <string.h>
-
+#define TABS_INSTEAD_OF_SPACES
 #include <SDL2/SDL.h>
 #define GLEW_STATIC
 #include <GL/glew.h>
 #define GL_GLEXT_PROTOTYPES
 #include <SDL2/SDL_opengl.h>
+
+#define DRAG_X_MIN 1
+#define DRAG_Y_MIN 1
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -94,6 +97,7 @@ int main(int argc, char **argv)
         err = editor_load_from_file(&editor, file_path);
         if (err != 0) {
             fprintf(stderr, "ERROR: Could not read file %s: %s\n", file_path, strerror(err));
+            fprintf(stderr, "HELP: If you're trying to open a directory, don't give any arguments, press F3 inside the editor.\n");
             return 1;
         }
     }
@@ -171,19 +175,138 @@ int main(int argc, char **argv)
             }
             break;
 
+            case SDL_MOUSEBUTTONUP:
+				if(!file_browser && (event.button.button & SDL_BUTTON_LEFT) == SDL_BUTTON_LEFT) {
+					editor.drag_mouse = false;
+				}
+				
+            	break;
+
+            case SDL_MOUSEMOTION:
+            	if(!file_browser && editor.drag_mouse) {
+            		int x_rel = event.motion.xrel;
+            		int y_rel = event.motion.yrel;
+            		int is_x_left = x_rel < 0;
+            		int is_y_down = y_rel < 0;
+            		x_rel = abs(x_rel);
+            		y_rel = abs(y_rel);
+            		while(y_rel > DRAG_Y_MIN) {
+						if(is_y_down) {
+							editor_move_line_up(&editor);
+						} else {
+							editor_move_line_down(&editor);
+						}
+						
+            			y_rel -= DRAG_Y_MIN;
+            		}
+
+            		while(x_rel > DRAG_X_MIN) {
+            			if(event.key.keysym.mod & KMOD_CTRL) {
+            				if(is_x_left) {
+            					editor_move_word_left(&editor);
+            				} else {
+            					editor_move_word_right(&editor);
+            				}
+            			} else {
+            				if(is_x_left) {
+            					editor_move_char_left(&editor);
+            				} else {
+            					editor_move_char_right(&editor);
+            				}
+            			}
+
+            			x_rel -= DRAG_X_MIN;
+            		}
+
+            		editor.last_stroke = SDL_GetTicks();
+            	}
+            	
+            	break;
+
+            case SDL_MOUSEWHEEL:
+                if(event.wheel.y > 0) {
+                    editor_move_line_up(&editor);
+                } else if(event.wheel.y < 0) {
+                    editor_move_line_down(&editor);
+                }
+                
+                if(file_browser) {
+                    if(event.wheel.y > 0) {
+                        if(fb.cursor > 0) fb.cursor -= 1;
+                    } else if(event.wheel.y < 0) {
+                        if(fb.cursor + 1 < fb.files.count) fb.cursor += 1;
+                    }
+                }
+                
+                break;
+
+            
+            case SDL_MOUSEBUTTONDOWN:
+                if(file_browser && (event.button.button & SDL_BUTTON_LEFT) == SDL_BUTTON_LEFT) {
+	                const char *file_path = fb_file_path(&fb);
+	                File_Type ft;
+	                err = type_of_file(file_path, &ft);
+	                if (err != 0) {
+	                    flash_error("Could not determine type of file %s: %s", file_path, strerror(err));
+	                } else {
+	                    switch (ft) {
+	                    case FT_DIRECTORY: {
+	                        err = fb_change_dir(&fb);
+	                        if (err != 0) {
+	                            flash_error("Could not change directory to %s: %s", file_path, strerror(err));
+	                        }
+	                    }
+	                    break;
+
+	                    case FT_REGULAR: {
+	                        // TODO: before opening a new file make sure you don't have unsaved changes
+	                        // And if you do, annoy the user about it. (just like all the other editors do)
+	                        err = editor_load_from_file(&editor, file_path);
+	                        if (err != 0) {
+	                            flash_error("Could not open file %s: %s", file_path, strerror(err));
+	                        } else {
+	                            file_browser = false;
+	                        }
+	                    }
+	                    break;
+
+	                    case FT_OTHER: {
+	                        flash_error("%s is neither a regular file nor a directory. We can't open it.", file_path);
+	                    }
+	                    break;
+
+	                    default:
+	                        UNREACHABLE("unknown File_Type");
+	                    }
+	                }
+                } else if((event.button.button & SDL_BUTTON_LEFT) == SDL_BUTTON_LEFT) {
+                	editor.drag_mouse = true;
+                }
+                
+                break;
+
             case SDL_KEYDOWN: {
                 if (file_browser) {
                     switch (event.key.keysym.sym) {
-                    case SDLK_F3: {
+					case SDLK_q:
+						if(event.key.keysym.mod & KMOD_CTRL) {
+							quit = true;
+						}
+
+						break;
+
+                    case SDLK_ESCAPE: {
                         file_browser = false;
                     }
                     break;
 
+					case SDLK_w:
                     case SDLK_UP: {
                         if (fb.cursor > 0) fb.cursor -= 1;
                     }
                     break;
 
+					case SDLK_s:
                     case SDLK_DOWN: {
                         if (fb.cursor + 1 < fb.files.count) fb.cursor += 1;
                     }
@@ -259,26 +382,42 @@ int main(int argc, char **argv)
                     }
                     break;
 
-                    case SDLK_F2: {
-                        if (editor.file_path.count > 0) {
-                            err = editor_save(&editor);
-                            if (err != 0) {
-                                flash_error("Could not save currently edited file: %s", strerror(err));
-                            }
-                        } else {
-                            // TODO: ask the user for the path to save to in this situation
-                            flash_error("Nowhere to save the text");
-                        }
+					case SDLK_q:
+						if(event.key.keysym.mod & KMOD_CTRL) {
+							quit = true;
+						}
+
+						break;
+
+					case SDLK_r:
+						if(event.key.keysym.mod & KMOD_CTRL) {
+							simple_renderer_reload_shaders(&sr);
+						}
+
+						break;
+					
+                    case SDLK_s: {
+						if(event.key.keysym.mod & KMOD_CTRL) {
+	                        if (editor.file_path.count > 0) {
+ 	                           err = editor_save(&editor);
+  	                          if (err != 0) {
+   	                             flash_error("Could not save currently edited file: %s", strerror(err));
+    	                        }
+     	                   } else {
+      	                      // TODO: ask the user for the path to save to in this situation
+       	                     flash_error("Nowhere to save the text");
+        	                }
+						}
                     }
                     break;
 
-                    case SDLK_F3: {
-                        file_browser = true;
-                    }
-                    break;
-
-                    case SDLK_F5: {
-                        simple_renderer_reload_shaders(&sr);
+                    case SDLK_ESCAPE: {
+                    	if(editor.searching) {
+                    		editor_stop_search(&editor);
+     		                editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                    	} else {
+							file_browser = true;
+                    	}
                     }
                     break;
 
@@ -305,12 +444,6 @@ int main(int argc, char **argv)
                     }
                     break;
 
-                    case SDLK_ESCAPE: {
-                        editor_stop_search(&editor);
-                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                    }
-                    break;
-
                     case SDLK_a: {
                         if (event.key.keysym.mod & KMOD_CTRL) {
                             editor.selection = true;
@@ -321,16 +454,14 @@ int main(int argc, char **argv)
                     break;
 
                     case SDLK_TAB: {
-                        // TODO: indent on Tab instead of just inserting 4 spaces at the cursor
-                        // That is insert the spaces at the beginning of the line. Shift+TAB should
-                        // do unindent, that is remove 4 spaces from the beginning of the line.
-                        // TODO: customizable indentation style
-                        // - tabs/spaces
-                        // - tab width
-                        // - etc.
-                        for (size_t i = 0; i < 4; ++i) {
-                            editor_insert_char(&editor, ' ');
-                        }
+                        // XXX: Tabs are kind of a hack, needs a redo.
+                        #ifdef TABS_INSTEAD_OF_SPACES
+                            editor_insert_char(&editor, '\t');
+                        #else
+                            for(int i = 0; i < TAB_SIZE; i++) {
+                                editor_insert_char(&editor, ' ');
+                            }
+                        #endif
                     }
                     break;
 
@@ -412,6 +543,8 @@ int main(int argc, char **argv)
             break;
             }
         }
+
+        
 
         {
             int w, h;

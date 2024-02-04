@@ -1,12 +1,13 @@
 #include <assert.h>
 #include <stdbool.h>
 #include "./free_glyph.h"
+#define TAB_SIZE 4
 
 void free_glyph_atlas_init(Free_Glyph_Atlas *atlas, FT_Face face)
 {
     // TODO: Introduction of SDF font slowed down the start up time
     // We need to investigate what's up with that
-    FT_Int32 load_flags = FT_LOAD_RENDER | FT_LOAD_TARGET_(FT_RENDER_MODE_SDF);
+    FT_Int32 load_flags = FT_LOAD_RENDER;
     for (int i = 32; i < 128; ++i) {
         if (FT_Load_Char(face, i, load_flags)) {
             fprintf(stderr, "ERROR: could not load glyph of a character with code %d\n", i);
@@ -17,6 +18,8 @@ void free_glyph_atlas_init(Free_Glyph_Atlas *atlas, FT_Face face)
         if (atlas->atlas_height < face->glyph->bitmap.rows) {
             atlas->atlas_height = face->glyph->bitmap.rows;
         }
+
+        load_flags = FT_LOAD_RENDER | FT_LOAD_TARGET_(FT_RENDER_MODE_SDF);
     }
 
     glActiveTexture(GL_TEXTURE0);
@@ -41,6 +44,7 @@ void free_glyph_atlas_init(Free_Glyph_Atlas *atlas, FT_Face face)
         NULL);
 
     int x = 0;
+    load_flags = FT_LOAD_RENDER;
     for (int i = 32; i < 128; ++i) {
         if (FT_Load_Char(face, i, load_flags)) {
             fprintf(stderr, "ERROR: could not load glyph of a character with code %d\n", i);
@@ -72,7 +76,29 @@ void free_glyph_atlas_init(Free_Glyph_Atlas *atlas, FT_Face face)
             GL_UNSIGNED_BYTE,
             face->glyph->bitmap.buffer);
         x += face->glyph->bitmap.width;
+        load_flags = FT_LOAD_RENDER | FT_LOAD_TARGET_(FT_RENDER_MODE_SDF);
     }
+
+    // tab hack
+    load_flags = FT_LOAD_RENDER;
+    int i = '\t';
+    if (FT_Load_Char(face, 32, load_flags)) {
+        fprintf(stderr, "ERROR: could not load glyph of a character with code %d\n", i);
+        exit(1);
+    }
+
+    if (FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL)) {
+        fprintf(stderr, "ERROR: could not render glyph of a character with code %d\n", i);
+        exit(1);
+    }
+    
+    atlas->metrics[i].ax = (face->glyph->advance.x >> 6) * TAB_SIZE;
+    atlas->metrics[i].ay = face->glyph->advance.y >> 6;
+    atlas->metrics[i].bw = face->glyph->bitmap.width * TAB_SIZE;
+    atlas->metrics[i].bh = face->glyph->bitmap.rows;
+    atlas->metrics[i].bl = face->glyph->bitmap_left;
+    atlas->metrics[i].bt = face->glyph->bitmap_top;
+    atlas->metrics[i].tx = (float) 0 / (float) atlas->atlas_width;
 }
 
 float free_glyph_atlas_cursor_pos(const Free_Glyph_Atlas *atlas, const char *text, size_t text_size, Vec2f pos, size_t col)
