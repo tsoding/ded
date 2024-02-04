@@ -48,7 +48,8 @@ Errno read_entire_dir(const char *dir_path, Files *files)
     errno = 0;
     struct dirent *ent = readdir(dir);
     while (ent != NULL) {
-        da_append(files, temp_strdup(ent->d_name));
+		char *dir_name = temp_strdup(ent->d_name);
+        da_append(files, dir_name);
         ent = readdir(dir);
     }
 
@@ -90,6 +91,7 @@ static Errno file_size(FILE *file, size_t *size)
     return 0;
 }
 
+// ram go boom boom
 Errno read_entire_file(const char *file_path, String_Builder *sb)
 {
     Errno result = 0;

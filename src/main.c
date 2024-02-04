@@ -237,16 +237,25 @@ int main(int argc, char **argv)
             case SDL_KEYDOWN: {
                 if (file_browser) {
                     switch (event.key.keysym.sym) {
-                    case SDLK_F3: {
+					case SDLK_q:
+						if(event.key.keysym.mod & KMOD_CTRL) {
+							quit = true;
+						}
+
+						break;
+
+                    case SDLK_ESCAPE: {
                         file_browser = false;
                     }
                     break;
 
+					case SDLK_w:
                     case SDLK_UP: {
                         if (fb.cursor > 0) fb.cursor -= 1;
                     }
                     break;
 
+					case SDLK_s:
                     case SDLK_DOWN: {
                         if (fb.cursor + 1 < fb.files.count) fb.cursor += 1;
                     }
@@ -322,26 +331,42 @@ int main(int argc, char **argv)
                     }
                     break;
 
-                    case SDLK_F2: {
-                        if (editor.file_path.count > 0) {
-                            err = editor_save(&editor);
-                            if (err != 0) {
-                                flash_error("Could not save currently edited file: %s", strerror(err));
-                            }
-                        } else {
-                            // TODO: ask the user for the path to save to in this situation
-                            flash_error("Nowhere to save the text");
-                        }
+					case SDLK_q:
+						if(event.key.keysym.mod & KMOD_CTRL) {
+							quit = true;
+						}
+
+						break;
+
+					case SDLK_r:
+						if(event.key.keysym.mod & KMOD_CTRL) {
+							simple_renderer_reload_shaders(&sr);
+						}
+
+						break;
+					
+                    case SDLK_s: {
+						if(event.key.keysym.mod & KMOD_CTRL) {
+	                        if (editor.file_path.count > 0) {
+ 	                           err = editor_save(&editor);
+  	                          if (err != 0) {
+   	                             flash_error("Could not save currently edited file: %s", strerror(err));
+    	                        }
+     	                   } else {
+      	                      // TODO: ask the user for the path to save to in this situation
+       	                     flash_error("Nowhere to save the text");
+        	                }
+						}
                     }
                     break;
 
-                    case SDLK_F3: {
-                        file_browser = true;
-                    }
-                    break;
-
-                    case SDLK_F5: {
-                        simple_renderer_reload_shaders(&sr);
+                    case SDLK_ESCAPE: {
+                    	if(editor.searching) {
+                    		editor_stop_search(&editor);
+     		                editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                    	} else {
+							file_browser = true;
+                    	}
                     }
                     break;
 
@@ -365,12 +390,6 @@ int main(int argc, char **argv)
                         if (event.key.keysym.mod & KMOD_CTRL) {
                             editor_start_search(&editor);
                         }
-                    }
-                    break;
-
-                    case SDLK_ESCAPE: {
-                        editor_stop_search(&editor);
-                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                     }
                     break;
 
