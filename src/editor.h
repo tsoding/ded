@@ -47,6 +47,9 @@ extern bool helix;
 extern bool emacs;
 extern bool automatic_zoom;
 
+
+extern float fringeWidth;
+extern bool showFringe;
 typedef struct {
     size_t begin;
     size_t end;
@@ -119,6 +122,10 @@ typedef struct {
     char *buffer_history[MAX_BUFFER_HISTORY];
     int buffer_history_count;
     int buffer_index;
+
+    // lsp
+    int to_clangd_fd;
+    int from_clangd_fd;
 
 } Editor;
 
@@ -196,11 +203,28 @@ void editor_save_and_quit(Editor *e);
 void find_matches_in_editor_data(Editor *e, const char *word, char **matches, size_t *matches_count);
 void evil_complete_next(Editor *e);
 Errno editor_goto_line(Editor *editor, const char *params[]);
-void get_cursor_position(const Editor *e, int *line, int *character);
+void get_cursor_position(const Editor *e, size_t *line, int *character);
 
 
 void set_current_mode();
 size_t calculate_max_line_length(const Editor *editor);
+
+
+Vec4f get_color_for_token_kind(Token_Kind kind);
+void update_cursor_color(Editor * editor);
+/* void update_cursor_color(Editor *editor, Free_Glyph_Atlas *atlas); */
+
+
+
+
+
+
+
+
+
+
+
+
 
 // UTILITY
 bool extractLine(Editor *editor, size_t cursor, char *line, size_t max_length);
@@ -211,15 +235,15 @@ bool editor_is_line_whitespaced(Editor *e, size_t row);
 float measure_whitespace_width(Free_Glyph_Atlas *atlas);
 float measure_whitespace_height(Free_Glyph_Atlas *atlas);
 size_t find_first_non_whitespace(const char* items, size_t begin, size_t end);
-bool exract_word_left_of_cursor(Editor *e, char *word, size_t max_word_length);
+bool extract_word_left_of_cursor(Editor *e, char *word, size_t max_word_length);
 bool is_number(const char *str);
 
 // Var Documentation
 
 typedef struct {
-    const char *var_name;  // Name of the variable
-    const char *var_type;  // Type of the variable (e.g., "int", "float", "bool")
-    const char *description; // Description of the variable
+    char *var_name;  // Name of the variable
+    char *var_type;  // Type of the variable (e.g., "int", "float", "bool")
+    char *description; // Description of the variable
 } VariableDoc;
 
 void initialize_variable_docs_map(uint64_t seed0, uint64_t seed1);
@@ -232,7 +256,6 @@ int variable_doc_compare(const void *a, const void *b, void *udata);
 
 
 // animation
-
 extern float targetModelineHeight;
 extern bool isModelineAnimating;
 extern void update_modeline_animation();
@@ -249,6 +272,8 @@ float easeOutCubic(float x);
 
 
 
-
+void editor_color_text_range(Editor *editor, size_t start, size_t end, Vec4f new_color);
+void adjust_line_number_width(Editor *editor, float *lineNumberWidth);
 
 #endif // EDITOR_H_
+

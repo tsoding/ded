@@ -55,8 +55,10 @@ void editor_kill_buffer(Editor *e) {
         e->buffer_history_count--;
 
         // Update the buffer index to point to the previous buffer, if possible
+
+
+        
         if (e->buffer_index > 0) {
-            e->buffer_index--;
         }
 
         // If there are still buffers in the history, load the previous one

@@ -10,10 +10,11 @@
 extern float tokenInterpolationProgress;
 extern float tokenLerpSpeed;
 extern bool tokenLerp;
+extern float lineNumberWidth;
+extern  bool mixSelectionColor;
 
 
 void update_tokens_interpolation();
-
 void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor);
 void render_search_text(Free_Glyph_Atlas *minibuffer_atlas, Simple_Renderer *sr, Editor *editor);
 /* void render_M_x(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor); */
@@ -31,6 +32,8 @@ typedef struct {
     Vec4f targetColor;
     float interpolationProgress;
 } TokenColorData;
+
+
 
 
 

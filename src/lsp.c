@@ -1,188 +1,310 @@
+#include "lsp.h"
+#include "common.h"
+#include "editor.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include "lsp.h"
+#include <pthread.h>
 #include <json-c/json.h>
+#include <limits.h>
+#include "common.h"
 
-
-int to_ccls[2];  // Pipe for sending data to ccls
-int from_ccls[2];  // Pipe for receiving data from ccls
+// Global variables
+int to_clangd[2];
+int from_clangd[2];
 pthread_t receive_thread;
+int current_request_id = 1;
 
-const char* project_root = "/home/l/Desktop/test/ded";
 
-
-#include "file_browser.h"
-
-void get_current_file_uri(Editor *e, char *file_uri, size_t uri_size) {
-    // Assuming that `e->file_path` is a String_Builder containing the full file path
-    // and `expand_path` is a function that normalizes or expands the path to a full path.
-    char expanded_path[256];
-    expand_path(e->file_path.items, expanded_path, sizeof(expanded_path));
-
-    // Convert the file path to a URI format. This typically involves prefixing with "file://"
-    // and ensuring the path is correctly encoded for a URI (e.g., spaces are encoded, etc.)
-    // Here, for simplicity, we're just prefixing with "file://".
-    snprintf(file_uri, uri_size, "file://%s", expanded_path);
+void handle_error(const char *message) {
+    perror(message);
+    exit(EXIT_FAILURE);
 }
 
-
-/* void start_ccls(const char* project_root) { */
-/*     if (pipe(to_ccls) == -1 || pipe(from_ccls) == -1) { */
-/*         perror("Failed to create pipes"); */
-/*         exit(EXIT_FAILURE); */
-/*     } */
-
-/*     pid_t pid = fork(); */
-/*     if (pid == -1) { */
-/*         perror("Failed to fork"); */
-/*         exit(EXIT_FAILURE); */
-/*     } */
-
-/*     if (pid == 0) { */
-/*         dup2(to_ccls[0], STDIN_FILENO); */
-/*         dup2(from_ccls[1], STDOUT_FILENO); */
-/*         close(to_ccls[0]); */
-/*         close(to_ccls[1]); */
-/*         close(from_ccls[0]); */
-/*         close(from_ccls[1]); */
-/*         execlp("ccls", "ccls", NULL); */
-/*         perror("Failed to start ccls"); */
-/*         exit(EXIT_FAILURE); */
-/*     } else { */
-/*         close(to_ccls[0]); */
-/*         close(from_ccls[1]); */
-/*     } */
-
-/*     // After starting ccls, send initialize message with the project root */
-/*     char init_params[1024]; */
-/*     snprintf(init_params, sizeof(init_params), */
-/*              "{\"processId\": null, \"rootUri\": \"file://%s\", \"capabilities\": {}}", */
-/*              project_root); */
-/*     send_json_rpc("initialize", init_params); */
-/*     pthread_create(&receive_thread, NULL, receive_json_rpc, NULL); */
-/* } */
-
-void start_ccls() {
-    char expanded_root[PATH_MAX];
-    // Assuming expand_path is a function that expands tildes and relative paths
-    expand_path(project_root, expanded_root, sizeof(expanded_root));
-
-    if (pipe(to_ccls) == -1 || pipe(from_ccls) == -1) {
-        perror("Failed to create pipes");
-        exit(EXIT_FAILURE);
+void start_clangd(Editor *e) {
+    printf("Starting clangd...\n");
+    if (pipe(to_clangd) == -1 || pipe(from_clangd) == -1) {
+        handle_error("Failed to create pipes");
     }
 
     pid_t pid = fork();
     if (pid == -1) {
-        perror("Failed to fork");
-        exit(EXIT_FAILURE);
+        handle_error("Failed to fork");
+    } else if (pid == 0) { // Child process
+        // Close unused pipe ends
+        close(to_clangd[1]);
+        close(from_clangd[0]);
+
+        // Redirect stdin and stdout
+        dup2(to_clangd[0], STDIN_FILENO);
+        dup2(from_clangd[1], STDOUT_FILENO);
+
+        execlp("clangd", "clangd", NULL);
+        handle_error("Failed to start clangd");
+    } else { // Parent process
+        // Close unused pipe ends
+        close(to_clangd[0]);
+        close(from_clangd[1]);
+
+        e->to_clangd_fd = to_clangd[1];
+        e->from_clangd_fd = from_clangd[0];
+        if (pthread_create(&receive_thread, NULL, receive_json_rpc, e) != 0) {
+            handle_error("Failed to create thread for receive_json_rpc");
+        }
     }
-
-    if (pid == 0) {
-        // Child process: Setup pipes and start ccls
-        dup2(to_ccls[0], STDIN_FILENO);
-        dup2(from_ccls[1], STDOUT_FILENO);
-        close(to_ccls[0]);
-        close(to_ccls[1]);
-        close(from_ccls[0]);
-        close(from_ccls[1]);
-
-        execlp("ccls", "ccls", "--log-file=/dev/stderr", NULL);
-        perror("Failed to start ccls");
-        exit(EXIT_FAILURE);
-    } else {
-        // Parent process: Close unused pipe ends
-        close(to_ccls[0]);
-        close(from_ccls[1]);
-    }
-
-    // Send initialize message with the expanded project root
-    char init_params[1024];
-    snprintf(init_params, sizeof(init_params),
-             "{\"processId\": null, \"rootUri\": \"file://%s\", \"capabilities\": {}}",
-             expanded_root);
-    send_json_rpc("initialize", init_params);
-    pthread_create(&receive_thread, NULL, receive_json_rpc, NULL);
+    send_initialize_request(e);
 }
 
+/* void shutdown_clangd() { */
+/*     send_json_rpc("shutdown", "{}", current_request_id++); */
+/*     send_json_rpc("exit", "{}", current_request_id++); */
+/*     close(to_clangd[1]); */
+/*     pthread_join(receive_thread, NULL); */
+/*     wait(NULL); // Wait for clangd to terminate */
+/* } */
 
-
-void goto_definition(Editor *e) {
-    printf("Debug: Entering goto_definition\n");
-
-    char file_uri[1024];
-    int line, character;
-    get_current_file_uri(e, file_uri, sizeof(file_uri));
-    get_cursor_position(e, &line, &character);
-
-    printf("Debug: file_uri = %s, line = %d, character = %d\n", file_uri, line, character);
-
-    char params[1024];
-    snprintf(params, sizeof(params),
-             "{\"textDocument\": {\"uri\": \"%s\"}, \"position\": {\"line\": %d, \"character\": %d}}",
-             file_uri, line, character);
-
-    send_json_rpc("textDocument/definition", params);
-    printf("Debug: JSON-RPC request sent\n");
+void shutdown_clangd(Editor *e) {
+    send_json_rpc(e->to_clangd_fd, "shutdown", "{}", current_request_id++);
+    send_json_rpc(e->to_clangd_fd, "exit", "{}", current_request_id++);
+    close(e->to_clangd_fd);
+    pthread_join(receive_thread, NULL);
+    close(e->from_clangd_fd);
+    wait(NULL); // Wait for clangd to terminate
 }
 
-void send_json_rpc(const char* method, const char* params) {
+void send_json_rpc(int fd, const char* method, const char* params, int request_id) {
     char message[4096];
-    snprintf(message, sizeof(message), "{\"jsonrpc\": \"2.0\", \"method\": \"%s\", \"params\": %s}\n", method, params);
-    printf("Debug: Sending JSON-RPC: %s\n", message);
+    size_t message_length = snprintf(message, sizeof(message), "{\"jsonrpc\": \"2.0\", \"id\": %d, \"method\": \"%s\", \"params\": %s}\n",
+                                  request_id, method, params);
 
-    if (write(to_ccls[1], message, strlen(message)) == -1) {
-        perror("Error sending JSON-RPC");
+    if (message_length >= sizeof(message)) {
+        fprintf(stderr, "[send_json_rpc] Error: JSON-RPC message is too long.\n");
+        return;
+    }
+
+    ssize_t bytes_written = write(fd, message, message_length);
+    if (bytes_written == -1) {
+        perror("[send_json_rpc] Error sending JSON-RPC");
+    } else if ((size_t)bytes_written != message_length) {
+        fprintf(stderr, "[send_json_rpc] Error: Partial JSON-RPC message sent. Expected %zu bytes, sent %zu bytes.\n", message_length, (size_t)bytes_written);
+    } else {
+        printf("[send_json_rpc] Sent %zu bytes: %s\n", (size_t)bytes_written, message);
     }
 }
+
+void parse_lsp_response(const char *response_json, LSPResponse *response) {
+    json_object *parsed_json = json_tokener_parse(response_json);
+    json_object *id, *method, *params;
+
+    if (json_object_object_get_ex(parsed_json, "id", &id)) {
+        response->id = json_object_get_int(id);
+    }
+
+    if (json_object_object_get_ex(parsed_json, "method", &method)) {
+        response->method = strdup(json_object_get_string(method));
+    }
+
+    if (json_object_object_get_ex(parsed_json, "params", &params)) {
+        response->params = strdup(json_object_to_json_string(params));
+    }
+
+    json_object_put(parsed_json);
+}
+
+void handle_lsp_response(LSPResponse *response, Editor *e) {
+    printf("[handle_lsp_response] Received response with method: %s\n", response->method);
+
+    if (strcmp(response->method, "textDocument/definition") == 0) {
+        json_object *parsed_response = json_tokener_parse(response->params);
+        json_object *locations_array;
+
+        if (json_object_object_get_ex(parsed_response, "result", &locations_array)) {
+            // Assuming the result is an array of locations (as per LSP specification)
+            json_object *location = json_object_array_get_idx(locations_array, 0); // Get the first location
+            if (location) {
+                json_object *uri_obj, *range_obj, *start_obj, *line_obj, *char_obj;
+                if (json_object_object_get_ex(location, "uri", &uri_obj) &&
+                    json_object_object_get_ex(location, "range", &range_obj) &&
+                    json_object_object_get_ex(range_obj, "start", &start_obj) &&
+                    json_object_object_get_ex(start_obj, "line", &line_obj) &&
+                    json_object_object_get_ex(start_obj, "character", &char_obj)) {
+
+                    const char *file_uri = json_object_get_string(uri_obj);
+                    int line = json_object_get_int(line_obj);
+                    int character = json_object_get_int(char_obj);
+
+                    char file_path[PATH_MAX];
+                    convert_uri_to_file_path(file_uri, file_path, sizeof(file_path));
+                    printf("[handle_lsp_response] Definition found at file: %s, line: %d, character: %d\n", file_path, line, character);
+                    find_file(e, file_path, line, character);
+                }
+            }
+        }
+        json_object_put(parsed_response);
+    } else {
+        printf("[handle_lsp_response] Received non-definition response or method not recognized\n");
+    }
+}
+
 
 void* receive_json_rpc(void* arg) {
+    Editor *e = (Editor *)arg;
+    if (e == NULL) {
+        fprintf(stderr, "[receive_json_rpc] Editor instance is NULL\n");
+        return NULL;
+    }
+
     char buffer[4096];
     ssize_t nbytes;
 
-    while ((nbytes = read(from_ccls[0], buffer, sizeof(buffer) - 1)) > 0) {
-        buffer[nbytes] = '\0';
-        printf("Received from ccls: %s\n", buffer);  // Print the raw response
+    printf("[receive_json_rpc] Thread started, waiting for responses from clangd...\n");
 
-        struct json_object *parsed_json = json_tokener_parse(buffer);
-        if (!parsed_json) {
-            printf("Failed to parse JSON response: %s\n", buffer);
-            continue;
+    while (1) {
+        nbytes = read(e->from_clangd_fd, buffer, sizeof(buffer) - 1);
+
+        if (nbytes > 0) {
+            buffer[nbytes] = '\0';
+            printf("[receive_json_rpc] Received %zd bytes from clangd: %s\n", nbytes, buffer);
+
+            LSPResponse response;
+            parse_lsp_response(buffer, &response);
+
+            if (response.method) {
+                printf("[receive_json_rpc] Handling response for method: %s\n", response.method);
+                handle_lsp_response(&response, e);
+                free(response.method);
+                free(response.params);
+            } else {
+                printf("[receive_json_rpc] No valid method found in response or response parsing failed\n");
+            }
+        } else if (nbytes == 0) {
+            printf("[receive_json_rpc] EOF reached, clangd might have closed the connection.\n");
+            break;
+        } else {
+            perror("[receive_json_rpc] Error reading from clangd");
+            break;
         }
-
-        // Log the entire JSON object for debugging
-        printf("Parsed JSON response: %s\n", json_object_to_json_string(parsed_json));
-        json_object_put(parsed_json);  // Free the JSON object
     }
 
-    if (nbytes == -1) {
-        perror("Error reading from ccls");
-    }
-
+    printf("[receive_json_rpc] Thread is exiting.\n");
     return NULL;
 }
 
-void initialize_lsp() {
-    send_json_rpc("initialize", "{\"capabilities\": {}}");
-    pthread_create(&receive_thread, NULL, receive_json_rpc, NULL);
+
+
+
+
+void convert_uri_to_file_path(const char *uri, char *file_path, size_t file_path_size) {
+    if (strncmp(uri, "file://", 7) == 0) {
+        uri += 7; // Skip the "file://" part
+        char *decoded_uri = url_decode(uri); // Implement url_decode to handle percent-encoding
+        snprintf(file_path, file_path_size, "%s", decoded_uri);
+        free(decoded_uri); // Assuming url_decode dynamically allocates memory
+    } else {
+        fprintf(stderr, "Invalid URI format\n");
+        strncpy(file_path, "", file_path_size);
+    }
 }
 
-void shutdown_lsp() {
-    send_json_rpc("shutdown", "{}");
-    send_json_rpc("exit", "{}");
-    close(to_ccls[1]);  // Close the write-end of the pipe
-
-    pthread_join(receive_thread, NULL);  // Wait for the receiving thread to finish
-
-    int status;
-    waitpid(-1, &status, 0);  // Wait for the ccls process to terminate
+// Example implementation of url_decode (simplified)
+char *url_decode(const char *str) {
+    char *decoded = malloc(strlen(str) + 1);
+    char *d = decoded;
+    while (*str) {
+        if (*str == '%' && *(str + 1) && *(str + 2)) {
+            char hex[3] = { str[1], str[2], '\0' };
+            *d++ = (char)strtol(hex, NULL, 16);
+            str += 3;
+        } else {
+            *d++ = *str++;
+        }
+    }
+    *d = '\0';
+    return decoded;
 }
 
-void handle_signal(int sig) {
-    shutdown_lsp();
-    exit(0);  // Exit the program
+void goto_definition(Editor *e, File_Browser *fb) {
+    if (!e || !fb) {
+        fprintf(stderr, "[goto_definition] Error: Editor or File_Browser is NULL\n");
+        return;
+    }
+
+    char file_uri[256];
+    get_current_file_uri(e, fb, file_uri, sizeof(file_uri));
+    int character;
+    size_t line;
+    get_cursor_position(e, &line, &character);
+
+    char params[512];
+    int params_length = snprintf(params, sizeof(params),
+             "{\"textDocument\": {\"uri\": \"%s\"}, \"position\": {\"line\": %zu, \"character\": %d}}",
+             file_uri, line, character);
+
+    // Check for snprintf error
+    if (params_length < 0) {
+        fprintf(stderr, "[goto_definition] Error: Encoding error in snprintf.\n");
+        return;
+    }
+
+    // Now safe to compare, with casting to match types
+    if (params_length >= (int)sizeof(params)) {
+        fprintf(stderr, "[goto_definition] Error: Params string is too long.\n");
+        return;
+    }
+
+    send_json_rpc(e->to_clangd_fd, "textDocument/definition", params, current_request_id++);
+    printf("[goto_definition] Requested definition at URI: %s, Line: %zu, Character: %d\n", file_uri, line, character);
 }
+
+void get_current_file_uri(Editor *e, File_Browser *fb, char *file_uri, size_t uri_size) {
+    if (!e || !fb || !file_uri) {
+        fprintf(stderr, "Error: Invalid arguments in get_current_file_uri\n");
+        return;
+    }
+
+    // Directly access the items of the String_Builder
+    /* char *path = fb->dir_path.items; */
+    char *path = fb->file_path.items;
+    /* char *path = "/home/l/Desktop/test/ded"; */
+
+    if (path && path[0] != '\0') {  // Check if the path is not empty
+        snprintf(file_uri, uri_size, "file://%s", path);
+    } else {
+        fprintf(stderr, "Error: File path is empty in File_Browser\n");
+        strncpy(file_uri, "", uri_size);
+    }
+}
+
+
+
+void send_initialize_request(Editor *e) {
+    const char *params = "{"
+                         "\"processId\": null,"
+                         "\"rootUri\": \"file://<path_to_your_workspace>\","
+                         "\"capabilities\": {"
+                         "  // Include necessary capabilities"
+                         "}"
+                         "}";
+    send_json_rpc(e->to_clangd_fd, "initialize", params, current_request_id++);
+}
+
+void send_initialized_notification(Editor *e) {
+    send_json_rpc(e->to_clangd_fd, "initialized", "{}", current_request_id++);
+}
+
+void send_did_open_notification(Editor *e, const char *file_uri, const char *file_content) {
+    char params[1024];
+    snprintf(params, sizeof(params),
+             "{\"textDocument\": {"
+             "\"uri\": \"%s\","
+             "\"languageId\": \"c\","
+             "\"version\": 1,"
+             "\"text\": \"%s\""
+             "}}", file_uri, file_content);
+    send_json_rpc(e->to_clangd_fd, "textDocument/didOpen", params, current_request_id++);
+}
+
+

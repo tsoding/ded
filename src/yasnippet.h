@@ -1,6 +1,7 @@
 #ifndef YASNIPPET_H_
 #define YASNIPPET_H_
 
+#include "editor.h"
 
 // YASNIPPET
 #define MAX_SNIPPET_KEY_LENGTH 50

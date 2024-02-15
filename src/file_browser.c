@@ -4,6 +4,10 @@
 #include "sv.h"
 #include "editor.h" // only for zoom_factor maybe im bad at programming
 #include <stdbool.h>
+#include <sys/stat.h>
+
+
+bool file_browser = false;
 
 
 static int file_cmp(const void *ap, const void *bp)
@@ -32,8 +36,6 @@ Errno fb_open_dir(File_Browser *fb, const char *dir_path)
     printf("Opened directory: %s\n", fb->dir_path.items);
     return 0;
 }
-
-
 
 
 #define PATH_SEP "/"
@@ -106,7 +108,6 @@ void normpath(String_View path, String_Builder *result)
     free(new_comps.items);
 }
 
-
 Errno fb_change_dir(File_Browser *fb)
 {
     assert(fb->dir_path.count > 0 && "You need to call fb_open_dir() before fb_change_dir()");
@@ -135,8 +136,6 @@ Errno fb_change_dir(File_Browser *fb)
     printf("Changed directory to: %s\n", fb->dir_path.items);
     return 0;
 }
-
-
 
 void fb_render(const File_Browser *fb, SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer *sr)
 {
@@ -197,9 +196,9 @@ void fb_render(const File_Browser *fb, SDL_Window *window, Free_Glyph_Atlas *atl
             if (target_scale > 3.0f) {
                 target_scale = 3.0f;
             } else {
-                offset = cursor_pos.x - w/1/sr->camera_scale;
+                offset = cursor_pos.x - w/1.0f/sr->camera_scale;
                 if (offset < 0.0f) offset = 0.0f;
-                target = vec2f(w/3/sr->camera_scale + offset, cursor_pos.y);
+                target = vec2f(w/3.0f/sr->camera_scale + offset, cursor_pos.y);
             }
 
             sr->camera_vel = vec2f_mul(
@@ -210,9 +209,7 @@ void fb_render(const File_Browser *fb, SDL_Window *window, Free_Glyph_Atlas *atl
             sr->camera_pos = vec2f_add(sr->camera_pos, vec2f_mul(sr->camera_vel, vec2fs(DELTA_TIME)));
             sr->camera_scale = sr->camera_scale + sr->camera_scale_vel * DELTA_TIME;
         }
-        // dont need the else ?
-        // the camera is already adjusted
-
+        // TODO // else if !followCursor
     }
 }
 
@@ -235,7 +232,6 @@ const char *fb_file_path(File_Browser *fb)
 
     return fb->file_path.items;
 }
-
 
 // ADDED
 void extract_file_extension(const char *filename, String_Builder *ext) {
@@ -271,4 +267,20 @@ void expand_path(const char *original_path, char *expanded_path, size_t expanded
     }
     expanded_path[expanded_path_size - 1] = '\0';
 }
+
+/* static int is_directory(const char* base_path, const char* file) { */
+/*     char full_path[PATH_MAX]; */
+/*     snprintf(full_path, PATH_MAX, "%s/%s", base_path, file); */
+
+/*     struct stat statbuf; */
+/*     if (stat(full_path, &statbuf) != 0) { */
+/*         return 0;  // In case of error, assume it's not a directory */
+/*     } */
+
+/*     return S_ISDIR(statbuf.st_mode); */
+/* } */
+
+void toggle_file_browser(){
+    file_browser = !file_browser;
+}    
 

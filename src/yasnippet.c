@@ -1,7 +1,6 @@
 // YANSIPPET
 
 #include <dirent.h>
-#include "editor.h"
 #include <errno.h>
 #include "yasnippet.h"
 
@@ -327,5 +326,7 @@ void activate_snippet(Editor *e) {
 /*         e->cursor = original_cursor_position; // Restore cursor to its original position. */
 /*     } */
 /* } */
+
+
 
 

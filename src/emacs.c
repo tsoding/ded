@@ -89,19 +89,14 @@ void emacs_backward_kill_word(Editor *e) {
 
 void emacs_back_to_indentation(Editor *e) {
     if (e->cursor >= e->data.count) return;
-
     size_t row = editor_cursor_row(e);
     size_t line_begin = e->lines.items[row].begin;
     size_t line_end = e->lines.items[row].end;
-
-    // Find the first non-whitespace character using the utility function
     size_t first_non_whitespace = find_first_non_whitespace(e->data.items, line_begin, line_end);
-
-    // Move the cursor to the first non-whitespace character
     e->cursor = first_non_whitespace;
 }
 
-void emacs_mark_paragraph(Editor *e, bool shift) {
+void emacs_mark_paragraph(Editor *e) {
     if (!e->selection) {
         // Find the first empty line above
         size_t row = editor_cursor_row(e);

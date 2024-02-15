@@ -10,8 +10,6 @@ typedef struct {
     int additional_params_count; // Number of additional parameters needed
 } Command;
 
-
-/* void register_command(struct hashmap *command_map, const char *name, void (*execute)(Editor *)); */
 void register_command(struct hashmap *command_map, const char *name, void (*execute)(Editor *, const char *params[]), int additional_params_count);
 void initialize_commands(struct hashmap *command_map);
 void execute_command(struct hashmap *command_map, Editor *editor, const char *command_name);

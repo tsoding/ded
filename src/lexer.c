@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "common.h"
 #include "lexer.h"
+#include "theme.h"
 
 typedef struct {
     Token_Kind kind;
@@ -626,3 +627,4 @@ Token lexer_next(Lexer *l)
     token.text_len = 1;
     return token;
 }
+

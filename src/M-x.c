@@ -6,7 +6,7 @@
 #include "emacs.h"
 #include "lsp.h"
 
-// TODO aliases (lua or lisp we will have an in init file), 
+// TODO aliases (lua or lisp we will have an init file), 
 // history in program memory, when quitting save it in ~/.config/ded/M-x-history
 // and load it when opening ded clamp it to max-M-x-history-size or something
 
@@ -90,13 +90,6 @@ void execute_command(struct hashmap *command_map, Editor *editor, const char *in
     free(input_copy);
 }
 
-
-
-
-
-
-
-
 int command_compare(const void *a, const void *b, void *udata) {
     const Command *cmd_a = a;
     const Command *cmd_b = b;
@@ -112,8 +105,6 @@ uint64_t simple_string_hash(const void *item, uint64_t seed0, uint64_t seed1) {
     }
     return hash ^ seed1;
 }
-
-
 
 
 // UTLITY

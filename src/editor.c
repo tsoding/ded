@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <limits.h>
 #include "./editor.h"
 #include "./common.h"
 #include "./free_glyph.h"
@@ -13,6 +14,8 @@
 #include "simple_renderer.h"
 #include <ctype.h> // For isalnum
 #include "evil.h"
+#include "theme.h"
+#include "M-x.h"
 
 
 bool quit = false;
@@ -46,13 +49,15 @@ bool ivy = false;
 bool M_x_active = false;
 bool evil_command_active = false;
 
-bool BlockInsertCurosr = true;
+bool BlockInsertCurosr = false;
 bool highlightCurrentLineNumberOnInsertMode = true; // the loong way
 
 bool helix = false;
 bool emacs = false;
 bool automatic_zoom = true;
 
+float fringeWidth = 6.0f;
+bool showFringe = true;
 
 
 void set_current_mode() {
@@ -65,7 +70,7 @@ void set_current_mode() {
     }
 }
 
-EvilMode current_mode = HELIX;
+EvilMode current_mode = NORMAL;
 
 bool extract_word_under_cursor(Editor *editor, char *word) {
     // Make a copy of cursor position to avoid modifying the actual cursor
@@ -353,35 +358,62 @@ size_t get_position_from_line_column(Editor *e, size_t line, size_t column) {
 /*     return 0; */
 /* } */
 
+/* Errno find_file(Editor *e, const char *file_path, size_t line, size_t column) { */
+/*     char expanded_file_path[PATH_MAX]; */
+/*     expand_path(file_path, expanded_file_path, sizeof(expanded_file_path)); */
+/*     printf("Loading %s\n", expanded_file_path); */
+
+/*     e->data.count = 0; */
+/*     Errno err = read_entire_file(expanded_file_path, &e->data); */
+/*     if (err != 0) return err; */
+
+/*     // Move cursor to the specified line and column */
+/*     e->cursor = get_position_from_line_column(e, line, column); */
+
+/*     editor_retokenize(e); */
+
+/*     e->file_path.count = 0; */
+/*     sb_append_cstr(&e->file_path, expanded_file_path); */
+/*     sb_append_null(&e->file_path); */
+
+/*     // Add file path to buffer history */
+/*     if (e->buffer_history_count < MAX_BUFFER_HISTORY) { */
+/*         e->buffer_history[e->buffer_history_count++] = strdup(expanded_file_path); */
+/*     } */
+/*     return 0; */
+/* } */
+
+
 
 Errno find_file(Editor *e, const char *file_path, size_t line, size_t column) {
     char expanded_file_path[PATH_MAX];
     expand_path(file_path, expanded_file_path, sizeof(expanded_file_path));
-    printf("Loading %s\n", expanded_file_path);
+
+    printf("[find_file] Requested File: %s\n", file_path);
+    printf("[find_file] Expanded File Path: %s\n", expanded_file_path);
+    printf("[find_file] Line: %zu, Column: %zu\n", line, column);
 
     e->data.count = 0;
     Errno err = read_entire_file(expanded_file_path, &e->data);
-    if (err != 0) return err;
+    if (err != 0) {
+        printf("[find_file] Error reading file: %d\n", err);
+        return err;
+    }
 
-    // Move cursor to the specified line and column
     e->cursor = get_position_from_line_column(e, line, column);
-
     editor_retokenize(e);
 
     e->file_path.count = 0;
     sb_append_cstr(&e->file_path, expanded_file_path);
     sb_append_null(&e->file_path);
 
-    // Add file path to buffer history
     if (e->buffer_history_count < MAX_BUFFER_HISTORY) {
         e->buffer_history[e->buffer_history_count++] = strdup(expanded_file_path);
     }
 
+    printf("[find_file] File loaded and cursor set.\n");
     return 0;
 }
-
-
-
 
 
 
@@ -801,6 +833,8 @@ ssize_t find_matching_parenthesis(Editor *editor, size_t cursor_pos) {
         }
         return -1; // No matching parenthesis found
     }
+    // if matchParenthesis is false or any other condition not covered above
+    return -1;
 }
 
 size_t editor_row_from_pos(const Editor *e, size_t pos) {
@@ -814,13 +848,14 @@ size_t editor_row_from_pos(const Editor *e, size_t pos) {
     return e->lines.count - 1;
 }
 
+
 //TODO BUG
 void editor_enter(Editor *e) {
     if (e->searching) {
         editor_stop_search_and_mark(e);
         current_mode = NORMAL;
         return;
-    } else if (M_x_active || evil_command_active && e->minibuffer_active) {
+    } else if ((M_x_active || evil_command_active) && e->minibuffer_active) {
         sb_append_null(&e->minibuffer_text); // null termination
         execute_command(e->commands, e, e->minibuffer_text.items);
         e->minibuffer_text.count = 0;
@@ -1238,7 +1273,7 @@ Errno openLocalIncludeFile(Editor *editor, const char *includePath) {
     snprintf(fullPath, sizeof(fullPath), "%s/%s", directory, includePath);
 
     // Load the file using the full path
-    Errno load_err = find_file(editor, fullPath, 0, 0);
+    Errno load_err = find_file(editor, fullPath, 10, 10);
     if (load_err != 0) {
         fprintf(stderr, "Error loading file %s: %s\n", fullPath, strerror(load_err));
         return load_err;
@@ -1351,7 +1386,6 @@ void select_region_from_inside_braces(Editor *editor) {
     // Find the start of the function
     while (start > 0) {
         start--;
-        size_t line_begin = editor->lines.items[start].begin;
         size_t line_end = editor->lines.items[start].end;
 
         // Simple heuristic: a line ending with '{' might be the start of a function
@@ -1472,10 +1506,6 @@ void editor_save_and_quit(Editor *e) {
     quit = true;
 }
 
-
-
-
-
 bool extract_word_left_of_cursor(Editor *e, char *word, size_t max_word_length) {
     if (e->cursor == 0 || !isalnum(e->data.items[e->cursor - 1])) {
         return false;
@@ -1507,7 +1537,6 @@ bool extract_word_left_of_cursor(Editor *e, char *word, size_t max_word_length) 
 #define MAX_WORD_LENGTH 256
 
 // TODO cycle
-// TODO bad match sometimes i invoke it and it does nothing
 
 void evil_complete_next(Editor *e) {
     static char last_word[MAX_WORD_LENGTH] = {0};
@@ -1611,7 +1640,7 @@ Errno editor_goto_line(Editor *editor, const char *params[]) {
     return 0;
 }
 
-void get_cursor_position(const Editor *e, int *line, int *character) {
+void get_cursor_position(const Editor *e, size_t *line, int *character) {
     assert(e != NULL && line != NULL && character != NULL);
 
     // Get the line number
@@ -1727,6 +1756,7 @@ uint64_t variable_doc_hash(const void *item, uint64_t seed0, uint64_t seed1) {
 
 
 int variable_doc_compare(const void *a, const void *b, void *udata) {
+    (void)udata; // Unfinished avoid compiler warning
     const VariableDoc *doc = a;
     const char *key = b;
     return strcmp(doc->var_name, key);
@@ -1798,9 +1828,6 @@ void update_minibuffer_animation(float deltaTime) {
 }
 
 
-
-
-
 size_t calculate_max_line_length(const Editor *editor) {
     size_t max_len = 0;
     for (size_t i = 0; i < editor->lines.count; ++i) {
@@ -1812,6 +1839,27 @@ size_t calculate_max_line_length(const Editor *editor) {
     }
     return max_len;
 }
+
+float column_to_x(Free_Glyph_Atlas *atlas, int column) {
+    float whitespace_width = measure_whitespace_width(atlas);
+    return column * whitespace_width;
+}
+
+
+void editor_color_text_range(Editor *editor, size_t start, size_t end, Vec4f new_color) {
+    for (size_t i = 0; i < editor->tokens.count; ++i) {
+        Token *token = &editor->tokens.items[i];
+        size_t token_start = token->position.x; // Make sure this is the correct way to calculate the start position
+        size_t token_end = token_start + token->text_len;
+
+        // Check if the token is within the specified range
+        if (token_start < end && token_end > start) {
+            token->color = new_color;
+        }
+    }
+}
+
+
 
 
 

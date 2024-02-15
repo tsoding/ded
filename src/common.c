@@ -164,3 +164,4 @@ Errno type_of_file(const char *file_path, File_Type *ft)
 #endif
     return 0;
 }
+

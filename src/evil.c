@@ -441,12 +441,11 @@ void evil_change_line(Editor *e) {
     editor_retokenize(e);
 }
 
-// TODO can't find Capital chars
+// TODO can't find Capital chars and chars that require holding shift
 void evil_find_char(Editor *e, char target) {
     if (e->searching || e->cursor >= e->data.count) return;
 
     size_t row = editor_cursor_row(e);
-    size_t line_begin = e->lines.items[row].begin;
     size_t line_end = e->lines.items[row].end;
 
     // Start searching from the character right after the cursor position

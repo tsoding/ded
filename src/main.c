@@ -41,6 +41,8 @@
 #include "unistd.h"
 #include "M-x.h"
 #include "lsp.h"
+#include "treesitter.h"
+#include "clock.h"
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
@@ -184,12 +186,12 @@ int main(int argc, char **argv)
     initialize_shader_paths();
     load_snippets_from_directory();
 
-    // lsp
-    signal(SIGINT, handle_signal);
-    start_ccls(/* project_root */);
-    initialize_lsp();
-
+    init_clock();
     
+    // lsp
+    start_clangd(&editor);
+    /* pthread_create(&receive_thread, NULL, receive_json_rpc, NULL); */
+
 
     // Define hash seeds (these could be randomly generated for more robustness)
     uint64_t seed0 = 0x12345678;
@@ -372,9 +374,11 @@ int main(int argc, char **argv)
               break;
 
             case SDL_KEYDOWN:
-              if (handle_evil_find_char(&editor, &event)) {
-                  break; // Skip further processing if the key event was handled
-              }
+                if (current_mode == NORMAL) {
+                    if (handle_evil_find_char(&editor, &event)) {
+                        break; // Skip further processing if the key event was handled
+                    }
+                }
 
               if (file_browser) {
                 switch (event.key.keysym.sym) {
@@ -698,6 +702,7 @@ int main(int argc, char **argv)
                         }
                     } break;
 
+
                     case SDLK_SEMICOLON:
                         if (event.key.keysym.mod & KMOD_SHIFT) {
                             current_mode = MINIBUFFER;
@@ -736,7 +741,9 @@ int main(int argc, char **argv)
                     case SDLK_c:
                         if (event.key.keysym.mod & KMOD_SHIFT) {
                             evil_change_line(&editor);
-                        }
+                        } else if (event.key.keysym.mod & KMOD_CTRL) {
+                            automatic_zoom = !automatic_zoom;
+                        }                            
                         
                         // Eat up the next SDL_TEXTINPUT event for 'C'
                         SDL_PollEvent(&tmpEvent);
@@ -765,6 +772,7 @@ int main(int argc, char **argv)
                             editor.minibuffer_active = false;
                         }
 
+                        mixSelectionColor = false ;
                         editor_clear_mark(&editor);
                         editor_stop_search(&editor);
                         editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
@@ -811,9 +819,6 @@ int main(int argc, char **argv)
 
 
                     case SDLK_o:
-                        if (superDrammtic) {
-                            followCursor = true;
-                        }
                         if (SDL_GetModState() & KMOD_SHIFT) {
                             evil_open_above(&editor);
                         } else {
@@ -1014,9 +1019,6 @@ int main(int argc, char **argv)
                                 current_mode = INSERT;
                             }
 
-                            if (superDrammtic){
-                                followCursor = true;
-                            }
                             editor.last_stroke = SDL_GetTicks();
                             
                             // Eat up the next SDL_TEXTINPUT event for 'i' or 'I'
@@ -1046,9 +1048,6 @@ int main(int argc, char **argv)
                       
                   case SDLK_a:
                     editor.last_stroke = SDL_GetTicks();
-                    if (superDrammtic){
-                        followCursor = true;
-                    }
                     if (SDL_GetModState() & KMOD_SHIFT) { // Check if shift is being held
                       editor_move_to_line_end(&editor);
                     } else {
@@ -1123,37 +1122,27 @@ int main(int argc, char **argv)
                     }
                     break;
                     
-                    case SDLK_h:
-                        if (event.key.keysym.mod & KMOD_ALT) {
-                            emacs_mark_paragraph(&editor, true);
+                        
+                    case SDLK_j:
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                        if ((event.key.keysym.mod & KMOD_CTRL) && (event.key.keysym.mod & KMOD_ALT)) {
+                            evil_open_above(&editor);
+                        } else if (event.key.keysym.mod & KMOD_CTRL) {
+                            evil_open_below(&editor);
+                        } else if ((event.key.keysym.mod & KMOD_ALT) && !followCursor) {
+                            move_camera(&sr, "down", 50.0f);
+                        } else if ((event.key.keysym.mod & KMOD_SHIFT) && !(event.key.keysym.mod & KMOD_ALT)) {
+                            evil_join(&editor);
+                        } else if (event.key.keysym.mod & KMOD_ALT) {
+                            editor_drag_line_down(&editor);
                         } else {
-                            editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                            if (event.key.keysym.mod & KMOD_CTRL) {
-                                editor_move_word_left(&editor);
-                            } else {
-                                editor_move_char_left(&editor);
-                            }
+                            editor_move_line_down(&editor);
                         }
                         editor.last_stroke = SDL_GetTicks();
                         break;
 
-                        
-                  case SDLK_j:
-                    editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                    if ((event.key.keysym.mod & KMOD_ALT) && !followCursor) {
-                      move_camera(&sr, "down", 50.0f);
-                    } else if (event.key.keysym.mod & KMOD_CTRL) {
-                      evil_open_above(&editor);
-                    } else if ((event.key.keysym.mod & KMOD_SHIFT) && !(event.key.keysym.mod & KMOD_ALT)) {
-                      evil_join(&editor);
-                    } else if (event.key.keysym.mod & KMOD_ALT) {
-                      editor_move_paragraph_down(&editor);
-                    } else {
-                      editor_move_line_down(&editor);
-                    }
-                    editor.last_stroke = SDL_GetTicks();
-                    break;
 
+                    
                   case SDLK_k:
                     editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                     if ((event.key.keysym.mod & KMOD_ALT) && !followCursor) {
@@ -1161,26 +1150,47 @@ int main(int argc, char **argv)
                     } else if (event.key.keysym.mod & KMOD_CTRL) {
                       emacs_kill_line(&editor);
                     } else if (event.key.keysym.mod & KMOD_ALT) {
-                      editor_move_paragraph_up(&editor);
+                      editor_drag_line_up(&editor);
                     } else if (event.key.keysym.mod & KMOD_SHIFT) {
-                        goto_definition(&editor);
+                        goto_definition(&editor, &fb);
                     } else {
                         editor_move_line_up(&editor);
                     }
                     editor.last_stroke = SDL_GetTicks();
                     break;
 
+
+                    case SDLK_h:
+                        if (event.key.keysym.mod & KMOD_ALT) {
+                            // If Alt is held, check if char under cursor is { or } and not editor->selection
+                            emacs_mark_paragraph(&editor);
+                        } else {
+                            editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                            if (event.key.keysym.mod & KMOD_CTRL) {
+                                editor_move_word_left(&editor);
+                            } else {
+                                editor_move_char_left(&editor);
+                            }
+                            // Toggle mixSelectionColor when Shift is pressed without Ctrl or Alt
+                            mixSelectionColor = (event.key.keysym.mod & KMOD_SHIFT) && !(event.key.keysym.mod & KMOD_CTRL) && !(event.key.keysym.mod & KMOD_ALT);
+                        }
+                        editor.last_stroke = SDL_GetTicks();
+                        break;
+
                     case SDLK_l:
                         editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                         if (event.key.keysym.mod & KMOD_CTRL) {
                             showLineNumbers = !showLineNumbers;
                         } else if (event.key.keysym.mod & KMOD_ALT) {
-                            select_region_from_inside_braces(&editor); 
+                            select_region_from_inside_braces(&editor);
                         } else {
                             editor_move_char_right(&editor);
+                            // Toggle mixSelectionColor when Shift is pressed without Ctrl or Alt
+                            mixSelectionColor = (event.key.keysym.mod & KMOD_SHIFT) && !(event.key.keysym.mod & KMOD_CTRL) && !(event.key.keysym.mod & KMOD_ALT);
                         }
                         editor.last_stroke = SDL_GetTicks();
                         break;
+
 
                     
                     case SDLK_DOWN:
@@ -1320,7 +1330,16 @@ int main(int argc, char **argv)
                       if (event.key.keysym.mod & KMOD_CTRL) {
                           editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                           editor_move_char_left(&editor);
-                      }
+                      } else if (event.key.keysym.mod & KMOD_ALT) {
+                          editor_backspace(&editor);
+
+                          // Eat up the next SDL_TEXTINPUT event for 'h'
+                          SDL_PollEvent(&tmpEvent);
+                          if (tmpEvent.type != SDL_TEXTINPUT ||
+                              (tmpEvent.text.text[0] != 'h')) {
+                              SDL_PushEvent(&tmpEvent); // Push it back to the event queue if it's not
+                          }
+                      }                          
                       editor.last_stroke = SDL_GetTicks();
                       break;
                       
@@ -1491,6 +1510,7 @@ int main(int argc, char **argv)
                         SDL_PushEvent(&tmpEvent); // Push the event back if it's not the one we're trying to consume
                       }
                     }
+                    editor.last_stroke = SDL_GetTicks();
                   }
                     break;
 
@@ -1520,10 +1540,6 @@ int main(int argc, char **argv)
                     break;
 
                     case SDLK_ESCAPE: {
-                        if (superDrammtic){
-                            followCursor = false;
-                        }
-
                         if (editor.searching) {
                             editor_clear_mark(&editor);
                             editor_stop_search(&editor);
@@ -1861,9 +1877,6 @@ int main(int argc, char **argv)
 
 
                     case SDLK_o:
-                        if (superDrammtic) {
-                            followCursor = true;
-                        }
                         if (SDL_GetModState() & KMOD_SHIFT) {
                             evil_open_above(&editor);
                         } else {
@@ -2064,9 +2077,6 @@ int main(int argc, char **argv)
                                 current_mode = INSERT;
                             }
 
-                            if (superDrammtic){
-                                followCursor = true;
-                            }
                             editor.last_stroke = SDL_GetTicks();
                             
                             // Eat up the next SDL_TEXTINPUT event for 'i' or 'I'
@@ -2096,9 +2106,6 @@ int main(int argc, char **argv)
                       
                   case SDLK_a:
                     editor.last_stroke = SDL_GetTicks();
-                    if (superDrammtic){
-                        followCursor = true;
-                    }
                     if (SDL_GetModState() & KMOD_SHIFT) { // Check if shift is being held
                       editor_move_to_line_end(&editor);
                     } else {
@@ -2175,7 +2182,7 @@ int main(int argc, char **argv)
                     
                     case SDLK_h:
                         if (event.key.keysym.mod & KMOD_ALT) {
-                            emacs_mark_paragraph(&editor, true);
+                            emacs_mark_paragraph(&editor);
                         } else {
                             editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                             if (event.key.keysym.mod & KMOD_CTRL) {
@@ -2213,7 +2220,7 @@ int main(int argc, char **argv)
                     } else if (event.key.keysym.mod & KMOD_ALT) {
                       editor_move_paragraph_up(&editor);
                     } else if (event.key.keysym.mod & KMOD_SHIFT) {
-                        goto_definition(&editor);
+                        goto_definition(&editor, &fb);
                     } else {
                         editor_move_line_up(&editor);
                     }
@@ -2292,17 +2299,6 @@ int main(int argc, char **argv)
 
                     // additional NORMAL mode keybinds here...
                   } break;
-
-
-
-
-
-
-
-
-
-
-
               
                 case MINIBUFFER:
                     switch (event.key.keysym.sym) {
@@ -2395,18 +2391,22 @@ int main(int argc, char **argv)
             if (theme_lerp){
                 update_theme_interpolation();
             }
-
             update_modeline_animation();
             update_minibuffer_animation(DELTA_TIME);
 
             editor_render(window, &atlas, &sr, &editor);
+            update_cursor_color(&editor);
             render_search_text(&atlas, &sr, &editor);
 
+
+            if (fb.file_extension.items != NULL && strcmp(fb.file_extension.items, "json") == 0) {
+                tree(&editor, &fb);
+            }
+            
           
-          
-          if (fb.file_extension.items != NULL && strcmp(fb.file_extension.items, "md") == 0) {
-              render_markdown(&atlas, &sr, &editor, &fb);
-          }
+            if (fb.file_extension.items != NULL && strcmp(fb.file_extension.items, "md") == 0) {
+                render_markdown(&atlas, &sr, &editor, &fb);
+            }
 
  
           
@@ -2425,9 +2425,9 @@ int main(int argc, char **argv)
             SDL_Delay(delta_time_ms - duration);
         }
     }
-    
-    shutdown_lsp();
-    free_snippet_array(&snippets); // TODO
+
+    shutdown_clangd(&editor);
+    free_snippet_array(&snippets);
     return 0;
 }
 
