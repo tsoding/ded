@@ -197,12 +197,6 @@ int main(int argc, char **argv)
     uint64_t seed0 = 0x12345678;
     uint64_t seed1 = 0x9ABCDEF0;
 
-    uint64_t seed2 = 0x1E7EDAD0;
-    uint64_t seed3 = 0x3E8A3D59;
-
-    initialize_variable_docs_map(seed2, seed3);
-    initialize_variable_documentation();
-    
     // Allocate and initialize the commands hashmap
     editor.commands = hashmap_new(
         sizeof(Command), // Size of each element
@@ -733,6 +727,8 @@ int main(int argc, char **argv)
                             editor_clipboard_copy(&editor);
                             editor_delete_selection(&editor);
                             editor.selection = false;
+                        } else if (event.key.keysym.mod & KMOD_CTRL) {
+                            evil_delete_char(&editor);
                         } else {
                             emacs_kill_line(&editor);
                         }
@@ -948,8 +944,8 @@ int main(int argc, char **argv)
                     break;
 
                   case SDLK_f:
-                    if (SDL_GetModState() & KMOD_CTRL){
-                      editor_move_char_right(&editor);
+                    if (SDL_GetModState() & KMOD_CTRL) {
+                        editor_move_char_right(&editor);
                     }
                     break;
 
@@ -1090,6 +1086,8 @@ int main(int argc, char **argv)
                             /* } */
                         } else if (event.key.keysym.mod & KMOD_SHIFT) {
                             evil_delete_backward_char(&editor);
+                        } else if (event.key.keysym.mod & KMOD_CTRL) {
+                            ctrl_x_pressed = true;
                         } else {
                             editor_clipboard_copy(&editor);
                             evil_delete_char(&editor);
@@ -1106,7 +1104,7 @@ int main(int argc, char **argv)
 
                   case SDLK_r:
                     if (event.key.keysym.mod & KMOD_CTRL) {
-                    file_browser = true;
+                        file_browser = true;
                     }
                     break;
 
@@ -1128,7 +1126,12 @@ int main(int argc, char **argv)
                         if ((event.key.keysym.mod & KMOD_CTRL) && (event.key.keysym.mod & KMOD_ALT)) {
                             evil_open_above(&editor);
                         } else if (event.key.keysym.mod & KMOD_CTRL) {
-                            evil_open_below(&editor);
+                            if (ctrl_x_pressed) {
+                                file_browser = true;
+                                ctrl_x_pressed = false;
+                            } else {
+                                editor_enter(&editor);
+                            }
                         } else if ((event.key.keysym.mod & KMOD_ALT) && !followCursor) {
                             move_camera(&sr, "down", 50.0f);
                         } else if ((event.key.keysym.mod & KMOD_SHIFT) && !(event.key.keysym.mod & KMOD_ALT)) {
@@ -1167,7 +1170,7 @@ int main(int argc, char **argv)
                         } else {
                             editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                             if (event.key.keysym.mod & KMOD_CTRL) {
-                                editor_move_word_left(&editor);
+                                editor_backspace(&editor);
                             } else {
                                 editor_move_char_left(&editor);
                             }
@@ -1705,14 +1708,21 @@ int main(int argc, char **argv)
               switch (event.key.keysym.sym) {
 
               case SDLK_j:
-                editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
-                if (event.key.keysym.mod & KMOD_CTRL) {
-                  editor_move_paragraph_down(&editor);
-                } else {
-                  editor_move_line_down(&editor);
-                }
-                editor.last_stroke = SDL_GetTicks();
-                break;
+                  editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                  if (event.key.keysym.mod & KMOD_CTRL) {
+                      editor_move_paragraph_down(&editor);
+                  } else {
+                      editor_move_line_down(&editor);
+
+                      size_t cursor_row = editor_cursor_row(&editor);
+                      if (cursor_row < editor.lines.count) {
+                          // Set cursor to the end of this new line
+                          Line current_line = editor.lines.items[cursor_row];
+                          editor.cursor = current_line.end;
+                      }
+                  }
+                  editor.last_stroke = SDL_GetTicks();
+                  break;
 
               case SDLK_h:
                 editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
@@ -1730,6 +1740,12 @@ int main(int argc, char **argv)
                   editor_move_paragraph_up(&editor);
                 } else {
                   editor_move_line_up(&editor);
+                  size_t cursor_row = editor_cursor_row(&editor);
+                  if (cursor_row < editor.lines.count) {
+                      // Set cursor to the end of this new line
+                      Line current_line = editor.lines.items[cursor_row];
+                      editor.cursor = current_line.begin;
+                  }
                 }
                 editor.last_stroke = SDL_GetTicks();
                 break;
@@ -2371,6 +2387,7 @@ int main(int argc, char **argv)
                 editor.selection = false;
                 editor.last_stroke = SDL_GetTicks();
               }
+              reset_keychords();
               break;
 
             }

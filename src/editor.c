@@ -36,7 +36,7 @@ bool copiedLine = false;
 bool matchParenthesis = true;
 
 bool hl_line = false;
-bool superDrammtic = false;
+bool superDrammtic = true;
 bool instantCamera = false;
 bool showIndentationLines = true;
 
@@ -49,7 +49,7 @@ bool ivy = false;
 bool M_x_active = false;
 bool evil_command_active = false;
 
-bool BlockInsertCurosr = false;
+bool BlockInsertCursor = true;
 bool highlightCurrentLineNumberOnInsertMode = true; // the loong way
 
 bool helix = false;
@@ -58,6 +58,12 @@ bool automatic_zoom = true;
 
 float fringeWidth = 6.0f;
 bool showFringe = true;
+
+bool ctrl_x_pressed = false;
+
+void reset_keychords() {
+    ctrl_x_pressed = false;
+}
 
 
 void set_current_mode() {
@@ -333,58 +339,6 @@ size_t get_position_from_line_column(Editor *e, size_t line, size_t column) {
 }
 
 
-
-/* Errno find_file(Editor *e, const char *file_path, size_t line, size_t column) { */
-/*     printf("Loading %s\n", file_path); */
-
-/*     e->data.count = 0; */
-/*     Errno err = read_entire_file(file_path, &e->data); */
-/*     if (err != 0) return err; */
-
-/*     // Move cursor to the specified line and column */
-/*     e->cursor = get_position_from_line_column(e, line, column); */
-
-/*     editor_retokenize(e); */
-
-/*     e->file_path.count = 0; */
-/*     sb_append_cstr(&e->file_path, file_path); */
-/*     sb_append_null(&e->file_path); */
-
-/*     // Add file path to buffer history */
-/*     if (e->buffer_history_count < MAX_BUFFER_HISTORY) { */
-/*         e->buffer_history[e->buffer_history_count++] = strdup(file_path); */
-/*     } */
-
-/*     return 0; */
-/* } */
-
-/* Errno find_file(Editor *e, const char *file_path, size_t line, size_t column) { */
-/*     char expanded_file_path[PATH_MAX]; */
-/*     expand_path(file_path, expanded_file_path, sizeof(expanded_file_path)); */
-/*     printf("Loading %s\n", expanded_file_path); */
-
-/*     e->data.count = 0; */
-/*     Errno err = read_entire_file(expanded_file_path, &e->data); */
-/*     if (err != 0) return err; */
-
-/*     // Move cursor to the specified line and column */
-/*     e->cursor = get_position_from_line_column(e, line, column); */
-
-/*     editor_retokenize(e); */
-
-/*     e->file_path.count = 0; */
-/*     sb_append_cstr(&e->file_path, expanded_file_path); */
-/*     sb_append_null(&e->file_path); */
-
-/*     // Add file path to buffer history */
-/*     if (e->buffer_history_count < MAX_BUFFER_HISTORY) { */
-/*         e->buffer_history[e->buffer_history_count++] = strdup(expanded_file_path); */
-/*     } */
-/*     return 0; */
-/* } */
-
-
-
 Errno find_file(Editor *e, const char *file_path, size_t line, size_t column) {
     char expanded_file_path[PATH_MAX];
     expand_path(file_path, expanded_file_path, sizeof(expanded_file_path));
@@ -414,7 +368,6 @@ Errno find_file(Editor *e, const char *file_path, size_t line, size_t column) {
     printf("[find_file] File loaded and cursor set.\n");
     return 0;
 }
-
 
 
 
@@ -658,19 +611,20 @@ void editor_clipboard_paste(Editor *e)
 void editor_update_selection(Editor *e, bool shift) {
     if (e->searching) return;
     
-    if (current_mode == VISUAL) {
-        if (!e->selection) {
-            evil_visual_char(e);
-        }
-    } else if (shift) {
+     if (shift) {
         if (!e->selection) {
             e->selection = true;
             e->select_begin = e->cursor;
         }
-    } else {
-        e->selection = false;
-    }
+     } else if (current_mode == VISUAL_LINE) {
+         
+     } else if (current_mode == VISUAL) {
+
+     } else {
+         e->selection = false;
+     }
 }
+
 
 // search
 void editor_start_search(Editor *e)
@@ -1617,8 +1571,6 @@ void find_matches_in_editor_data(Editor *e, const char *word, char **matches, si
     }
 }
 
-
-
 Errno editor_goto_line(Editor *editor, const char *params[]) {
     if (!params || !params[0]) {
         // Handle error: No line number provided
@@ -1660,107 +1612,7 @@ void get_cursor_position(const Editor *e, size_t *line, int *character) {
 
 
 
-// TODO doesn't work 
-// VARIABLES DOCUMENTATION
-struct hashmap *variable_docs_map;
 
-void initialize_variable_docs_map(uint64_t seed0, uint64_t seed1) {
-    variable_docs_map = hashmap_new(
-        sizeof(VariableDoc), // Size of each element
-        16,                  // Initial capacity
-        seed0, seed1,        // Hash seeds
-        variable_doc_hash,   // Hash function
-        variable_doc_compare,// Compare function
-        NULL,                // Element free function (NULL if not needed)
-        NULL                 // User data for compare function (NULL if not needed)
-    );
-
-    if (!variable_docs_map) {
-        // Handle hashmap initialization failure
-        fprintf(stderr, "Failed to initialize variable documentation map\n");
-    }
-}
-
-
-bool document_variable(const char *name, const char *type, const char *description) {
-    // Check if the variable is already documented using the variable name as the key
-    if (hashmap_get(variable_docs_map, name) != NULL) {
-        // Variable already documented
-        return false;
-    }
-
-    VariableDoc *doc = malloc(sizeof(VariableDoc));
-    if (!doc) {
-        // Memory allocation failure
-        return false;
-    }
-
-    // Duplicate the strings to ensure they are properly managed
-    doc->var_name = strdup(name);
-    doc->var_type = strdup(type);
-    doc->description = strdup(description);
-
-    // Insert the new documentation into the map
-    // The hashmap_set function calculates the hash internally
-    if (hashmap_set(variable_docs_map, doc) == NULL) {
-        // Successfully documented the variable or replaced an existing one
-        return true;
-    } else {
-        // Cleanup in case of failure
-        free(doc->var_name);
-        free(doc->var_type);
-        free(doc->description);
-        free(doc);
-        return false;
-    }
-}
-
-
-
-// TODO type checking
-void initialize_variable_documentation() {
-    // Define hash seeds
-    uint64_t seed0 = 0x12345678;
-    uint64_t seed1 = 0x9ABCDEF0;
-
-    // Initialize the hashmap with seeds
-    initialize_variable_docs_map(seed0, seed1);
-
-    // Document variables
-    document_variable("zoom_factor", "float", "Controls the zoom level of the editor view.");
-    document_variable("showLineNumbers", "bool", "Determines whether line numbers are displayed.");
-    // Add more variables here...
-}
-
-
-
-void print_variable_doc(const char *var_name) {
-    VariableDoc *doc = (VariableDoc *)hashmap_get(variable_docs_map, var_name);
-    if (doc) {
-        printf("Variable Name: %s\nType: %s\nDescription: %s\n", doc->var_name, doc->var_type, doc->description);
-    } else {
-        printf("No documentation found for variable '%s'.\n", var_name);
-    }
-}
-
-
-
-uint64_t variable_doc_hash(const void *item, uint64_t seed0, uint64_t seed1) {
-    const char *str = item;
-    uint64_t hash = seed0;
-    while (*str) {
-        hash = 31 * hash + (*str++);
-    }
-    return hash ^ seed1;
-}
-
-
-int variable_doc_compare(const void *a, const void *b, void *udata) {
-    (void)udata; // Unfinished avoid compiler warning
-    const VariableDoc *doc = a;
-    const char *key = b;
-    return strcmp(doc->var_name, key);
-}
 
 
 

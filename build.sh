@@ -35,4 +35,3 @@ fi
 $CC $CFLAGS `pkg-config --cflags $PKGS` -o ded $SRC $LIBS ./libtree-sitter-json.a `pkg-config --libs $PKGS `
 
 
-

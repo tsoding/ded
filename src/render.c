@@ -8,11 +8,12 @@
 #include "theme.h"
 #include <stdbool.h>
 #include <time.h>
+#include "clock.h"
 
 float lineNumberWidth = FREE_GLYPH_FONT_SIZE * 1;
 bool render_whitespaces_on_select = false;
 bool lerpTokens = true; // TODO
-bool mixSelectionColor = true;
+bool mixSelectionColor = false;
 
 
 Vec4f blend_color(Vec4f color1, Vec4f color2, float blendFactor) {
@@ -24,6 +25,7 @@ Vec4f blend_color(Vec4f color1, Vec4f color2, float blendFactor) {
     return result;
 }
 
+// TODO
 void render_search_text(Free_Glyph_Atlas *atlas, Simple_Renderer *sr, Editor *editor) {
     if (editor->searching) {
         Vec4f cursorColor = CURRENT_THEME.cursor;
@@ -528,8 +530,8 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
 
     // TODO shader switch
-    render_selection(editor, sr, atlas);
     render_indentation_lines(sr, atlas, editor);
+    render_selection(editor, sr, atlas);
     render_whitespaces(atlas, sr, editor);
 
     
@@ -570,48 +572,6 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         }
     }
 
-    // Render marked search result
-    {
-        simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
-        if (editor->has_mark) {
-            for (size_t row = 0; row < editor->lines.count; ++row) {
-                size_t mark_begin_chr = editor->mark_start;
-                size_t mark_end_chr = editor->mark_end;
-
-                Line line_chr = editor->lines.items[row];
-
-                if (mark_begin_chr < line_chr.begin) {
-                    mark_begin_chr = line_chr.begin;
-                }
-
-                if (mark_end_chr > line_chr.end) {
-                    mark_end_chr = line_chr.end;
-                }
-
-                if (mark_begin_chr <= mark_end_chr) {
-                    Vec2f mark_begin_scr = vec2f(0, -((float)row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE);
-                    free_glyph_atlas_measure_line_sized(
-                                                        atlas, editor->data.items + line_chr.begin, mark_begin_chr - line_chr.begin,
-                                                        &mark_begin_scr);
-
-                    Vec2f mark_end_scr = mark_begin_scr;
-                    free_glyph_atlas_measure_line_sized(
-                                                        atlas, editor->data.items + mark_begin_chr, mark_end_chr - mark_begin_chr,
-                                                        &mark_end_scr);
-
-                    // Adjust for line numbers width if they are displayed
-                    if (showLineNumbers) {
-                        mark_begin_scr.x += lineNumberWidth;
-                        mark_end_scr.x += lineNumberWidth;
-                    }
-
-                    Vec4f mark_color = CURRENT_THEME.marks;
-                    simple_renderer_solid_rect(sr, mark_begin_scr, vec2f(mark_end_scr.x - mark_begin_scr.x, FREE_GLYPH_FONT_SIZE), mark_color);
-                }
-            }
-        }
-        simple_renderer_flush(sr);
-    }
   
     render_line_numbers(sr, atlas, editor);
 
@@ -687,7 +647,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
         // If editor has a mark, make the cursor transparent
         if (editor->has_mark) {
-            CURSOR_COLOR.w = 0.0f; // Set alpha to 0 (fully transparent)
+            /* CURSOR_COLOR.w = 0.0f; // Set alpha to 0 (fully transparent) */
         }
 
         // Rendering based on mode
@@ -731,52 +691,40 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
                 CURSOR_COLOR);
         } break;
 
-
+        case VISUAL_LINE:
         case VISUAL: {
             float cursor_width;
             // Check if the cursor is on an actual character or an empty line
             if (editor->cursor < editor->data.count && editor->data.items[editor->cursor] != '\n') {
-                    Vec2f next_char_pos = cursor_pos;
-                    free_glyph_atlas_measure_line_sized(
-                        atlas, editor->data.items + editor->cursor,
-                        1, // Measure the actual character at the cursor
-                        &next_char_pos);
-                    cursor_width = next_char_pos.x - cursor_pos.x;
+                Vec2f next_char_pos = cursor_pos;
+                free_glyph_atlas_measure_line_sized(atlas, editor->data.items + editor->cursor, 1, &next_char_pos);
+                cursor_width = next_char_pos.x - cursor_pos.x;
             } else {
-                    cursor_width = whitespace_width;
+                cursor_width = whitespace_width;
             }
 
-            simple_renderer_solid_rect(
-                sr, cursor_pos, vec2f(cursor_width, FREE_GLYPH_FONT_SIZE),
-                CURSOR_COLOR);
+            simple_renderer_solid_rect(sr, cursor_pos, vec2f(cursor_width, FREE_GLYPH_FONT_SIZE), CURSOR_COLOR);
         } break;
 
         case MINIBUFFER: {
             // TODO
         } break;
 
-            
         case EMACS: {
             float cursor_width;
             CURSOR_COLOR = CURRENT_THEME.emacs_cursor;
             // Check if the cursor is on an actual character or an empty line
             if (editor->cursor < editor->data.count &&
                 editor->data.items[editor->cursor] != '\n') {
-                Vec2f next_char_pos = cursor_pos;
-                free_glyph_atlas_measure_line_sized(
-                                                    atlas, editor->data.items + editor->cursor,
-                                                    1, // Measure the actual character at the cursor
-                                                    &next_char_pos);
+                Vec2f next_char_pos = cursor_pos; free_glyph_atlas_measure_line_sized(atlas, editor->data.items + editor->cursor, 1, &next_char_pos);
                 cursor_width = next_char_pos.x - cursor_pos.x;
             } else {
                 cursor_width = whitespace_width;
             }
             
             // Implement blinking for EMACS mode
-            if (t < CURSOR_BLINK_THRESHOLD ||
-                (t / CURSOR_BLINK_PERIOD) % 2 != 0) {
-                simple_renderer_solid_rect(sr, cursor_pos, vec2f(cursor_width, FREE_GLYPH_FONT_SIZE),
-                                           CURSOR_COLOR);
+            if (t < CURSOR_BLINK_THRESHOLD || (t / CURSOR_BLINK_PERIOD) % 2 != 0) {
+                simple_renderer_solid_rect(sr, cursor_pos, vec2f(cursor_width, FREE_GLYPH_FONT_SIZE), CURSOR_COLOR);
             }
         } break;
 
@@ -784,7 +732,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         case INSERT:
             CURSOR_COLOR = themes[currentThemeIndex].insert_cursor;
             /* CURSOR_COLOR = CURRENT_THEME.cursor; */
-            if (BlockInsertCurosr) {
+            if (BlockInsertCursor) {
                 // Check if the cursor is on an actual character or an empty line
                 if (editor->cursor < editor->data.count && editor->data.items[editor->cursor] != '\n') {
                     Vec2f next_char_pos = cursor_pos;
@@ -859,30 +807,56 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
         /*     break; */
         /* } */
 
-        case VISUAL_LINE:
-            // Set the cursor width to cover the entire height of the line
-            CURSOR_WIDTH = FREE_GLYPH_FONT_SIZE;
-
-            // Adjust cursor color for visual distinction. For instance, make it
-            // slightly transparent
-            Vec4f TRANSPARENT_CURSOR_COLOR =
-                vec4f(CURSOR_COLOR.x, CURSOR_COLOR.y, CURSOR_COLOR.z,
-                      0.5f); // 50% transparency
-
-            // Render the cursor for the entire line
-            simple_renderer_solid_rect(
-                sr, cursor_pos, vec2f(CURSOR_WIDTH, FREE_GLYPH_FONT_SIZE),
-                TRANSPARENT_CURSOR_COLOR);
-
-            // If you'd like to add additional visual cues, consider adding a
-            // border or some other distinguishing feature.
-            break;
         }
         simple_renderer_flush(sr);
     }
 
     
+    // Render marked search result
+    {
+        simple_renderer_set_shader(sr, VERTEX_SHADER_SIMPLE, SHADER_FOR_COLOR);
+        if (editor->has_mark) {
+            for (size_t row = 0; row < editor->lines.count; ++row) {
+                size_t mark_begin_chr = editor->mark_start;
+                size_t mark_end_chr = editor->mark_end;
 
+                Line line_chr = editor->lines.items[row];
+
+                if (mark_begin_chr < line_chr.begin) {
+                    mark_begin_chr = line_chr.begin;
+                }
+
+                if (mark_end_chr > line_chr.end) {
+                    mark_end_chr = line_chr.end;
+                }
+
+                if (mark_begin_chr <= mark_end_chr) {
+                    Vec2f mark_begin_scr = vec2f(0, -((float)row + CURSOR_OFFSET) * FREE_GLYPH_FONT_SIZE);
+                    free_glyph_atlas_measure_line_sized(
+                                                        atlas, editor->data.items + line_chr.begin, mark_begin_chr - line_chr.begin,
+                                                        &mark_begin_scr);
+
+                    Vec2f mark_end_scr = mark_begin_scr;
+                    free_glyph_atlas_measure_line_sized(
+                                                        atlas, editor->data.items + mark_begin_chr, mark_end_chr - mark_begin_chr,
+                                                        &mark_end_scr);
+
+                    // Adjust for line numbers width if they are displayed
+                    if (showLineNumbers) {
+                        mark_begin_scr.x += lineNumberWidth;
+                        mark_end_scr.x += lineNumberWidth;
+                    }
+
+                    Vec4f mark_color = CURRENT_THEME.marks;
+                    simple_renderer_solid_rect(sr, mark_begin_scr, vec2f(mark_end_scr.x - mark_begin_scr.x, FREE_GLYPH_FONT_SIZE), mark_color);
+                }
+            }
+        }
+        simple_renderer_flush(sr);
+    }
+
+
+    
     // Render text
     {
 

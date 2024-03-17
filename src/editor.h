@@ -38,7 +38,7 @@ extern bool M_x_active;
 extern bool evil_command_active;
 extern bool quit;
 
-extern bool BlockInsertCurosr;
+extern bool BlockInsertCursor;
 extern bool highlightCurrentLineNumberOnInsertMode;
 extern bool instantCamera;
 
@@ -46,6 +46,11 @@ extern bool instantCamera;
 extern bool helix;
 extern bool emacs;
 extern bool automatic_zoom;
+
+// Emacs Style KeyChords
+extern bool ctrl_x_pressed;
+
+void reset_keychords();
 
 
 extern float fringeWidth;
@@ -103,6 +108,7 @@ typedef struct {
 
     bool selection;
     size_t select_begin;
+    size_t select_end; // Needed for VISUAL_LINE selection
     size_t cursor;
 
     bool has_mark;            // Indicates if there's a marked search result.

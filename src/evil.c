@@ -250,20 +250,7 @@ void evil_paste_before(Editor* editor) {
 
 void evil_visual_char(Editor *e) {
     e->selection = true;
-
-    // Identify the current line the cursor is on
-    size_t cursor_row = editor_cursor_row(e);
-    Line current_line = e->lines.items[cursor_row];
-
-    // If in VISUAL_LINE mode, adjust the selection to span the entire line
-    if (current_mode == VISUAL_LINE) {
-        e->select_begin = current_line.begin;
-
-        // Set the cursor to the end of the current line to span the whole line
-        e->cursor = current_line.end;
-    } else {
-        e->select_begin = e->cursor;
-    }
+    e->select_begin = e->cursor;
 }
 
 // TODO doesn't work
