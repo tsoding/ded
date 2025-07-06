@@ -1,7 +1,6 @@
-te
-ded
-SDL2
 *.exe
 *.obj
 *.pdb
 *.ilk
+*.dll
+dependencies

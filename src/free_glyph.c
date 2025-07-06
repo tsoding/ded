@@ -52,12 +52,12 @@ void free_glyph_atlas_init(Free_Glyph_Atlas *atlas, FT_Face face)
             exit(1);
         }
 
-        atlas->metrics[i].ax = face->glyph->advance.x >> 6;
-        atlas->metrics[i].ay = face->glyph->advance.y >> 6;
-        atlas->metrics[i].bw = face->glyph->bitmap.width;
-        atlas->metrics[i].bh = face->glyph->bitmap.rows;
-        atlas->metrics[i].bl = face->glyph->bitmap_left;
-        atlas->metrics[i].bt = face->glyph->bitmap_top;
+        atlas->metrics[i].ax = (float)(face->glyph->advance.x >> 6);
+        atlas->metrics[i].ay = (float)(face->glyph->advance.y >> 6);
+        atlas->metrics[i].bw = (float)face->glyph->bitmap.width;
+        atlas->metrics[i].bh = (float)face->glyph->bitmap.rows;
+        atlas->metrics[i].bl = (float)face->glyph->bitmap_left;
+        atlas->metrics[i].bt = (float)face->glyph->bitmap_top;
         atlas->metrics[i].tx = (float) x / (float) atlas->atlas_width;
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);

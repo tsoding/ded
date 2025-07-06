@@ -311,7 +311,7 @@ void simple_renderer_sync(Simple_Renderer *sr)
 
 void simple_renderer_draw(Simple_Renderer *sr)
 {
-    glDrawArrays(GL_TRIANGLES, 0, sr->verticies_count);
+    glDrawArrays(GL_TRIANGLES, 0, (GLsizei)sr->verticies_count);
 }
 
 void simple_renderer_set_shader(Simple_Renderer *sr, Simple_Shader shader)

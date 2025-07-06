@@ -45,7 +45,7 @@ struct Region {
     Region *next;
     size_t count;
     size_t capacity;
-    uintptr_t data[];
+    uintptr_t data[1];
 };
 
 typedef struct {

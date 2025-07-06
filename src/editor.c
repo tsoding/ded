@@ -1,6 +1,9 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
+#ifdef _WIN32
+#include <ctype.h>
+#endif // _WIN32
 #include <errno.h>
 #include <string.h>
 #include "./editor.h"
@@ -262,7 +265,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
 
     float max_line_len = 0.0f;
 
-    sr->resolution = vec2f(w, h);
+    sr->resolution = vec2f((float)w, (float)h);
     sr->time = (float) SDL_GetTicks() / 1000.0f;
 
     // Render selection
@@ -323,7 +326,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
     {
         if (editor->searching) {
             simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
-            Vec4f selection_color = vec4f(.10, .10, .25, 1);
+            Vec4f selection_color = vec4f(.10f, .10f, .25f, 1.0f);
             Vec2f p1 = cursor_pos;
             Vec2f p2 = p1;
             free_glyph_atlas_measure_line_sized(editor->atlas, editor->search.items, editor->search.count, &p2);
@@ -387,7 +390,7 @@ void editor_render(SDL_Window *window, Free_Glyph_Atlas *atlas, Simple_Renderer 
             max_line_len = 1000.0f;
         }
 
-        float target_scale = w/3/(max_line_len*0.75); // TODO: division by 0
+        float target_scale = w/3/(max_line_len*0.75f); // TODO: division by 0
 
         Vec2f target = cursor_pos;
         float offset = 0.0f;

@@ -62,7 +62,10 @@ const char *token_kind_name(Token_Kind kind)
     default:
         UNREACHABLE("token_kind_name");
     }
+#ifdef _WIN32
+#else
     return NULL;
+#endif // _WIN32
 }
 
 Lexer lexer_new(Free_Glyph_Atlas *atlas, const char *content, size_t content_len)

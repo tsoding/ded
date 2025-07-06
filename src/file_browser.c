@@ -139,7 +139,7 @@ void fb_render(const File_Browser *fb, SDL_Window *window, Free_Glyph_Atlas *atl
 
     float max_line_len = 0.0f;
 
-    sr->resolution = vec2f(w, h);
+    sr->resolution = vec2f((float)w, (float)h);
     sr->time = (float) SDL_GetTicks() / 1000.0f;
 
     simple_renderer_set_shader(sr, SHADER_FOR_COLOR);
@@ -176,7 +176,7 @@ void fb_render(const File_Browser *fb, SDL_Window *window, Free_Glyph_Atlas *atl
             max_line_len = 1000.0f;
         }
 
-        float target_scale = w/3/(max_line_len*0.75); // TODO: division by 0
+        float target_scale = w/3/(max_line_len*0.75f); // TODO: division by 0
 
         Vec2f target = cursor_pos;
         float offset = 0.0f;
