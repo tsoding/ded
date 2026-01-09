@@ -102,6 +102,11 @@ void lexer_chop_char(Lexer *l, size_t len)
             l->line += 1;
             l->bol = l->cursor;
             l->x = 0;
+        } else if(x == '\t') {
+            if(l->atlas) {
+                Glyph_Metric space_metric = l->atlas->metrics[(size_t)' '];
+                l->x += space_metric.ax * 4;
+            }
         } else {
             if (l->atlas) {
                 size_t glyph_index = x;
@@ -118,7 +123,9 @@ void lexer_chop_char(Lexer *l, size_t len)
 
 void lexer_trim_left(Lexer *l)
 {
-    while (l->cursor < l->content_len && isspace(l->content[l->cursor])) {
+    while (l->cursor < l->content_len && isspace(l->content[l->cursor])
+     && l->content[l->cursor] != '\t'
+    ) {
         lexer_chop_char(l, 1);
     }
 }
@@ -145,6 +152,13 @@ Token lexer_next(Lexer *l)
     token.position.y = -(float)l->line * FREE_GLYPH_FONT_SIZE;
 
     if (l->cursor >= l->content_len) return token;
+
+    if (l->content[l->cursor] == '\t') {
+         token.kind = TOKEN_TAB;
+         token.text_len = 1;
+         lexer_chop_char(l, 1);
+         return token;
+    }
 
     if (l->content[l->cursor] == '"') {
         // TODO: TOKEN_STRING should also handle escape sequences

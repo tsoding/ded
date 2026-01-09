@@ -73,6 +73,16 @@ void free_glyph_atlas_init(Free_Glyph_Atlas *atlas, FT_Face face)
             face->glyph->bitmap.buffer);
         x += face->glyph->bitmap.width;
     }
+
+    // Set tab character metric as 4 times the space metric
+    Glyph_Metric space_metric = atlas->metrics[(size_t)' '];
+    atlas->metrics[(size_t)'\t'].ax = space_metric.ax * 4;
+    atlas->metrics[(size_t)'\t'].ay = space_metric.ay;
+    atlas->metrics[(size_t)'\t'].bw = space_metric.bw;
+    atlas->metrics[(size_t)'\t'].bh = space_metric.bh;
+    atlas->metrics[(size_t)'\t'].bl = space_metric.bl;
+    atlas->metrics[(size_t)'\t'].bt = space_metric.bt;
+    atlas->metrics[(size_t)'\t'].tx = space_metric.tx;
 }
 
 float free_glyph_atlas_cursor_pos(const Free_Glyph_Atlas *atlas, const char *text, size_t text_size, Vec2f pos, size_t col)

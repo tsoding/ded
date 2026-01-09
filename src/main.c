@@ -328,9 +328,7 @@ int main(int argc, char **argv)
                         // - tabs/spaces
                         // - tab width
                         // - etc.
-                        for (size_t i = 0; i < 4; ++i) {
-                            editor_insert_char(&editor, ' ');
-                        }
+                        editor_insert_char(&editor, '\t');
                     }
                     break;
 

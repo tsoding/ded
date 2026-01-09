@@ -8,6 +8,7 @@
 typedef enum {
     TOKEN_END = 0,
     TOKEN_INVALID,
+    TOKEN_TAB,
     TOKEN_PREPROC,
     TOKEN_SYMBOL,
     TOKEN_OPEN_PAREN,
