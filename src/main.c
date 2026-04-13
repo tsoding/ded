@@ -370,6 +370,24 @@ int main(int argc, char **argv)
                     }
                     break;
 
+                    case SDLK_PAGEUP: {
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                        for(int i = 0; i < PAGE_JUMP_LINES; i++) {
+                            editor_move_line_up(&editor);
+                        }
+                        editor.last_stroke = SDL_GetTicks();
+                    }
+                    break;
+
+                    case SDLK_PAGEDOWN: {
+                        editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
+                        for(int i = 0; i < PAGE_JUMP_LINES; i++) {
+                            editor_move_line_down(&editor);
+                        }
+                        editor.last_stroke = SDL_GetTicks();
+                    }
+                    break;
+
                     case SDLK_LEFT: {
                         editor_update_selection(&editor, event.key.keysym.mod & KMOD_SHIFT);
                         if (event.key.keysym.mod & KMOD_CTRL) {
