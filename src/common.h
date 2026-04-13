@@ -11,6 +11,7 @@
 #define FPS 60
 #define DELTA_TIME (1.0f / FPS)
 #define CURSOR_OFFSET 0.13f
+#define PAGE_JUMP_LINES 20
 
 typedef int Errno;
 
